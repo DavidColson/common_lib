@@ -18,8 +18,9 @@ struct Array {
 
 int arrayTest() {
     // Create Allocator
-    Array myArray;
-    myArray.append(5);
+    // Array myArray;
+    // myArray.append(5);
+    return 0;
 }  
 
 // TODO: 
@@ -40,6 +41,10 @@ int arrayTest() {
 // Everything else that does mem alloc should take an allocator as a parameter to make it clear they're doing mem ops
 // I think we should have a global mem allocator object that anyone can access
 // Regarding global context stack, we can probably play with this as a bonus if needed, but lets see how far we get without it first please
+
+
+// Re: Tests
+// https://github.com/maghoff/jsonxx/tree/master/tests
 
 int main() {
     printf("hello world");
