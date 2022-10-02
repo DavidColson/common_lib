@@ -1,25 +1,127 @@
 
 #include "stdio.h"
+#include "stdlib.h"
+#include "string.h"
 
 
 // Core Types
-typedef unsigned int uint;
+typedef unsigned int uint32;
 
 
+template<typename type>
 struct Array {
-    char* pData{ nullptr };
-    uint count{ 0 };
+    type* pData{ nullptr };
+    uint32 count{ 0 };
+	uint32 capacity { 0 };
+	
+	void reserve(uint32 desiredCapacity) {
+		if (capacity >= desiredCapacity) return;
+		type* pNewData = (type*)malloc(desiredCapacity * sizeof(type));
+		if (pData) {
+			memcpy(pNewData, pData, count * sizeof(type));
+			free(pData);
+		}
+		pData = pNewData;
+		capacity = desiredCapacity;
+	}
 
-    // operator []?
-    // Consider what this is even solving?
+	void append(const type& value) {
+		if (count == capacity) {
+			reserve(grow_capacity());
+		}
+		memcpy(&pData[count], &value, sizeof(type));
+		count++;
+	}
 
+	// TODO: Erase, Insert, iterator type
+
+	type& operator[](int i) {
+		return pData[i];
+	}
+	
+	const type& operator[](int i) const {
+		return pData[i];
+	}
+
+	bool validate() {
+		return capacity >= count;
+	}
+
+private:
+	uint32 grow_capacity() {
+		uint32 newCapacity;
+		if (capacity == 0)
+			newCapacity = 8;
+		else
+			newCapacity = capacity + capacity / 2;
+		return newCapacity;
+	}
 };
 
 
+
+// ----------------------
+// Test Helpers
+// ----------------------
+
+void StartTest(const char* testName) {
+	printf("Starting test: %s\n", testName);
+}
+
+void EndTest(int errorCount) {
+	if (errorCount == 0) {
+		printf("PASS\n\n");
+	} else {
+		printf("Failed with %i errors\n", errorCount);
+	}
+	return;
+}
+
+bool _verify(bool expression, int& errorCount, const char* file, int line, const char* msg) {
+	if (!expression) {
+		errorCount++;
+		printf("FAIL: %s(%i): %s\n", file, line, msg);
+		return false;
+	}
+	return true;
+}
+
+#define VERIFY(expression) _verify((expression), errorCount, __FILE__, __LINE__, (#expression))
+#define VERIFY_MSG(expression, msg) _verify((expression), errorCount, __FILE__, __LINE__, msg)
+
 int arrayTest() {
-    // Create Allocator
-    // Array myArray;
-    // myArray.append(5);
+	StartTest("Array Test");
+	int errorCount = 0;
+
+	Array<int> testArray;
+
+	testArray.reserve(2);
+	// TODO: Could verify the amount of memory requested from allocator?
+	VERIFY(testArray.capacity == 2);
+	
+	testArray.append(1337);
+	testArray.append(420);
+	testArray.append(1800);
+	testArray.append(77);
+	testArray.append(99);
+	VERIFY(testArray[0] == 1337);
+	VERIFY(testArray[1] == 420);
+	VERIFY(testArray[2] == 1800);
+	VERIFY(testArray[3] == 77);
+	VERIFY(testArray[4] == 99);
+	VERIFY(testArray.count == 5);
+	VERIFY(testArray.capacity == 6);
+
+	// Reserve should memcpy the old data to the new reserved location
+	testArray.reserve(50);
+	VERIFY(testArray[2] == 1800);
+	VERIFY(testArray.capacity == 50);
+	VERIFY(testArray.count == 5);
+	
+	// You wanna test for mem leaks at the end of this function
+	// Plus test for memory overwrites and so on (tests should maybe be done in address sanitizer mode)
+
+	EndTest(errorCount);
     return 0;
 }  
 
@@ -47,6 +149,7 @@ int arrayTest() {
 // https://github.com/maghoff/jsonxx/tree/master/tests
 
 int main() {
+	arrayTest();
     printf("hello world");
     return 0;
 }

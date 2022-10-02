@@ -15,7 +15,7 @@ solution "CommonLib"
     filter "configurations:Debug*"
         defines "_DEBUG"
         optimize "Debug"
-        symbols "On"
+        symbols "Full"
     
     project "Tests"
         kind "ConsoleApp"
