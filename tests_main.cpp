@@ -147,11 +147,10 @@ int arrayTest() {
 
 // TODO: 
 // [x] Make a dynamic array class
-// [ ] Install VS2022 and try out address sanitizer
-// [ ] Change array to use realloc it's cool
-// [ ] Make a string view class
+// [x] Install VS2022 and try out address sanitizer
+// [x] Change array to use realloc it's cool
 // [ ] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
-// [ ] Experiment with small stack allocated string section for small strings
+// [ ] Make a string view class
 // [ ] Make a simple hash map class
 // [ ] Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
 // [ ] Make a custom allocator mechanism for the dynamic array class
