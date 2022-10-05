@@ -20,8 +20,13 @@ struct Array {
     uint32_t count{ 0 };
 	uint32_t capacity { 0 };
 	
+	~Array() {
+		if (pData) free(pData);
+	}
+
 	void reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
+		// TODO: Realloc here
 		type* pNewData = (type*)malloc(desiredCapacity * sizeof(type));
 		if (pData) {
 			memcpy(pNewData, pData, count * sizeof(type));

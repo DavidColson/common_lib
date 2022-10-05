@@ -4,9 +4,54 @@
 
 #include <stdio.h>
 
+
+// Dynamic String Class
+// --------------------
+// ... TODO Documentation etc
+// Null terminated string Type
+
+struct String {
+	char* pData = nullptr;
+	uint32_t length = 0;
+	
+	String() {}
+
+	String(const char* str) {
+		length = (uint32_t)strlen(str);
+		pData = (char*)realloc(pData, length + 1);
+		memcpy(pData, str, length + 1);
+	}
+
+	~String() {
+		if (pData) free(pData);
+	}
+
+	void operator=(const char* str) {
+		length = (uint32_t)strlen(str);
+		pData = (char*)realloc(pData, length + 1);
+		memcpy(pData, str, length + 1);
+	}
+};
+
 // ---------------------
 // Tests
 // ---------------------
+
+int stringTest() {
+	StartTest("String Test");
+	int errorCount = 0;
+
+	// Constructing Strings
+	String myString;
+	myString = "Hello World";
+	VERIFY(strcmp(myString.pData, "Hello World") == 0);
+
+	String mySecondString("Hello World 2");
+	VERIFY(strcmp(mySecondString.pData, "Hello World 2") == 0);
+
+	EndTest(errorCount);
+	return 0;
+}
 
 int arrayTest() {
 	StartTest("Array Test");
@@ -122,6 +167,7 @@ int arrayTest() {
 
 int main() {
 	arrayTest();
+	stringTest();
 	__debugbreak();
     return 0;
 }
