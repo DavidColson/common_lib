@@ -53,6 +53,16 @@ int stringTest() {
 	myString = "Hello world my name is David";
 	VERIFY(strcmp(myString.pData, "Hello world my name is David") == 0);
 
+	// TODO
+	// [ ] Copy constructor
+	// [ ] Append const char/stringview
+	// [ ] Append formatted
+	// [ ] clear function
+	// [ ] reserve, stored capacity/length value
+	// [ ] iterator
+	// [ ] string view struct (construct from String, String construct from view)
+	// [ ] string scanning functions (i.e. advance, peek, is digit etc etc) on string views
+
 	EndTest(errorCount);
 	return 0;
 }
