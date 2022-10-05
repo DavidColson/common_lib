@@ -1,177 +1,8 @@
 
-#include "stdio.h"
-#include "stdlib.h"
-#include "string.h"
+#include "array.h"
+#include "testing.h"
 
-
-// Core Types
-typedef unsigned int uint32;
-
-#ifdef _DEBUG
-#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
-#else
-#define DEBUG_CHECK(expression)
-#endif
-
-template<typename type>
-struct Array {
-    type* pData{ nullptr };
-    uint32 count{ 0 };
-	uint32 capacity { 0 };
-	
-	void reserve(uint32 desiredCapacity) {
-		if (capacity >= desiredCapacity) return;
-		type* pNewData = (type*)malloc(desiredCapacity * sizeof(type));
-		if (pData) {
-			memcpy(pNewData, pData, count * sizeof(type));
-			free(pData);
-		}
-		pData = pNewData;
-		capacity = desiredCapacity;
-	}
-
-	void push_back(const type& value) {
-		if (count == capacity) {
-			reserve(grow_capacity());
-		}
-		memcpy(&pData[count], &value, sizeof(type));
-		count++;
-	}
-
-	void pop_back() {
-		DEBUG_CHECK(count > 0);
-		count--;
-	}
-
-	type& operator[](uint32 i) {
-		DEBUG_CHECK(i >= 0 && i < count);
-		return pData[i];
-	}
-	
-	const type& operator[](uint32 i) const {
-		DEBUG_CHECK(i >= 0 && i < count);
-		return pData[i];
-	}
-
-	void clear() {
-		free(pData);
-		pData = nullptr;
-		count = 0;
-		capacity = 0;
-	}
-
-	void erase(uint32 index) {
-		DEBUG_CHECK(index >= 0 && index < count);
-		if (index == count-1) {
-			pop_back(); count--;
-		}
-		if (index < count-1) {
-			memmove(pData + index, pData + (index + 1), (count - index) * sizeof(type));
-			count--;
-		}
-	}
-
-	void erase_unsorted(uint32 index) {
-		DEBUG_CHECK(index >= 0 && index < count);
-		if (index == count-1) {
-			pop_back(); count--;
-		}
-		if (index < count-1) {
-			memcpy(pData + index, pData + (count - 1), sizeof(type));
-			count--;
-		}
-	}
-	
-	void insert(uint32 index, const type& value) {
-		DEBUG_CHECK(index >= 0 && index < count);
-		if (capacity == count) reserve(grow_capacity());
-		memmove(pData + (index + 1), pData + index, (count-index) * sizeof(type));
-		memcpy(pData + index, &value, sizeof(type));
-		count++;
-	}
-
-	type* find(const type& value) {
-		type* pTest = pData;
-		const type* pDataEnd = pData + count;
-		while (pTest < pDataEnd) {
-			if (*pTest == value)
-				break;
-			pTest++;
-		}
-		return pTest;
-	}
-
-	type* begin() {
-		return pData;
-	}
-
-	type* end() {
-		return pData + count;
-	}
-
-	const type* begin() const{
-		return pData;
-	}
-
-	const type* end() const {
-		return pData + count;
-	}
-
-	uint32 index_from_ptr(const type* ptr) const {
-		DEBUG_CHECK(ptr >= pData && ptr < pData + count);
-		ptrdiff_t diff = ptr - pData;
-		return (uint32)diff;
-	}
-
-	bool validate() const {
-		return capacity >= count;
-	}
-
-private:
-	uint32 grow_capacity() {
-		uint32 newCapacity;
-		if (capacity == 0)
-			newCapacity = 8;
-		else
-			newCapacity = 2 * capacity;
-		return newCapacity;
-	}
-};
-
-
-
-// ----------------------
-// Test Helpers
-// ----------------------
-
-void StartTest(const char* testName) {
-	printf("Starting test: %s\n", testName);
-}
-
-void EndTest(int errorCount) {
-	if (errorCount == 0) {
-		printf("PASS\n\n");
-	} else {
-		printf("Failed with %i errors\n", errorCount);
-	}
-	return;
-}
-
-bool _verify(bool expression, int& errorCount, const char* file, int line, const char* msg) {
-	if (!expression) {
-		errorCount++;
-		printf("FAIL: %s(%i): %s\n", file, line, msg);
-		return false;
-	}
-	return true;
-}
-
-#define VERIFY(expression) _verify((expression), errorCount, __FILE__, __LINE__, (#expression))
-#define VERIFY_MSG(expression, msg) _verify((expression), errorCount, __FILE__, __LINE__, msg)
-
-
-
-
+#include <stdio.h>
 
 // ---------------------
 // Tests
@@ -256,14 +87,16 @@ int arrayTest() {
 }  
 
 // TODO: 
-// 1. Make a dynamic array class ------ DONE
-// 2. Install VS2022 and try out address sanitizer
-// 3. Make a string view class
-// 4. Make a dynamic string class inspired by bx stringT and built on the dynamic array 
-// 5. Make a simple hash map class
-// 6. Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
-// 7. Make a custom allocator mechanism for the dynamic array class
-// 8. Make linear pool allocator
+// [x] Make a dynamic array class
+// [ ] Install VS2022 and try out address sanitizer
+// [ ] Change array to use realloc it's cool
+// [ ] Make a string view class
+// [ ] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
+// [ ] Experiment with small stack allocated string section for small strings
+// [ ] Make a simple hash map class
+// [ ] Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
+// [ ] Make a custom allocator mechanism for the dynamic array class
+// [ ] Make linear pool allocator
 
 
 // Jai's Pool allocator

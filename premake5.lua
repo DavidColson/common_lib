@@ -26,5 +26,7 @@ solution "CommonLib"
         debugdir ""
         files 
         {
-            "tests_main.cpp"
+            "tests_main.cpp",
+            "array.h",
+            "testing.h"
         }
