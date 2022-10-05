@@ -49,6 +49,10 @@ int stringTest() {
 	String mySecondString("Hello World 2");
 	VERIFY(strcmp(mySecondString.pData, "Hello World 2") == 0);
 
+	// Changing existing string to something else
+	myString = "Hello world my name is David";
+	VERIFY(strcmp(myString.pData, "Hello world my name is David") == 0);
+
 	EndTest(errorCount);
 	return 0;
 }

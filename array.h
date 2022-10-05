@@ -24,15 +24,11 @@ struct Array {
 		if (pData) free(pData);
 	}
 
+	// TODO: Need a resize function, that doesn't free memory, so it can be reused
+
 	void reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		// TODO: Realloc here
-		type* pNewData = (type*)malloc(desiredCapacity * sizeof(type));
-		if (pData) {
-			memcpy(pNewData, pData, count * sizeof(type));
-			free(pData);
-		}
-		pData = pNewData;
+		pData = (type*)realloc(pData, desiredCapacity * sizeof(type));
 		capacity = desiredCapacity;
 	}
 
