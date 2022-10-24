@@ -4,6 +4,8 @@
 
 #include <stdio.h>
 
+#include <stdarg.h>
+
 
 // Dynamic String Class
 // --------------------
@@ -13,12 +15,13 @@
 struct String {
 	char* pData = nullptr;
 	uint32_t length = 0;
+	uint32_t capacity = 0;
 	
 	String() {}
 
 	String(const char* str) {
 		length = (uint32_t)strlen(str);
-		pData = (char*)realloc(pData, length + 1);
+		reserve(grow_capacity(length + 1));
 		memcpy(pData, str, length + 1);
 	}
 
@@ -28,8 +31,75 @@ struct String {
 
 	void operator=(const char* str) {
 		length = (uint32_t)strlen(str);
-		pData = (char*)realloc(pData, length + 1);
+		reserve(grow_capacity(length + 1));
 		memcpy(pData, str, length + 1);
+	}
+
+	void append(const char* str) {
+		uint32_t addedLength = (uint32_t)strlen(str);
+		reserve(grow_capacity(length + addedLength + 1));
+		memcpy(pData + length, str, addedLength + 1);
+		length += addedLength;
+	}
+
+	void append_format_internal(const char* format, va_list args) {
+		va_list argsCopy;
+		va_copy(argsCopy, args);
+
+		int addedLength = vsnprintf(nullptr, 0, format, args);
+		if (addedLength <= 0) {
+			va_end(argsCopy);
+			return;
+		}
+
+		reserve(grow_capacity(length + addedLength + 1));
+		vsnprintf(pData + length, addedLength + 1, format, args);
+		va_end(argsCopy);
+		length += addedLength;
+	}
+
+	void append_format(const char* format, ...) {
+		va_list args;
+		va_start(args, format);
+		append_format_internal(format, args);
+		va_end(args);
+	}
+
+	void clear() {
+		free(pData);
+		pData = nullptr;
+		length = 0;
+		capacity = 0;
+	}
+
+	char* begin() {
+		return pData;
+	}
+
+	char* end() {
+		return pData + length;
+	}
+
+	const char* begin() const{
+		return pData;
+	}
+
+	const char* end() const {
+		return pData + length;
+	}
+
+	void reserve(uint32_t desiredCapacity) {
+		if (capacity >= desiredCapacity) return;
+		pData = (char*)realloc(pData, desiredCapacity * sizeof(char));
+		capacity = desiredCapacity;
+	}
+
+	uint32_t grow_capacity(uint32_t atLeastSize) const {
+		// if we're big enough already, don't grow, otherwise double, 
+		// and if that's not enough just use atLeastSize
+		if (capacity > atLeastSize) return capacity;
+		uint32_t newCapacity = capacity ? capacity * 2 : 8;
+		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 	}
 };
 
@@ -45,21 +115,55 @@ int stringTest() {
 	String myString;
 	myString = "Hello World";
 	VERIFY(strcmp(myString.pData, "Hello World") == 0);
+	VERIFY(myString.length == 11);
+	VERIFY(myString.capacity == 12);
 
 	String mySecondString("Hello World 2");
 	VERIFY(strcmp(mySecondString.pData, "Hello World 2") == 0);
+	VERIFY(mySecondString.length == 13);
+	VERIFY(mySecondString.capacity == 14);
 
 	// Changing existing string to something else
 	myString = "Hello world my name is David";
 	VERIFY(strcmp(myString.pData, "Hello world my name is David") == 0);
+	VERIFY(myString.length == 28);
+	VERIFY(myString.capacity == 29);
+
+	// Appending to the string
+	myString.append(" and I wrote this code");
+	VERIFY(strcmp(myString.pData, "Hello world my name is David and I wrote this code") == 0);
+	VERIFY(myString.length == 50);
+	VERIFY(myString.capacity == 58);
+
+	// Appending formatted strings
+	String newString;
+	newString.append_format("Hello %s %f", "world", 5.12f);
+	VERIFY(strcmp(newString.pData, "Hello world 5.120000") == 0);
+	VERIFY(newString.length == 20);
+	VERIFY(newString.capacity == 21);
+
+	newString.append_format(" there are %i %s", 2000, "people");
+	VERIFY(strcmp(newString.pData, "Hello world 5.120000 there are 2000 people") == 0);
+	VERIFY(newString.length == 42);
+	VERIFY(newString.capacity == 43);
+
+	// Clearing strings
+	newString.clear();
+	VERIFY(newString.pData == nullptr);
+	VERIFY(newString.length == 0);
+	VERIFY(newString.capacity == 0);
+
+	// Iterating characters
+	String badCopy;
+	for (char c : myString) {
+		badCopy.append(&c);
+	}
+	VERIFY(strcmp(badCopy.pData, "Hello world my name is David and I wrote this code") == 0);
+	VERIFY(badCopy.length == 50);
+	VERIFY(badCopy.capacity == 64);
+
 
 	// TODO
-	// [ ] Copy constructor
-	// [ ] Append const char/stringview
-	// [ ] Append formatted
-	// [ ] clear function
-	// [ ] reserve, stored capacity/length value
-	// [ ] iterator
 	// [ ] string view struct (construct from String, String construct from view)
 	// [ ] string scanning functions (i.e. advance, peek, is digit etc etc) on string views
 

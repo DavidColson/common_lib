@@ -34,7 +34,7 @@ struct Array {
 
 	void push_back(const type& value) {
 		if (count == capacity) {
-			reserve(grow_capacity());
+			reserve(grow_capacity(count + 1));
 		}
 		memcpy(&pData[count], &value, sizeof(type));
 		count++;
@@ -86,7 +86,7 @@ struct Array {
 	
 	void insert(uint32_t index, const type& value) {
 		DEBUG_CHECK(index >= 0 && index < count);
-		if (capacity == count) reserve(grow_capacity());
+		if (capacity == count) reserve(grow_capacity(count + 1));
 		memmove(pData + (index + 1), pData + index, (count-index) * sizeof(type));
 		memcpy(pData + index, &value, sizeof(type));
 		count++;
@@ -129,13 +129,11 @@ struct Array {
 		return capacity >= count;
 	}
 
-private:
-	uint32_t grow_capacity() {
-		uint32_t newCapacity;
-		if (capacity == 0)
-			newCapacity = 8;
-		else
-			newCapacity = 2 * capacity;
-		return newCapacity;
+	uint32_t grow_capacity(uint32_t atLeastSize) const {
+		// if we're big enough already, don't grow, otherwise double, 
+		// and if that's not enough just use atLeastSize
+		if (capacity > atLeastSize) return capacity;
+		uint32_t newCapacity = capacity ? capacity * 2 : 8;
+		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 	}
 };
