@@ -28,5 +28,6 @@ solution "CommonLib"
         {
             "tests_main.cpp",
             "array.h",
+            "string.h",
             "testing.h"
         }

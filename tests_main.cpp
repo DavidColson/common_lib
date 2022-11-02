@@ -1,113 +1,13 @@
 
+#include "string.h"
 #include "array.h"
 #include "testing.h"
-
-#include <stdio.h>
-
-#include <stdarg.h>
-
-
-// Dynamic String Class
-// --------------------
-// ... TODO Documentation etc
-// Null terminated string Type
-
-struct String {
-	char* pData = nullptr;
-	uint32_t length = 0;
-	uint32_t capacity = 0;
-	
-	String() {}
-
-	String(const char* str) {
-		length = (uint32_t)strlen(str);
-		reserve(grow_capacity(length + 1));
-		memcpy(pData, str, length + 1);
-	}
-
-	~String() {
-		if (pData) free(pData);
-	}
-
-	void operator=(const char* str) {
-		length = (uint32_t)strlen(str);
-		reserve(grow_capacity(length + 1));
-		memcpy(pData, str, length + 1);
-	}
-
-	void append(const char* str) {
-		uint32_t addedLength = (uint32_t)strlen(str);
-		reserve(grow_capacity(length + addedLength + 1));
-		memcpy(pData + length, str, addedLength + 1);
-		length += addedLength;
-	}
-
-	void append_format_internal(const char* format, va_list args) {
-		va_list argsCopy;
-		va_copy(argsCopy, args);
-
-		int addedLength = vsnprintf(nullptr, 0, format, args);
-		if (addedLength <= 0) {
-			va_end(argsCopy);
-			return;
-		}
-
-		reserve(grow_capacity(length + addedLength + 1));
-		vsnprintf(pData + length, addedLength + 1, format, args);
-		va_end(argsCopy);
-		length += addedLength;
-	}
-
-	void append_format(const char* format, ...) {
-		va_list args;
-		va_start(args, format);
-		append_format_internal(format, args);
-		va_end(args);
-	}
-
-	void clear() {
-		free(pData);
-		pData = nullptr;
-		length = 0;
-		capacity = 0;
-	}
-
-	char* begin() {
-		return pData;
-	}
-
-	char* end() {
-		return pData + length;
-	}
-
-	const char* begin() const{
-		return pData;
-	}
-
-	const char* end() const {
-		return pData + length;
-	}
-
-	void reserve(uint32_t desiredCapacity) {
-		if (capacity >= desiredCapacity) return;
-		pData = (char*)realloc(pData, desiredCapacity * sizeof(char));
-		capacity = desiredCapacity;
-	}
-
-	uint32_t grow_capacity(uint32_t atLeastSize) const {
-		// if we're big enough already, don't grow, otherwise double, 
-		// and if that's not enough just use atLeastSize
-		if (capacity > atLeastSize) return capacity;
-		uint32_t newCapacity = capacity ? capacity * 2 : 8;
-		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
-	}
-};
 
 // ---------------------
 // Tests
 // ---------------------
 
-int stringTest() {
+int StringTest() {
 	StartTest("String Test");
 	int errorCount = 0;
 
@@ -130,25 +30,25 @@ int stringTest() {
 	VERIFY(myString.capacity == 29);
 
 	// Appending to the string
-	myString.append(" and I wrote this code");
+	myString.Append(" and I wrote this code");
 	VERIFY(strcmp(myString.pData, "Hello world my name is David and I wrote this code") == 0);
 	VERIFY(myString.length == 50);
 	VERIFY(myString.capacity == 58);
 
 	// Appending formatted strings
 	String newString;
-	newString.append_format("Hello %s %f", "world", 5.12f);
+	newString.AppendFormat("Hello %s %f", "world", 5.12f);
 	VERIFY(strcmp(newString.pData, "Hello world 5.120000") == 0);
 	VERIFY(newString.length == 20);
 	VERIFY(newString.capacity == 21);
 
-	newString.append_format(" there are %i %s", 2000, "people");
+	newString.AppendFormat(" there are %i %s", 2000, "people");
 	VERIFY(strcmp(newString.pData, "Hello world 5.120000 there are 2000 people") == 0);
 	VERIFY(newString.length == 42);
 	VERIFY(newString.capacity == 43);
 
 	// Clearing strings
-	newString.clear();
+	newString.Clear();
 	VERIFY(newString.pData == nullptr);
 	VERIFY(newString.length == 0);
 	VERIFY(newString.capacity == 0);
@@ -156,7 +56,7 @@ int stringTest() {
 	// Iterating characters
 	String badCopy;
 	for (char c : myString) {
-		badCopy.append(&c);
+		badCopy.Append(&c);
 	}
 	VERIFY(strcmp(badCopy.pData, "Hello world my name is David and I wrote this code") == 0);
 	VERIFY(badCopy.length == 50);
@@ -171,22 +71,22 @@ int stringTest() {
 	return 0;
 }
 
-int arrayTest() {
+int ArrayTest() {
 	StartTest("Array Test");
 	int errorCount = 0;
 
 	Array<int> testArray;
 
 	// Reserve memory
-	testArray.reserve(2);
+	testArray.Reserve(2);
 	VERIFY(testArray.capacity == 2);
 	
 	// Appending values
-	testArray.push_back(1337);
-	testArray.push_back(420);
-	testArray.push_back(1800);
-	testArray.push_back(77);
-	testArray.push_back(99);
+	testArray.PushBack(1337);
+	testArray.PushBack(420);
+	testArray.PushBack(1800);
+	testArray.PushBack(77);
+	testArray.PushBack(99);
 	VERIFY(testArray[0] == 1337);
 	VERIFY(testArray[1] == 420);
 	VERIFY(testArray[2] == 1800);
@@ -195,8 +95,8 @@ int arrayTest() {
 	VERIFY(testArray.count == 5);
 	VERIFY(testArray.capacity == 8);
 
-	// Reserve should memcpy the old data to the new reserved location 
-	testArray.reserve(50);
+	// Reserve should memcpy the old data to the new Reserved location 
+	testArray.Reserve(50);
 	VERIFY(testArray[2] == 1800);
 	VERIFY(testArray.capacity == 50);
 	VERIFY(testArray.count == 5);
@@ -209,21 +109,21 @@ int arrayTest() {
 	VERIFY(sum == 3733);
 
 	// Erasing elements
-	testArray.erase(2);
-	testArray.erase_unsorted(0);
+	testArray.Erase(2);
+	testArray.EraseUnsorted(0);
 	VERIFY(testArray[0] == 99);
 	VERIFY(testArray[1] == 420);
 	VERIFY(testArray[2] == 77);
 	VERIFY(testArray.count == 3);
 
 	// Remove element at back
-	testArray.pop_back();
+	testArray.PopBack();
 	VERIFY(testArray.count == 2);
 
 	// Inserting elements
-	testArray.insert(0, 9999);
-	testArray.insert(1, 1111);
-	testArray.insert(1, 2222);
+	testArray.Insert(0, 9999);
+	testArray.Insert(1, 1111);
+	testArray.Insert(1, 2222);
 	VERIFY(testArray[0] == 9999);
 	VERIFY(testArray[1] == 2222);
 	VERIFY(testArray[2] == 1111);
@@ -232,12 +132,12 @@ int arrayTest() {
 	VERIFY(testArray.count == 5);
 
 	// Finding elements
-	VERIFY(testArray.index_from_ptr(testArray.find(99)) == 3);
-	VERIFY(testArray.index_from_ptr(testArray.find(1111)) == 2);
-	VERIFY(testArray.find(1337) == testArray.end());
+	VERIFY(testArray.IndexFromPointer(testArray.Find(99)) == 3);
+	VERIFY(testArray.IndexFromPointer(testArray.Find(1111)) == 2);
+	VERIFY(testArray.Find(1337) == testArray.end());
 
 	// Clear the array
-	testArray.clear();
+	testArray.Clear();
 	VERIFY(testArray.count == 0);
 	VERIFY(testArray.capacity == 0);
 	VERIFY(testArray.pData == nullptr);
@@ -253,7 +153,7 @@ int arrayTest() {
 // [x] Make a dynamic array class
 // [x] Install VS2022 and try out address sanitizer
 // [x] Change array to use realloc it's cool
-// [ ] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
+// [x] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
 // [ ] Make a string view class
 // [ ] Make a simple hash map class
 // [ ] Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
@@ -270,7 +170,7 @@ int arrayTest() {
 // I have the feeling that a virtual function allocator interface is actually going to be fine
 // So we can avoid the template allocator parameter. And just have set/get allocator functions on containers
 // Things that will free much later than they alloc must store the allocator for later freeing
-// Everything else that does mem alloc should take an allocator as a parameter to make it clear they're doing mem ops
+// Everything else that does mem alloc should take an allocator as a parameter to make it Clear they're doing mem ops
 // I think we should have a global mem allocator object that anyone can access
 // Regarding global context stack, we can probably play with this as a bonus if needed, but lets see how far we get without it first please
 
@@ -283,8 +183,8 @@ int arrayTest() {
 
 
 int main() {
-	arrayTest();
-	stringTest();
+	ArrayTest();
+	StringTest();
 	__debugbreak();
     return 0;
 }
