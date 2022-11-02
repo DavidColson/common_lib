@@ -3,6 +3,37 @@
 #include "array.h"
 #include "testing.h"
 
+// String view
+// -------------------------------
+// ... Documentation
+// non-null terminated string view
+// does not own data, guaranteed to do no mem ops, very fast
+
+struct StringView {
+	const char *pData = nullptr;
+	uint32_t length = 0;
+
+	StringView(const char* str) {
+		pData = str;
+		length = (uint32_t)strlen(str);
+	}
+
+	StringView(const String& str) {
+		pData = str.pData;
+		length = str.length;
+	}
+
+	void operator=(const char* str) {
+		pData = str;
+		length = (uint32_t)strlen(str);
+	}
+
+	void operator=(const String& str) {
+		pData = str.pData;
+		length = str.length;
+	}
+};
+
 // ---------------------
 // Tests
 // ---------------------
@@ -62,10 +93,46 @@ int StringTest() {
 	VERIFY(badCopy.length == 50);
 	VERIFY(badCopy.capacity == 64);
 
+	EndTest(errorCount);
+	return 0;
+}
 
-	// TODO
-	// [ ] string view struct (construct from String, String construct from view)
-	// [ ] string scanning functions (i.e. advance, peek, is digit etc etc) on string views
+bool StringViewParameterTest(StringView stringView, const char* comparison)
+{
+	if (strcmp(stringView.pData, comparison) == 0 && stringView.length == strlen(comparison))
+		return true;
+	return false;
+}
+
+int StringViewTest() {
+	StartTest("StringView Test");
+	int errorCount = 0;
+
+	StringView simpleView("Hello World");
+	VERIFY(strcmp(simpleView.pData, "Hello World") == 0);
+	VERIFY(simpleView.length == 11);
+
+	simpleView = "Hello Internet";
+	VERIFY(strcmp(simpleView.pData, "Hello Internet") == 0);
+	VERIFY(simpleView.length == 14);
+
+	// Can pass const chars to functions expecting string views
+	VERIFY(StringViewParameterTest("Hello world", "Hello world"));
+
+	// Can pass normal strings to functions expecting string views
+	String testString = "Geese are scary";
+	VERIFY(StringViewParameterTest(testString, "Geese are scary"));
+
+	// TODO string scanning functions (i.e. advance, peek, is digit etc etc) on string views
+	
+	// Advance on string view (increments ptr)
+	// Peek (returns next character)
+	// Advance whitespace
+	// Match
+	// IsDigit
+	// IsAlpha
+	// IsHexDigit
+	// IsAlphaNumeric
 
 	EndTest(errorCount);
 	return 0;
@@ -154,7 +221,7 @@ int ArrayTest() {
 // [x] Install VS2022 and try out address sanitizer
 // [x] Change array to use realloc it's cool
 // [x] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
-// [ ] Make a string view class
+// [x] Make a string view class
 // [ ] Make a simple hash map class
 // [ ] Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
 // [ ] Make a custom allocator mechanism for the dynamic array class
@@ -185,6 +252,7 @@ int ArrayTest() {
 int main() {
 	ArrayTest();
 	StringTest();
+	StringViewTest();
 	__debugbreak();
     return 0;
 }
