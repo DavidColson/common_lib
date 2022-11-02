@@ -8,6 +8,7 @@
 // Dynamic String Class
 // --------------------
 // ... TODO Documentation etc
+// ... TODO This is not templated, can be moved to cpp file for faster compilation
 // Null terminated string Type
 
 struct String {
@@ -33,11 +34,16 @@ struct String {
 		memcpy(pData, str, length + 1);
 	}
 
+	void AppendChars(const char* str, uint32_t len) {
+		Reserve(GrowCapacity(length + len + 1));
+		memcpy(pData + length, str, len + 1);
+		length += len;
+		pData[length] = '\0';
+	}
+
 	void Append(const char* str) {
 		uint32_t addedLength = (uint32_t)strlen(str);
-		Reserve(GrowCapacity(length + addedLength + 1));
-		memcpy(pData + length, str, addedLength + 1);
-		length += addedLength;
+		AppendChars(str, addedLength);
 	}
 
 	void AppendFormatInternal(const char* format, va_list args) {

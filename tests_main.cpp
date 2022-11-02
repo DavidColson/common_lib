@@ -56,7 +56,7 @@ int StringTest() {
 	// Iterating characters
 	String badCopy;
 	for (char c : myString) {
-		badCopy.Append(&c);
+		badCopy.AppendChars(&c, 1);
 	}
 	VERIFY(strcmp(badCopy.pData, "Hello world my name is David and I wrote this code") == 0);
 	VERIFY(badCopy.length == 50);
