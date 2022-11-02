@@ -138,6 +138,33 @@ int StringViewTest() {
 	return 0;
 }
 
+int HashMapTest() {
+	StartTest("StringView Test");
+	int errorCount = 0;
+
+	// How tf does one make a hash map?
+	// https://aozturk.medium.com/simple-hash-map-hash-table-implementation-in-c-931965904250
+	// https://www.softwaretestinghelp.com/hash-table-cpp-programs/
+	
+	// https://en.cppreference.com/w/cpp/container/unordered_map
+	// 
+	// Interesting notes from c++ unordered map
+	// There are functions for load balancing and improving performance
+	// Load factor, showing average number of elements per bucket (closer to 1 the better the performance)
+	// Provides a reserve function, which will ensure there are enough buckets for all your elements (keeping load factor low)
+	// Rehashing
+	// Note stl has a max load factor of 1.0 (elems/number of buckets)
+	// When we insert a new element we check the load factor, if it's gone above the max (1.0) then we grow the bucket array
+	// as per normal (doubling?) and rehash the whole table
+	
+
+	// https://github.com/electronicarts/EASTL/blob/master/include/EASTL/internal/hashtable.h
+	//
+	// Interesting note is that EASTL uses some prime number magic when deciding the new bucket count when rehashing
+	EndTest(errorCount);
+	return 0;
+}
+
 int ArrayTest() {
 	StartTest("Array Test");
 	int errorCount = 0;
