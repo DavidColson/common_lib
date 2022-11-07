@@ -1,8 +1,110 @@
 
+// TODO: put this someplace sensible
+#ifdef _DEBUG
+#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
+#else
+#define DEBUG_CHECK(expression)
+#endif
+
 #include "string_view.h"
 #include "string.h"
 #include "array.h"
 #include "testing.h"
+
+#include <new>
+
+#define TABLE_SIZE 16
+
+template<typename K>
+struct Hash {
+	uint64_t operator()(const K& key) const
+	{
+		// TODO: Compile error here?
+		DEBUG_CHECK(false) // Must provide a custom hash for your key type
+		return 0;
+	}
+};
+
+template<>
+struct Hash<String> {
+	uint64_t operator()(const String& key) const
+	{
+		uint32_t nChars = key.length;
+		uint32_t hash = 0x811C9DC5;
+		const unsigned char* pData = (const unsigned char*)key.pData;
+		while (nChars--)
+			hash = (*pData++ ^ hash) * 0x01000193;
+		return hash;
+	}
+};
+
+template<typename K, typename V>
+struct HashNode {
+	K key;
+	V value;
+	HashNode* pNext{ nullptr };
+};
+
+template<typename K, typename V, typename H = Hash<K>>
+struct HashMap {
+	HashMap() {
+		pTable = (HashNode<K, V>**)malloc(TABLE_SIZE * sizeof(HashNode<K, V>*));
+		for (int i = 0; i < TABLE_SIZE; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
+			pTable[i] = nullptr;
+	}
+
+	~HashMap() {
+		// Dealloc all the nodes
+		// Dealloc the table
+	}
+
+	bool Insert(const K& key, const V& value) {
+		uint32_t hash = hashFunc(key) % TABLE_SIZE;
+		HashNode<K, V>* pPrev = nullptr;
+		HashNode<K, V>* pEntry = pTable[hash];
+
+		// Find the entry in it's bucket
+		if (pEntry != nullptr && pEntry->key != key) {
+			pPrev = pEntry;
+			pEntry = pEntry->pNext;
+		}
+
+		// It doesn't exist, so we'll have to make it
+		if (pEntry == nullptr) {
+			pEntry = (HashNode<K, V>*)malloc(sizeof(HashNode<K, V>));
+			new (pEntry) HashNode<K, V>();
+			pEntry->key = key;
+			pEntry->value = value;
+			pEntry->pNext = nullptr;
+
+			if (pPrev == nullptr) {
+				pTable[hash] = pEntry;
+			}
+			else {
+				pPrev->pNext = pEntry;
+			}
+			return true;
+		}
+		return false;
+	}
+
+	V& Get(const K& key) {
+		uint32_t hash = hashFunc(key) % TABLE_SIZE;
+		HashNode<K, V>* pEntry = pTable[hash];
+		
+		while (pEntry != nullptr) {
+			if (pEntry->key == key) {
+				return pEntry->value;
+			}
+			pEntry = pEntry->pNext;
+		}
+		DEBUG_CHECK(pEntry != nullptr);
+		return pEntry->value;
+	}
+
+	HashNode<K, V>** pTable{ nullptr };
+	H hashFunc;
+};
 
 // ---------------------
 // Tests
@@ -63,6 +165,17 @@ int StringTest() {
 	VERIFY(badCopy.length == 50);
 	VERIFY(badCopy.capacity == 64);
 
+	// Comparison
+	String comparisonTest = "David";
+	VERIFY(comparisonTest == "David");
+	VERIFY(comparisonTest != "David Colson");
+	VERIFY(comparisonTest != "Dav");
+
+	String comparisonTest2 = "David";
+	String comparisonTest3 = "David Colson";
+	VERIFY(comparisonTest == comparisonTest2);
+	VERIFY(comparisonTest != comparisonTest3);
+
 	EndTest(errorCount);
 	return 0;
 }
@@ -110,8 +223,24 @@ int StringViewTest() {
 }
 
 int HashMapTest() {
-	StartTest("StringView Test");
+	StartTest("HashMap Test");
 	int errorCount = 0;
+
+	HashMap<String, int> ageMap;
+
+	ageMap.Insert("Dave", 27);
+	VERIFY(ageMap.Get("Dave") == 27);
+
+	ageMap.Insert("Szymon", 28);
+	VERIFY(ageMap.Get("Dave") == 27);
+	VERIFY(ageMap.Get("Szymon") == 28);
+
+	// TODO: 
+	// [] operators
+	// Resizing the table
+	// Rehashing
+	// Exists check
+	// Erase Elements
 
 	// How tf does one make a hash map?
 	// https://aozturk.medium.com/simple-hash-map-hash-table-implementation-in-c-931965904250
@@ -251,6 +380,7 @@ int main() {
 	ArrayTest();
 	StringTest();
 	StringViewTest();
+	HashMapTest();
 	__debugbreak();
     return 0;
 }
