@@ -29,5 +29,8 @@ solution "CommonLib"
             "tests_main.cpp",
             "array.h",
             "string.h",
+            "string.cpp",
+            "string_view.h",
+            "string_view.cpp",
             "testing.h"
         }

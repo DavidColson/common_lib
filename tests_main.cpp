@@ -1,38 +1,8 @@
 
+#include "string_view.h"
 #include "string.h"
 #include "array.h"
 #include "testing.h"
-
-// String view
-// -------------------------------
-// ... Documentation
-// non-null terminated string view
-// does not own data, guaranteed to do no mem ops, very fast
-
-struct StringView {
-	const char *pData = nullptr;
-	uint32_t length = 0;
-
-	StringView(const char* str) {
-		pData = str;
-		length = (uint32_t)strlen(str);
-	}
-
-	StringView(const String& str) {
-		pData = str.pData;
-		length = str.length;
-	}
-
-	void operator=(const char* str) {
-		pData = str;
-		length = (uint32_t)strlen(str);
-	}
-
-	void operator=(const String& str) {
-		pData = str.pData;
-		length = str.length;
-	}
-};
 
 // ---------------------
 // Tests
@@ -125,6 +95,7 @@ int StringViewTest() {
 
 	// TODO string scanning functions (i.e. advance, peek, is digit etc etc) on string views
 	
+	// Comparison operators?
 	// Advance on string view (increments ptr)
 	// Peek (returns next character)
 	// Advance whitespace
