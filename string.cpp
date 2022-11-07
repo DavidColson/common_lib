@@ -11,14 +11,28 @@ String::String(const char* str) {
 	memcpy(pData, str, length + 1);
 }
 
+String::String(const String& toCopy) {
+	length = toCopy.length;
+	Reserve(toCopy.capacity);
+	memcpy(pData, toCopy.pData, length);
+}
+
 String::~String() {
 	if (pData) free(pData);
 }
 
-void String::operator=(const char* str) {
+String& String::operator=(const char* str) {
 	length = (uint32_t)strlen(str);
 	Reserve(GrowCapacity(length + 1));
 	memcpy(pData, str, length + 1);
+	return *this;
+}
+
+String& String::operator=(const String& toCopy) {
+	length = toCopy.length;
+	Reserve(toCopy.capacity);
+	memcpy(pData, toCopy.pData, length + 1);
+	return *this;
 }
 
 void String::AppendChars(const char* str, uint32_t len) {
@@ -61,6 +75,24 @@ void String::Clear() {
 	pData = nullptr;
 	length = 0;
 	capacity = 0;
+}
+
+bool String::operator==(const char* other) {
+	if (strcmp(pData, other) == 0)
+ 		return true;
+	return false;
+}
+
+bool String::operator!=(const char* other) {
+	return !operator==(other);
+}
+
+bool String::operator==(const String& other) {
+	return operator==(other.pData);
+}
+
+bool String::operator!=(const String& other) {
+	return !operator==(other.pData);
 }
 
 char* String::begin() {

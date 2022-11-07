@@ -15,9 +15,13 @@ struct String {
 
 	String(const char* str);
 
+	String(const String& toCopy);
+
 	~String();
 
-	void operator=(const char* str);
+	String& operator=(const char* str);
+
+	String& operator=(const String& toCopy);
 
 	void AppendChars(const char* str, uint32_t len);
 
@@ -28,6 +32,14 @@ struct String {
 	void AppendFormat(const char* format, ...);
 
 	void Clear();
+
+	bool operator==(const char* other);
+
+	bool operator!=(const char* other);
+
+	bool operator==(const String& other);
+
+	bool operator!=(const String& other);
 
 	char* begin();
 

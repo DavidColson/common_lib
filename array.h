@@ -2,12 +2,6 @@
 #include <string.h>
 #include <stdlib.h>
 
-#ifdef _DEBUG
-#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
-#else
-#define DEBUG_CHECK(expression)
-#endif
-
 // Dynamic Array Structure
 // -----------------------
 // ... todo documentation, examples, reasoning etc
