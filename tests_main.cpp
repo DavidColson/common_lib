@@ -13,8 +13,6 @@
 
 #include <new>
 
-#define TABLE_SIZE 16
-
 template<typename K>
 struct Hash {
 	uint64_t operator()(const K& key) const
@@ -48,8 +46,8 @@ struct HashNode {
 template<typename K, typename V, typename H = Hash<K>>
 struct HashMap {
 	HashMap() {
-		pTable = (HashNode<K, V>**)malloc(TABLE_SIZE * sizeof(HashNode<K, V>*));
-		for (int i = 0; i < TABLE_SIZE; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
+		pTable = (HashNode<K, V>**)malloc(bucketCount * sizeof(HashNode<K, V>*));
+		for (uint32_t i = 0; i < bucketCount; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
 			pTable[i] = nullptr;
 	}
 
@@ -58,23 +56,37 @@ struct HashMap {
 		// Dealloc the table
 	}
 
-	bool Insert(const K& key, const V& value) {
-		uint32_t hash = hashFunc(key) % TABLE_SIZE;
+	bool Check(const K& key, V& outValue) {
+		uint32_t hash = hashFunc(key) % bucketCount;
+		HashNode<K, V>* pEntry = pTable[hash];
+		
+		while (pEntry != nullptr) {
+			if (pEntry->key == key) {
+				outValue = pEntry->value;
+				return true;
+			}
+			pEntry = pEntry->pNext;
+		}
+		return false;
+	}
+
+	V& operator[](const K& key) {
+		uint32_t hash = hashFunc(key) % bucketCount;
 		HashNode<K, V>* pPrev = nullptr;
 		HashNode<K, V>* pEntry = pTable[hash];
 
 		// Find the entry in it's bucket
-		if (pEntry != nullptr && pEntry->key != key) {
+		while (pEntry != nullptr && pEntry->key != key) {
 			pPrev = pEntry;
 			pEntry = pEntry->pNext;
 		}
 
-		// It doesn't exist, so we'll have to make it
+		// It doesn't exist, make it
 		if (pEntry == nullptr) {
+			size++;
 			pEntry = (HashNode<K, V>*)malloc(sizeof(HashNode<K, V>));
 			new (pEntry) HashNode<K, V>();
 			pEntry->key = key;
-			pEntry->value = value;
 			pEntry->pNext = nullptr;
 
 			if (pPrev == nullptr) {
@@ -83,27 +95,53 @@ struct HashMap {
 			else {
 				pPrev->pNext = pEntry;
 			}
-			return true;
 		}
-		return false;
+		return pEntry->value;
 	}
 
-	V& Get(const K& key) {
-		uint32_t hash = hashFunc(key) % TABLE_SIZE;
-		HashNode<K, V>* pEntry = pTable[hash];
-		
-		while (pEntry != nullptr) {
-			if (pEntry->key == key) {
-				return pEntry->value;
+	void Rehash(uint32_t desiredBuckets) {
+		HashNode<K, V>** pTableNew = (HashNode<K, V>**)malloc(desiredBuckets * sizeof(HashNode<K, V>*));
+		for (uint32_t i = 0; i < desiredBuckets; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
+			pTableNew[i] = nullptr;
+
+		for (uint32_t i = 0; i < bucketCount; i++)
+		{
+			HashNode<K, V>* pEntry = pTable[i];
+			while (pEntry != nullptr) {
+				// Process pEntry
+				uint32_t newHash = hashFunc(pEntry->key) % desiredBuckets;
+
+				if (pTableNew[newHash] != nullptr) {
+					HashNode<K, V>* pPrev = pTableNew[newHash];
+					HashNode<K, V>* pNext = pPrev->pNext;
+					while (pNext != nullptr) {
+						pPrev = pNext;
+						pNext = pPrev->pNext;
+					}
+					pPrev->pNext = pEntry;
+				}
+				else {
+					pTableNew[newHash] = pEntry;
+				}
+				HashNode<K, V>* pTemp = pEntry;
+				pEntry = pEntry->pNext;
+				pTemp->pNext = nullptr;
 			}
-			pEntry = pEntry->pNext;
 		}
-		DEBUG_CHECK(pEntry != nullptr);
-		return pEntry->value;
+
+		free(pTable);
+		pTable = pTableNew;
+		bucketCount = desiredBuckets;
+	}
+
+	float LoadFactor() const {
+		return (float)size / (float)bucketCount;
 	}
 
 	HashNode<K, V>** pTable{ nullptr };
 	H hashFunc;
+	uint32_t size{ 0 };
+	uint32_t bucketCount{ 2 };
 };
 
 // ---------------------
@@ -228,18 +266,34 @@ int HashMapTest() {
 
 	HashMap<String, int> ageMap;
 
-	ageMap.Insert("Dave", 27);
-	VERIFY(ageMap.Get("Dave") == 27);
+	ageMap["Dave"] = 27;
+	VERIFY(ageMap["Dave"] == 27);
 
-	ageMap.Insert("Szymon", 28);
-	VERIFY(ageMap.Get("Dave") == 27);
-	VERIFY(ageMap.Get("Szymon") == 28);
+	ageMap["Szymon"] = 28;
+	VERIFY(ageMap["Dave"] == 27);
+	VERIFY(ageMap["Szymon"] == 28);
+
+	ageMap["Dave"] = 29;
+	VERIFY(ageMap["Dave"] == 29);
+
+	// Check tells you if an item exists, and gets it for you if it does
+	int daveAge;
+	VERIFY(ageMap.Check("Dave", daveAge));
+	VERIFY(daveAge == 29);
+
+	ageMap["Jonny"] = 31;
+	ageMap["Mark"] = 32;
+
+	VERIFY(ageMap.LoadFactor() == 2);
+	ageMap.Rehash(8);
+	VERIFY(ageMap.LoadFactor() == 0.5);
+	VERIFY(ageMap["Dave"] == 29);
+	VERIFY(ageMap["Szymon"] == 28);
+	VERIFY(ageMap["Jonny"] == 31);
+	VERIFY(ageMap["Mark"] == 32);
 
 	// TODO: 
-	// [] operators
-	// Resizing the table
-	// Rehashing
-	// Exists check
+	// Resizing the table on insertion
 	// Erase Elements
 
 	// How tf does one make a hash map?
