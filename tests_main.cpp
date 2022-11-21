@@ -128,12 +128,34 @@ int StringViewTest() {
 	return 0;
 }
 
+struct CustomKeyType {
+	int thing;
+	int thing2;
+
+	// Your custom type must define a not-equal operator
+	bool operator!=(const CustomKeyType& other) {
+		return thing != other.thing && thing2 != other.thing2;
+	}
+};
+
+// And your custom type must define a hash
+template<>
+struct Hash<CustomKeyType> {
+	uint64_t operator()(const CustomKeyType& key) const
+	{
+		// This is probably not a good hash method for this type
+		// But it serves for demonstration
+		return static_cast<uint64_t>(key.thing + key.thing2);
+	}
+};
+
 int HashMapTest() {
 	StartTest("HashMap Test");
 	int errorCount = 0;
 
 	HashMap<String, int> ageMap;
 
+	// Use operator [] to access and add elements
 	ageMap["Dave"] = 27;
 	VERIFY(ageMap["Dave"] == 27);
 
@@ -196,29 +218,65 @@ int HashMapTest() {
 	VERIFY(ageMap.size == 3);
 	VERIFY(ageMap.bucketCount == 2);
 
-	// TODO: 
-	// Tests for different kinds of keys (ints, floats, stringview?)
-	// Test for custom key type
+	// Testing a few common key types
+	HashMap<int, int> intMap;
+	intMap[2] = 1337;
+	intMap[17] = 1338;
+	intMap[6] = 1339;
+	VERIFY(intMap[2] == 1337);
+	VERIFY(intMap[17] == 1338);
+	VERIFY(intMap[6] == 1339);
 
-	// How tf does one make a hash map?
-	// https://aozturk.medium.com/simple-hash-map-hash-table-implementation-in-c-931965904250
-	// https://www.softwaretestinghelp.com/hash-table-cpp-programs/
-	
-	// https://en.cppreference.com/w/cpp/container/unordered_map
-	// 
-	// Interesting notes from c++ unordered map
-	// There are functions for load balancing and improving performance
-	// Load factor, showing average number of elements per bucket (closer to 1 the better the performance)
-	// Provides a reserve function, which will ensure there are enough buckets for all your elements (keeping load factor low)
-	// Rehashing
-	// Note stl has a max load factor of 1.0 (elems/number of buckets)
-	// When we insert a new element we check the load factor, if it's gone above the max (1.0) then we grow the bucket array
-	// as per normal (doubling?) and rehash the whole table
-	
+	HashMap<float, int> floatMap;
+	floatMap[28.31f] = 1337;
+	floatMap[4.1231f] = 1338;
+	floatMap[0.78f] = 1339;
+	VERIFY(floatMap[28.31f] == 1337);
+	VERIFY(floatMap[4.1231f] == 1338);
+	VERIFY(floatMap[0.78f] == 1339);
 
-	// https://github.com/electronicarts/EASTL/blob/master/include/EASTL/internal/hashtable.h
-	//
-	// Interesting note is that EASTL uses some prime number magic when deciding the new bucket count when rehashing
+	HashMap<char, int> charMap;
+	charMap['c'] = 1337;
+	charMap['8'] = 1338;
+	charMap['U'] = 1339;
+	VERIFY(charMap['c'] == 1337);
+	VERIFY(charMap['8'] == 1338);
+	VERIFY(charMap['U'] == 1339);
+
+	HashMap<const char*, int> cStringMap;
+	cStringMap["Ducks"] = 1337;
+	cStringMap["Cars"] = 1338;
+	cStringMap["Hats"] = 1339;
+	VERIFY(cStringMap["Ducks"] == 1337);
+	VERIFY(cStringMap["Cars"] == 1338);
+	VERIFY(cStringMap["Hats"] == 1339);
+
+	int arr[3];
+	arr[0] = 3;
+	arr[1] = 2;
+	arr[2] = 1;
+
+	HashMap<int*, int> pointerMap;
+	pointerMap[arr] = 1337;
+	pointerMap[arr+1] = 1338;
+	pointerMap[arr+2] = 1339;
+	VERIFY(pointerMap[arr] == 1337);
+	VERIFY(pointerMap[arr+1] == 1338);
+	VERIFY(pointerMap[arr+2] == 1339);
+
+	// Custom Key Types
+	CustomKeyType one { 1, 2 };
+	CustomKeyType two { 4, 1 };
+	CustomKeyType three { 3, 8 };
+
+	HashMap<CustomKeyType, int> customMap;
+	customMap[one] = 1337;
+	customMap[two] = 1338;
+	customMap[three] = 1339;
+	VERIFY(customMap[one] == 1337);
+	VERIFY(customMap[two] == 1338);
+	VERIFY(customMap[three] == 1339);
+
 	EndTest(errorCount);
 	return 0;
 }
@@ -307,7 +365,7 @@ int ArrayTest() {
 // [x] Change array to use realloc it's cool
 // [x] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
 // [x] Make a string view class
-// [ ] Make a simple hash map class
+// [x] Make a simple hash map class
 // [ ] Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
 // [ ] Make a custom allocator mechanism for the dynamic array class
 // [ ] Make linear pool allocator

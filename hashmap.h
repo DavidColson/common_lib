@@ -62,7 +62,7 @@ const uint32_t primeCount = (sizeof(primeNumberArray) / sizeof(primeNumberArray[
 
 template<typename K>
 struct Hash {
-	uint64_t operator()(const K& key) const
+	uint64_t operator()(K& key) const
 	{
 		// TODO: Compile error here?
 		DEBUG_CHECK(false) // Must provide a custom hash for your key type
@@ -70,6 +70,60 @@ struct Hash {
 	}
 };
 
+template<typename T>
+struct Hash<T*> 
+{ uint64_t operator()(T* key) const { return uint64_t(uintptr_t(key)); } };
+
+// Numeric hashes
+template<>
+struct Hash<char> 
+{ uint64_t operator()(int8_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<int8_t> 
+{ uint64_t operator()(int8_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<int16_t> 
+{ uint64_t operator()(int16_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<int32_t> 
+{ uint64_t operator()(int32_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<int64_t> 
+{ uint64_t operator()(int64_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<uint8_t> 
+{ uint64_t operator()(uint8_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<uint16_t> 
+{ uint64_t operator()(uint16_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<uint32_t> 
+{ uint64_t operator()(uint32_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<uint64_t> 
+{ uint64_t operator()(uint64_t key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<float> 
+{ uint64_t operator()(float key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<double> 
+{ uint64_t operator()(double key) const { return static_cast<uint64_t>(key); } };
+
+template<>
+struct Hash<long double> 
+{ uint64_t operator()(long double key) const { return static_cast<uint64_t>(key); } };
+
+// String hashes
 template<>
 struct Hash<String> {
 	uint64_t operator()(const String& key) const
@@ -79,6 +133,30 @@ struct Hash<String> {
 		const unsigned char* pData = (const unsigned char*)key.pData;
 		while (nChars--)
 			hash = (*pData++ ^ hash) * 0x01000193;
+		return hash;
+	}
+};
+
+template<>
+struct Hash<char*> {
+	uint64_t operator()(const char* key) const
+	{
+		uint32_t c;
+		uint32_t hash = 0x811C9DC5;
+		while ((c = (uint8_t)*key++) != 0)
+			hash = (c ^ hash) * 0x01000193;
+		return hash;
+	}
+};
+
+template<>
+struct Hash<const char*> {
+	uint64_t operator()(const char* key) const
+	{
+		uint32_t c;
+		uint32_t hash = 0x811C9DC5;
+		while ((c = (uint8_t)*key++) != 0)
+			hash = (c ^ hash) * 0x01000193;
 		return hash;
 	}
 };
