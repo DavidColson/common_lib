@@ -366,8 +366,8 @@ int ArrayTest() {
 // [x] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
 // [x] Make a string view class
 // [x] Make a simple hash map class
-// [ ] Override global allocation functions to do memory tracking for debugging (new, delete, alloc, free)
-// [ ] Make a custom allocator mechanism for the dynamic array class
+// [ ] Create a memory tracker similar to jai which wraps around alloc/realloc/free for commonLib
+// [ ] Make a custom allocator mechanism for commonLib
 // [ ] Make linear pool allocator
 
 
@@ -390,6 +390,21 @@ int ArrayTest() {
 // Memory debugger.jai is a good example here.
 // on alloc we add the allocation to a table
 // on free, we look for the allocation in the table
+
+// More details?
+// We maintain a hashTable with pointer as key and allocation data as value
+// Allocation data stores pointer, size, if allocation is live, the allocator used, stack trace of allocation site
+// 
+// On free, we lookup the allocation in the table, check for errors, set is isLive to false, and store stack trace of free site
+// 
+// On realloc, potentially same as alloc, but otherwise
+// Look for this allocation in the table
+// Check if new allocation is in same place as old allocation
+// If so, update the existing allocation data with the new size
+// else, make the old allocation no longer live, storing it's free site trace, and add a new entry to the table as before
+//
+// We can do two things here, report allocation errors as the alloc functions are called
+// We can also search through the table and find any live allocations so that we can tell if anything is leaking
 
 
 int main() {

@@ -1,8 +1,9 @@
 #pragma once
 
+#include "sys_alloc.h"
+
 #include <stdint.h>
 #include <string.h>
-#include <stdlib.h>
 
 // Dynamic Array Structure
 // -----------------------
@@ -15,14 +16,14 @@ struct Array {
 	uint32_t capacity { 0 };
 	
 	~Array() {
-		if (pData) free(pData);
+		if (pData) SYS_FREE(pData);
 	}
 
 	// TODO: Need a resize function, that doesn't free memory, so it can be reused
 
 	void Reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		pData = (type*)realloc(pData, desiredCapacity * sizeof(type));
+		pData = (type*)SYS_REALLOC(pData, desiredCapacity * sizeof(type));
 		capacity = desiredCapacity;
 	}
 

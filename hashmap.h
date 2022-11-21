@@ -1,8 +1,9 @@
 #pragma once
 
 #include "string.h"
+#include "sys_alloc.h"
 
-#include <new>
+#include <math.h>
 
 // Prime number list, used to pick prime number sizes 
 // of the hashmap so collisions are less frequent
@@ -181,7 +182,7 @@ struct HashNode {
 template<typename K, typename V, typename H = Hash<K>>
 struct HashMap {
 	HashMap() {
-		pTable = (HashNode<K, V>**)malloc(bucketCount * sizeof(HashNode<K, V>*));
+		pTable = (HashNode<K, V>**)SYS_ALLOC(bucketCount * sizeof(HashNode<K, V>*));
 		for (uint32_t i = 0; i < bucketCount; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
 			pTable[i] = nullptr;
 	}
@@ -192,11 +193,11 @@ struct HashMap {
 			while (pEntry != nullptr) {
 				HashNode<K, V>* pPrev = pEntry;
 				pEntry = pEntry->pNext;
-				free(pPrev);
+				SYS_FREE(pPrev);
 			}
 			pTable[i] = nullptr;
 		}
-		free(pTable);
+		SYS_FREE(pTable);
 	}
 
 	bool Check(const K& key, V& outValue) {
@@ -231,8 +232,8 @@ struct HashMap {
 				Rehash(newBucketCount);
 
 			size++;
-			pEntry = (HashNode<K, V>*)malloc(sizeof(HashNode<K, V>));
-			new (pEntry) HashNode<K, V>();
+			pEntry = (HashNode<K, V>*)SYS_ALLOC(sizeof(HashNode<K, V>));
+			SYS_P_NEW(pEntry) HashNode<K, V>();
 			pEntry->key = key;
 			pEntry->pNext = nullptr;
 
@@ -259,7 +260,7 @@ struct HashMap {
 
 		if (pEntry != nullptr) {
 			HashNode<K, V>* pNext = pEntry->pNext;
-			free(pEntry);
+			SYS_FREE(pEntry);
 			size--;
 
 			if (pPrev == nullptr) {
@@ -275,7 +276,7 @@ struct HashMap {
 	}
 
 	void Rehash(uint32_t desiredBuckets) {
-		HashNode<K, V>** pTableNew = (HashNode<K, V>**)malloc(desiredBuckets * sizeof(HashNode<K, V>*));
+		HashNode<K, V>** pTableNew = (HashNode<K, V>**)SYS_ALLOC(desiredBuckets * sizeof(HashNode<K, V>*));
 		for (uint32_t i = 0; i < desiredBuckets; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
 			pTableNew[i] = nullptr;
 

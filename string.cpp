@@ -1,6 +1,7 @@
 #include "string.h"
 
-#include <stdlib.h>
+#include "sys_alloc.h"
+
 #include <stdio.h>
 #include <stdarg.h>
 #include <string.h>
@@ -18,7 +19,7 @@ String::String(const String& toCopy) {
 }
 
 String::~String() {
-	if (pData) free(pData);
+	if (pData) SYS_FREE(pData);
 }
 
 String& String::operator=(const char* str) {
@@ -71,7 +72,7 @@ void String::AppendFormat(const char* format, ...) {
 }
 
 void String::Clear() {
-	free(pData);
+	SYS_FREE(pData);
 	pData = nullptr;
 	length = 0;
 	capacity = 0;
@@ -113,7 +114,7 @@ const char* String::end() const {
 
 void String::Reserve(uint32_t desiredCapacity) {
 	if (capacity >= desiredCapacity) return;
-	pData = (char*)realloc(pData, desiredCapacity * sizeof(char));
+	pData = (char*)SYS_REALLOC(pData, desiredCapacity * sizeof(char));
 	capacity = desiredCapacity;
 }
 

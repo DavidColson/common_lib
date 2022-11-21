@@ -27,6 +27,7 @@ solution "CommonLib"
         files 
         {
             "tests_main.cpp",
+            "sys_alloc.h",
             "array.h",
             "hashmap.h",
             "string.h",
