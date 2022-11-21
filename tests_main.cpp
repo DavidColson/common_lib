@@ -149,6 +149,34 @@ struct HashMap {
 		return pEntry->value;
 	}
 
+	void Erase(const K& key) {
+		uint32_t hash = hashFunc(key) % bucketCount;
+		HashNode<K, V>* pPrev = nullptr;
+		HashNode<K, V>* pEntry = pTable[hash];
+
+		// Find the entry in it's bucket
+		while (pEntry != nullptr && pEntry->key != key) {
+			pPrev = pEntry;
+			pEntry = pEntry->pNext;
+		}
+
+		if (pEntry != nullptr) {
+			HashNode<K, V>* pNext = pEntry->pNext;
+			delete pEntry;
+			size--;
+
+			if (pPrev == nullptr) {
+				if (pNext != nullptr)
+					pTable[hash] = pNext;
+				else
+					pTable[hash] = nullptr;
+			}
+			else {
+				pPrev->pNext = pNext;
+			}
+		}
+	}
+
 	void Rehash(uint32_t desiredBuckets) {
 		HashNode<K, V>** pTableNew = (HashNode<K, V>**)malloc(desiredBuckets * sizeof(HashNode<K, V>*));
 		for (uint32_t i = 0; i < desiredBuckets; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
@@ -385,9 +413,30 @@ int HashMapTest() {
 	VERIFY(ageMap.GetIdealBucketCount(5) == 7);
 	VERIFY(ageMap.GetIdealBucketCount(25) == 29);
 
+	// Erase Elements
+	ageMap.Erase("Dave");
+	VERIFY(!ageMap.Check("Dave", daveAge));
+	VERIFY(ageMap["Szymon"] == 28);
+	VERIFY(ageMap["Jonny"] == 31);
+	VERIFY(ageMap["Mark"] == 32);
+
+	// Checking erasing when items are in bucket linked lists
+	ageMap["Dave"] = 27;
+	ageMap["Chris"] = 25;
+	ageMap.Rehash(2);
+	ageMap.Erase("Chris");
+	ageMap.Erase("Szymon");
+	VERIFY(!ageMap.Check("Chris", daveAge));
+	VERIFY(!ageMap.Check("Szymon", daveAge));
+	VERIFY(ageMap["Dave"] == 27);
+	VERIFY(ageMap["Jonny"] == 31);
+	VERIFY(ageMap["Mark"] == 32);
+	VERIFY(ageMap.size == 3);
+	VERIFY(ageMap.bucketCount == 2);
 
 	// TODO: 
-	// Erase Elements
+	// Tests for different kinds of keys (ints, floats, stringview?)
+	// Test for custom key type
 
 	// How tf does one make a hash map?
 	// https://aozturk.medium.com/simple-hash-map-hash-table-implementation-in-c-931965904250
