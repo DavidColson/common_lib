@@ -28,6 +28,7 @@ solution "CommonLib"
         {
             "tests_main.cpp",
             "array.h",
+            "hashmap.h",
             "string.h",
             "string.cpp",
             "string_view.h",
