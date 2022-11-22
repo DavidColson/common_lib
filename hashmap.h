@@ -69,7 +69,7 @@ const uint32_t primeCount = (sizeof(primeNumberArray) / sizeof(primeNumberArray[
 
 template<typename K>
 struct Hash {
-	uint64_t operator()(K key) const
+	uint64_t operator()(K& key) const
 	{
 		DEBUG_CHECK(false) // Must provide a custom hash for your key type
 		return 0;
@@ -211,13 +211,13 @@ struct HashMap {
 		allocator.Free(pTable);
 	}
 
-	bool Check(const K& key, V& outValue) {
+
+	bool Exists(const K& key) {
 		uint32_t hash = hashFunc(key) % bucketCount;
 		HashNode<K, V>* pEntry = pTable[hash];
 		
 		while (pEntry != nullptr) {
 			if (pEntry->key == key) {
-				outValue = pEntry->value;
 				return true;
 			}
 			pEntry = pEntry->pNext;
@@ -239,8 +239,20 @@ struct HashMap {
 		// It doesn't exist, make it
 		if (pEntry == nullptr) {
 			uint32_t newBucketCount;
-			if (NeedsRehash(1, newBucketCount))
+			if (NeedsRehash(1, newBucketCount)) {
 				Rehash(newBucketCount);
+				// hash code has changed, so need to find the correct place to put this node
+				hash = hashFunc(key) % bucketCount;
+				if (pTable[hash] != nullptr) {
+					pPrev = pTable[hash];
+					while (pPrev->pNext != nullptr) {
+						pPrev = pPrev->pNext;
+					}
+				}
+				else {
+					pPrev = nullptr;
+				}
+			}
 
 			size++;
 			pEntry = (HashNode<K, V>*)allocator.Allocate(sizeof(HashNode<K, V>));
