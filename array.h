@@ -1,29 +1,36 @@
 #pragma once
 
-#include "sys_alloc.h"
+#include "memory.h"
 
 #include <stdint.h>
 #include <string.h>
+
+#ifdef _DEBUG
+#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
+#else
+#define DEBUG_CHECK(expression)
+#endif
 
 // Dynamic Array Structure
 // -----------------------
 // ... todo documentation, examples, reasoning etc
 
-template<typename type>
+template<typename type, typename AllocatorType = Allocator>
 struct Array {
     type* pData{ nullptr };
     uint32_t count{ 0 };
 	uint32_t capacity { 0 };
+	AllocatorType allocator;
 	
 	~Array() {
-		if (pData) SYS_FREE(pData);
+		if (pData) allocator.Free(pData);
 	}
 
 	// TODO: Need a resize function, that doesn't free memory, so it can be reused
 
 	void Reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		pData = (type*)SYS_REALLOC(pData, desiredCapacity * sizeof(type));
+		pData = (type*)allocator.Reallocate(pData, desiredCapacity * sizeof(type));
 		capacity = desiredCapacity;
 	}
 

@@ -13,7 +13,7 @@ solution "CommonLib"
     filter "configurations:Release"
         optimize "Full"
     filter "configurations:Debug*"
-        defines "_DEBUG"
+        defines { "_DEBUG", "MEMORY_TRACKING" }
         optimize "Debug"
         symbols "Full"
     
@@ -27,12 +27,13 @@ solution "CommonLib"
         files 
         {
             "tests_main.cpp",
-            "sys_alloc.h",
+            "memory.h",
+            "memory.cpp",
             "array.h",
             "hashmap.h",
             "string.h",
-            "string.cpp",
             "string_view.h",
-            "string_view.cpp",
-            "testing.h"
+            "testing.h",
+            "memory_tracker.h",
+            "memory_tracker.cpp"
         }

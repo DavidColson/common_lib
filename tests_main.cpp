@@ -1,16 +1,10 @@
-
-// TODO: put this someplace sensible
-#ifdef _DEBUG
-#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
-#else
-#define DEBUG_CHECK(expression)
-#endif
-
 #include "hashmap.h"
 #include "string_view.h"
 #include "string.h"
 #include "array.h"
 #include "testing.h"
+
+
 
 // ---------------------
 // Tests
@@ -366,9 +360,11 @@ int ArrayTest() {
 // [x] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
 // [x] Make a string view class
 // [x] Make a simple hash map class
+// [x] Make a custom allocator mechanism for commonLib
 // [ ] Create a memory tracker similar to jai which wraps around alloc/realloc/free for commonLib
-// [ ] Make a custom allocator mechanism for commonLib
+// [ ] Container constructors allow runtime allocator assignment
 // [ ] Make linear pool allocator
+// [ ] Experiment with memory alignment in our custom allocators (i.e. perf before after alignment)
 
 
 // Jai's Pool allocator

@@ -1,9 +1,15 @@
 #pragma once
 
 #include "string.h"
-#include "sys_alloc.h"
+#include "memory.h"
 
 #include <math.h>
+
+#ifdef _DEBUG
+#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
+#else
+#define DEBUG_CHECK(expression)
+#endif
 
 // Prime number list, used to pick prime number sizes 
 // of the hashmap so collisions are less frequent
@@ -63,9 +69,8 @@ const uint32_t primeCount = (sizeof(primeNumberArray) / sizeof(primeNumberArray[
 
 template<typename K>
 struct Hash {
-	uint64_t operator()(K& key) const
+	uint64_t operator()(K key) const
 	{
-		// TODO: Compile error here?
 		DEBUG_CHECK(false) // Must provide a custom hash for your key type
 		return 0;
 	}
@@ -179,10 +184,16 @@ struct HashNode {
 // -----------------------
 // TODO Documentation etc
 
-template<typename K, typename V, typename H = Hash<K>>
+template<typename K, typename V, typename AllocatorType=Allocator, typename H = Hash<K>>
 struct HashMap {
+	HashNode<K, V>** pTable{ nullptr };
+	H hashFunc;
+	uint32_t size{ 0 };
+	uint32_t bucketCount{ 11 };
+	AllocatorType allocator;
+
 	HashMap() {
-		pTable = (HashNode<K, V>**)SYS_ALLOC(bucketCount * sizeof(HashNode<K, V>*));
+		pTable = (HashNode<K, V>**)allocator.Allocate(bucketCount * sizeof(HashNode<K, V>*));
 		for (uint32_t i = 0; i < bucketCount; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
 			pTable[i] = nullptr;
 	}
@@ -193,11 +204,11 @@ struct HashMap {
 			while (pEntry != nullptr) {
 				HashNode<K, V>* pPrev = pEntry;
 				pEntry = pEntry->pNext;
-				SYS_FREE(pPrev);
+				allocator.Free(pPrev);
 			}
 			pTable[i] = nullptr;
 		}
-		SYS_FREE(pTable);
+		allocator.Free(pTable);
 	}
 
 	bool Check(const K& key, V& outValue) {
@@ -232,7 +243,7 @@ struct HashMap {
 				Rehash(newBucketCount);
 
 			size++;
-			pEntry = (HashNode<K, V>*)SYS_ALLOC(sizeof(HashNode<K, V>));
+			pEntry = (HashNode<K, V>*)allocator.Allocate(sizeof(HashNode<K, V>));
 			SYS_P_NEW(pEntry) HashNode<K, V>();
 			pEntry->key = key;
 			pEntry->pNext = nullptr;
@@ -260,7 +271,7 @@ struct HashMap {
 
 		if (pEntry != nullptr) {
 			HashNode<K, V>* pNext = pEntry->pNext;
-			SYS_FREE(pEntry);
+			allocator.Free(pEntry);
 			size--;
 
 			if (pPrev == nullptr) {
@@ -276,7 +287,7 @@ struct HashMap {
 	}
 
 	void Rehash(uint32_t desiredBuckets) {
-		HashNode<K, V>** pTableNew = (HashNode<K, V>**)SYS_ALLOC(desiredBuckets * sizeof(HashNode<K, V>*));
+		HashNode<K, V>** pTableNew = (HashNode<K, V>**)allocator.Allocate(desiredBuckets * sizeof(HashNode<K, V>*));
 		for (uint32_t i = 0; i < desiredBuckets; i++) // Note that placement new array uses the first few bytes for extra stuff, need to avoid this
 			pTableNew[i] = nullptr;
 
@@ -341,9 +352,4 @@ struct HashMap {
 	float LoadFactor() const {
 		return (float)size / (float)bucketCount;
 	}
-
-	HashNode<K, V>** pTable{ nullptr };
-	H hashFunc;
-	uint32_t size{ 0 };
-	uint32_t bucketCount{ 11 };
 };
