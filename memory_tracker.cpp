@@ -14,8 +14,6 @@ struct ForceNoTrackAllocator {
 	void  		SetName(const char* _name) {}
 };
 
-// store global mem tracking state, initialize on first call
-
 struct Allocation {
 	void* pointer { nullptr };
 	size_t size { 0 };
@@ -23,7 +21,7 @@ struct Allocation {
 };
 
 struct MemoryTrackerState {
-	HashMap<void*, Allocation, ForceNoTrackAllocator> allocationMap;
+	HashMap<void*, Allocation, ForceNoTrackAllocator> allocationTable;
 };
 
 namespace {
@@ -37,23 +35,71 @@ void* mallocTrack(size_t size) {
 		SYS_P_NEW(pCtx) MemoryTrackerState();
 	}
 
-	// do the alloc, and then store it in the hashmap
 	void* pMemory = malloc(size);
 
 	Allocation allocation;
 	allocation.pointer = pMemory;
 	allocation.size = size;
 	allocation.isLive = true;
-
-	pCtx->allocationMap[pMemory] = allocation;
+	pCtx->allocationTable[pMemory] = allocation;
 
 	return pMemory;
 }
 
 void* reallocTrack(void* ptr, size_t size) {
-	return realloc(ptr, size);
+	if (pCtx == nullptr)
+	{
+		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
+		SYS_P_NEW(pCtx) MemoryTrackerState();
+	}
+
+	void* pMemory = realloc(ptr, size);
+
+	if (pCtx->allocationTable.Exists(ptr)) { // pre-existing allocation
+		Allocation& alloc = pCtx->allocationTable[ptr];
+
+		if (alloc.pointer != pMemory) { // Memory has changed location, so we must change the key
+			Allocation newAlloc = alloc;
+			newAlloc.pointer = pMemory;
+			newAlloc.size = size;
+			pCtx->allocationTable.Erase(alloc.pointer);
+			pCtx->allocationTable[pMemory] = newAlloc;
+		}
+		else
+		{
+			alloc.pointer = pMemory;
+			alloc.size = size;
+		}
+	}
+	else { // new allocation
+		Allocation allocation;
+		allocation.pointer = pMemory;
+		allocation.size = size;
+		allocation.isLive = true;
+		pCtx->allocationTable[pMemory] = allocation;
+		return pMemory;
+	}
+
+	return pMemory;
 }
 
 void freeTrack(void* ptr) {
-	return free(ptr);
+	if (pCtx == nullptr)
+	{
+		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
+		SYS_P_NEW(pCtx) MemoryTrackerState();
+	}
+
+	if (pCtx->allocationTable.Exists(ptr)) {
+		Allocation& alloc = pCtx->allocationTable[ptr];
+
+		if (!alloc.isLive)
+			__debugbreak(); // Double free
+
+		alloc.isLive = false;
+	}
+	else {
+		__debugbreak(); // Attempting to free some memory that was never allocated
+	}
+	free(ptr);
 }

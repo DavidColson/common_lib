@@ -162,10 +162,8 @@ int HashMapTest() {
 	ageMap["Dave"] = 29;
 	VERIFY(ageMap["Dave"] == 29);
 
-	// Check tells you if an item exists, and gets it for you if it does
-	int daveAge;
-	VERIFY(ageMap.Check("Dave", daveAge));
-	VERIFY(daveAge == 29);
+	// Exists tells you if an item exists
+	VERIFY(ageMap.Exists("Dave"));
 
 	// Rehashing and resizing the table
 	ageMap.Rehash(2);
@@ -193,7 +191,7 @@ int HashMapTest() {
 
 	// Erase Elements
 	ageMap.Erase("Dave");
-	VERIFY(!ageMap.Check("Dave", daveAge));
+	VERIFY(!ageMap.Exists("Dave"));
 	VERIFY(ageMap["Szymon"] == 28);
 	VERIFY(ageMap["Jonny"] == 31);
 	VERIFY(ageMap["Mark"] == 32);
@@ -204,8 +202,8 @@ int HashMapTest() {
 	ageMap.Rehash(2);
 	ageMap.Erase("Chris");
 	ageMap.Erase("Szymon");
-	VERIFY(!ageMap.Check("Chris", daveAge));
-	VERIFY(!ageMap.Check("Szymon", daveAge));
+	VERIFY(!ageMap.Exists("Chris"));
+	VERIFY(!ageMap.Exists("Szymon"));
 	VERIFY(ageMap["Dave"] == 27);
 	VERIFY(ageMap["Jonny"] == 31);
 	VERIFY(ageMap["Mark"] == 32);
