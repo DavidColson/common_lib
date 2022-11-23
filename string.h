@@ -36,7 +36,7 @@ struct BaseString {
 	BaseString(const BaseString& toCopy) {
 		length = toCopy.length;
 		Reserve(toCopy.capacity);
-		memcpy(pData, toCopy.pData, length);
+		memcpy(pData, toCopy.pData, length + 1);
 	}
 
 	~BaseString() {
