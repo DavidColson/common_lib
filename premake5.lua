@@ -10,13 +10,18 @@ solution "CommonLib"
     configurations { "Release", "Debug" }
     platforms "x86_64"
     architecture "x86_64"
+	flags { "FatalWarnings" }
     filter "configurations:Release"
         optimize "Full"
     filter "configurations:Debug*"
         defines { "_DEBUG", "MEMORY_TRACKING" }
         optimize "Debug"
         symbols "Full"
-    
+    filter { "system:windows", "configurations:Debug*" }
+		buildoptions { "/fsanitize=address" }
+		flags { "NoIncrementalLink" }
+		editandcontinue "Off"
+			
     project "Tests"
         kind "ConsoleApp"
         language "C++"
