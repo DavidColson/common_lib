@@ -64,75 +64,108 @@ const uint32_t primeCount = (sizeof(primeNumberArray) / sizeof(primeNumberArray[
 
 
 
-// Hash functions for common types
+// Key functions define all the needed operations
+// for each key. So the hashing function and the key comparison
 // -------------------------------
 
 template<typename K>
-struct Hash {
-	uint64_t operator()(K& key) const
+struct KeyFuncs {
+	uint64_t Hash(K& key) const
 	{
-		DEBUG_CHECK(false) // Must provide a custom hash for your key type
+		// This code intentionally doesn't compile
+		// You must provide a custom hash for your key type
+		DEBUG_CHECK(false)
 		return 0;
+	}
+
+	bool Cmp(K& key1, K& key2) const {
+		return false;
 	}
 };
 
 template<typename T>
-struct Hash<T*> 
-{ uint64_t operator()(T* key) const { return uint64_t(uintptr_t(key)); } };
+struct KeyFuncs<T*> { 
+	uint64_t Hash(T* key) const { return uint64_t(uintptr_t(key)); }
+	bool Cmp(T* key1, T* key2) const { return key1 == key2; }
+};
 
 // Numeric hashes
 template<>
-struct Hash<char> 
-{ uint64_t operator()(int8_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<char> {
+	uint64_t Hash(char key) const { return static_cast<uint64_t>(key); }
+	bool Cmp(int8_t key1, int8_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<int8_t> 
-{ uint64_t operator()(int8_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<int8_t> {
+	uint64_t Hash(int8_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(int8_t key1, int8_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<int16_t> 
-{ uint64_t operator()(int16_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<int16_t> {
+	uint64_t Hash(int16_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(int16_t key1, int16_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<int32_t> 
-{ uint64_t operator()(int32_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<int32_t> {
+	uint64_t Hash(int32_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(int32_t key1, int32_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<int64_t> 
-{ uint64_t operator()(int64_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<int64_t> {
+	uint64_t Hash(int64_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(int64_t key1, int64_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<uint8_t> 
-{ uint64_t operator()(uint8_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<uint8_t> {
+	uint64_t Hash(uint8_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(uint8_t key1, uint8_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<uint16_t> 
-{ uint64_t operator()(uint16_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<uint16_t> {
+	uint64_t Hash(uint16_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(uint16_t key1, uint16_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<uint32_t> 
-{ uint64_t operator()(uint32_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<uint32_t> {
+	uint64_t Hash(uint32_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(uint32_t key1, uint32_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<uint64_t> 
-{ uint64_t operator()(uint64_t key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<uint64_t> {
+	uint64_t Hash(uint64_t key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(uint64_t key1, uint64_t key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<float> 
-{ uint64_t operator()(float key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<float> {
+	uint64_t Hash(float key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(float key1, float key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<double> 
-{ uint64_t operator()(double key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<double> {
+	uint64_t Hash(double key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(double key1, double key2) const { return key1 == key2; }
+};
 
 template<>
-struct Hash<long double> 
-{ uint64_t operator()(long double key) const { return static_cast<uint64_t>(key); } };
+struct KeyFuncs<long double> {
+	uint64_t Hash(long double key) const { return static_cast<uint64_t>(key); } 
+	bool Cmp(long double key1, long double key2) const { return key1 == key2; }
+};
 
 // String hashes
 template<>
-struct Hash<String> {
-	uint64_t operator()(const String& key) const
+struct KeyFuncs<String> {
+	uint64_t Hash(const String& key) const
 	{
 		uint32_t nChars = key.length;
 		uint32_t hash = 0x811C9DC5;
@@ -141,11 +174,14 @@ struct Hash<String> {
 			hash = (*pData++ ^ hash) * 0x01000193;
 		return hash;
 	}
+	bool Cmp(const String& key1, const String& key2) const {
+		return strcmp(key1.pData, key2.pData) == 0;
+	}
 };
 
 template<>
-struct Hash<char*> {
-	uint64_t operator()(const char* key) const
+struct KeyFuncs<char*> {
+	uint64_t Hash(const char* key) const
 	{
 		uint32_t c;
 		uint32_t hash = 0x811C9DC5;
@@ -153,17 +189,23 @@ struct Hash<char*> {
 			hash = (c ^ hash) * 0x01000193;
 		return hash;
 	}
+	bool Cmp(const char* key1, const char* key2) const {
+		return strcmp(key1, key2) == 0;
+	}
 };
 
 template<>
-struct Hash<const char*> {
-	uint64_t operator()(const char* key) const
+struct KeyFuncs<const char*> {
+	uint64_t Hash(const char* key) const
 	{
 		uint32_t c;
 		uint32_t hash = 0x811C9DC5;
 		while ((c = (uint8_t)*key++) != 0)
 			hash = (c ^ hash) * 0x01000193;
 		return hash;
+	}
+	bool Cmp(const char* key1, const char* key2) const {
+		return strcmp(key1, key2) == 0;
 	}
 };
 
@@ -184,10 +226,10 @@ struct HashNode {
 // -----------------------
 // TODO Documentation etc
 
-template<typename K, typename V, typename AllocatorType=Allocator, typename H = Hash<K>>
+template<typename K, typename V, typename AllocatorType=Allocator, typename KF = KeyFuncs<K>>
 struct HashMap {
 	HashNode<K, V>** pTable{ nullptr };
-	H hashFunc;
+	KF keyFuncs;
 	uint32_t size{ 0 };
 	uint32_t bucketCount{ 11 };
 	AllocatorType allocator;
@@ -204,6 +246,7 @@ struct HashMap {
 			while (pEntry != nullptr) {
 				HashNode<K, V>* pPrev = pEntry;
 				pEntry = pEntry->pNext;
+				pPrev->~HashNode<K, V>(); // Note for dave, if you want an example mem leak, delete this line
 				allocator.Free(pPrev);
 			}
 			pTable[i] = nullptr;
@@ -213,7 +256,7 @@ struct HashMap {
 
 
 	bool Exists(const K& key) {
-		uint32_t hash = hashFunc(key) % bucketCount;
+		uint32_t hash = keyFuncs.Hash(key) % bucketCount;
 		HashNode<K, V>* pEntry = pTable[hash];
 		
 		while (pEntry != nullptr) {
@@ -226,12 +269,12 @@ struct HashMap {
 	}
 
 	V& operator[](const K& key) {
-		uint32_t hash = hashFunc(key) % bucketCount;
+		uint32_t hash = keyFuncs.Hash(key) % bucketCount;
 		HashNode<K, V>* pPrev = nullptr;
 		HashNode<K, V>* pEntry = pTable[hash];
 
 		// Find the entry in it's bucket
-		while (pEntry != nullptr && pEntry->key != key) {
+		while (pEntry != nullptr && !keyFuncs.Cmp(pEntry->key, key)) {
 			pPrev = pEntry;
 			pEntry = pEntry->pNext;
 		}
@@ -242,7 +285,7 @@ struct HashMap {
 			if (NeedsRehash(1, newBucketCount)) {
 				Rehash(newBucketCount);
 				// hash code has changed, so need to find the correct place to put this node
-				hash = hashFunc(key) % bucketCount;
+				hash = keyFuncs.Hash(key) % bucketCount;
 				if (pTable[hash] != nullptr) {
 					pPrev = pTable[hash];
 					while (pPrev->pNext != nullptr) {
@@ -271,18 +314,19 @@ struct HashMap {
 	}
 
 	void Erase(const K& key) {
-		uint32_t hash = hashFunc(key) % bucketCount;
+		uint32_t hash = keyFuncs.Hash(key) % bucketCount;
 		HashNode<K, V>* pPrev = nullptr;
 		HashNode<K, V>* pEntry = pTable[hash];
 
 		// Find the entry in it's bucket
-		while (pEntry != nullptr && pEntry->key != key) {
+		while (pEntry != nullptr && !keyFuncs.Cmp(pEntry->key, key)) {
 			pPrev = pEntry;
 			pEntry = pEntry->pNext;
 		}
 
 		if (pEntry != nullptr) {
 			HashNode<K, V>* pNext = pEntry->pNext;
+			pEntry->~HashNode<K, V>();
 			allocator.Free(pEntry);
 			size--;
 
@@ -308,7 +352,7 @@ struct HashMap {
 			HashNode<K, V>* pEntry = pTable[i];
 			while (pEntry != nullptr) {
 				// Process pEntry
-				uint32_t newHash = hashFunc(pEntry->key) % desiredBuckets;
+				uint32_t newHash = keyFuncs.Hash(pEntry->key) % desiredBuckets;
 
 				if (pTableNew[newHash] != nullptr) {
 					HashNode<K, V>* pPrev = pTableNew[newHash];

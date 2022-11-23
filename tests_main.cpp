@@ -125,21 +125,19 @@ int StringViewTest() {
 struct CustomKeyType {
 	int thing;
 	int thing2;
-
-	// Your custom type must define a not-equal operator
-	bool operator!=(const CustomKeyType& other) {
-		return thing != other.thing && thing2 != other.thing2;
-	}
 };
 
-// And your custom type must define a hash
+// Your custom type must define KeyFuncs to be able to used as a key
 template<>
-struct Hash<CustomKeyType> {
-	uint64_t operator()(const CustomKeyType& key) const
+struct KeyFuncs<CustomKeyType> {
+	uint64_t Hash(const CustomKeyType& key) const
 	{
 		// This is probably not a good hash method for this type
 		// But it serves for demonstration
 		return static_cast<uint64_t>(key.thing + key.thing2);
+	}
+	bool Cmp(const CustomKeyType& key1, const CustomKeyType& key2) const {
+		return key1.thing == key2.thing && key1.thing2 == key2.thing2;
 	}
 };
 
