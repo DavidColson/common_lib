@@ -59,7 +59,7 @@ struct BaseString {
 
 	void AppendChars(const Type* str, uint32_t len) {
 		Reserve(GrowCapacity(length + len + 1));
-		memcpy(pData + length, str, len + 1);
+		memcpy(pData + length, str, len);
 		length += len;
 		pData[length] = '\0';
 	}
