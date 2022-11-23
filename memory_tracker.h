@@ -1,6 +1,8 @@
 #pragma once
 
-void* mallocTrack(size_t size);
-void* reallocTrack(void* ptr, size_t size);
-void freeTrack(void* ptr);
+void* MallocTrack(size_t size);
+void* ReallocTrack(void* ptr, size_t size);
+void FreeTrack(void* ptr);
+
+int ReportMemoryLeaks();
 

@@ -9,9 +9,9 @@ inline void operator delete(void*, NewWrapper, void*) {}
 
 #ifdef MEMORY_TRACKING
 #include "memory_tracker.h"
-#define SYS_ALLOC(size) mallocTrack(size)
-#define SYS_REALLOC(ptr, size) reallocTrack(ptr, size)
-#define SYS_FREE(ptr) freeTrack(ptr)
+#define SYS_ALLOC(size) MallocTrack(size)
+#define SYS_REALLOC(ptr, size) ReallocTrack(ptr, size)
+#define SYS_FREE(ptr) FreeTrack(ptr)
 #else
 #define SYS_ALLOC(size) malloc(size)
 #define SYS_REALLOC(ptr, size) realloc(ptr, size)

@@ -21,6 +21,7 @@ solution "CommonLib"
 		buildoptions { "/fsanitize=address" }
 		flags { "NoIncrementalLink" }
 		editandcontinue "Off"
+		links { "dbghelp" }
 			
     project "Tests"
         kind "ConsoleApp"
