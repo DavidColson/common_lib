@@ -372,7 +372,7 @@ struct HashMap {
 			}
 		}
 
-		free(pTable);
+		allocator.Free(pTable);
 		pTable = pTableNew;
 		bucketCount = desiredBuckets;
 	}
