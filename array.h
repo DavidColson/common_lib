@@ -38,7 +38,7 @@ struct Array {
 		if (count == capacity) {
 			Reserve(GrowCapacity(count + 1));
 		}
-		memcpy(&pData[count], &value, sizeof(type));
+		SYS_P_NEW(pData + count) type(value);
 		count++;
 	}
 
@@ -58,7 +58,7 @@ struct Array {
 	}
 
 	void Clear() {
-		free(pData);
+		allocator.Free(pData);
 		pData = nullptr;
 		count = 0;
 		capacity = 0;
