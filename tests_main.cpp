@@ -5,10 +5,103 @@
 #include "testing.h"
 
 
+struct MemString {
+	char* pData = nullptr;
+	size_t length = 0;
+
+	// TODO
+	// Comparison operators
+	MemString() {}
+	
+	MemString(const char* str) {
+		pData = const_cast<char*>(str);
+		length = strlen(str);
+	}
+
+	void operator=(const char* str) {
+		pData = const_cast<char*>(str);
+		length = strlen(str);
+	}
+
+	bool operator==(MemString& other) {
+		return strcmp(pData, other.pData) == 0;
+	}
+
+	bool operator!=(MemString& other) {
+		return strcmp(pData, other.pData) != 0;
+	}
+};
+
+template<typename AllocatorType = Allocator>
+MemString CopyCString(const char* string, AllocatorType allocator = Allocator()) {
+	MemString s;
+	size_t len = strlen(string);
+	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char));
+	s.length = len;
+	memcpy(s.pData, string, (len+1) * sizeof(char));
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
+MemString CopyString(MemString& string, AllocatorType allocator = Allocator()) {
+	MemString s;
+	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char));
+	s.length = string.length;
+	memcpy(s.pData, string.pData, (string.length+1) * sizeof(char));
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
+MemString AllocString(size_t length, AllocatorType allocator = Allocator()) {
+	MemString s;
+	s.pData = (char*)allocator.Allocate(length * sizeof(char));
+	s.length = length;
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
+void FreeString(MemString& string, AllocatorType allocator = Allocator()) {
+	allocator.Free(string.pData);
+	string.pData = nullptr;
+	string.length = 0;
+}
 
 // ---------------------
 // Tests
 // ---------------------
+
+int StringExperimentalTest() {
+
+	// Goal, we want a string that is POD, can be memcpy'd easily
+	// Manually memory managed and tracked by memory tracker
+
+	// How about the core string class does zero memory allocations
+	// We provide some external functions which can copy a string
+	// And we provide a string builder struct which takes an allocator,
+	// which will do the grow capacity stuff as normal on append
+	// string builder is where append format lives as well and any other creation utilities
+
+	// TODO: 
+	// Write tests for all the above copy, allocation and free functions
+	// Write tests for assignment and equality functions
+
+	MemString copy;
+	{
+		const char* cstring = "Hello World";
+
+		MemString str("Hello World 2");
+		str = cstring;
+		str = "Ducks";
+		copy = str;
+
+		copy = CopyCString("Test String");
+	}
+
+	FreeString(copy);
+
+	ReportMemoryLeaks();
+	return 0;
+}
 
 int StringTest() {
 	StartTest("String Test");
@@ -345,11 +438,19 @@ int ArrayTest() {
 		VERIFY(testArray.count == 0);
 		VERIFY(testArray.capacity == 0);
 		VERIFY(testArray.pData == nullptr);
+
+
+		// TODO: test with strings and non pod stuff
 	}
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
     return 0;
 }  
+
+// Goals:
+// No copy constructors
+// No constructors, POD data everywhere
+// Explicit memory operations for things
 
 // TODO: 
 // [x] Make a dynamic array class
@@ -360,7 +461,13 @@ int ArrayTest() {
 // [x] Make a simple hash map class
 // [x] Make a custom allocator mechanism for commonLib
 // [x] Create a memory tracker similar to jai which wraps around alloc/realloc/free for commonLib
-// [ ] Mem tracker spits out error messages for Unknown Memory and Double free memory	
+// [x] New POD string types that do no memory operations
+// [ ] string builder class
+// [ ] Array becomes resizeable array (that is not automatically freed)
+// [ ] Array type becomes a slice of another array (c style, or resizeable)
+// [ ] Rewrite hashmap to be open addressing table and to not support non-POD data types
+// [ ] Mem tracker spits out error messages for Unknown Memory and Double free memory
+// [ ] Mem tracker spits out error messages for mismatched allocator
 // [ ] Container constructors allow runtime allocator assignment
 // [ ] Make linear pool allocator
 // [ ] Experiment with memory alignment in our custom allocators (i.e. perf before after alignment)
@@ -370,39 +477,9 @@ int ArrayTest() {
 // Linked list of blocks basically, allocates a new one if you try get memory more than is free in the existing block
 
 
-// Re: Allocators (point 2)
-//
-// I have the feeling that a virtual function allocator interface is actually going to be fine
-// So we can avoid the template allocator parameter. And just have set/get allocator functions on containers
-// Things that will free much later than they alloc must store the allocator for later freeing
-// Everything else that does mem alloc should take an allocator as a parameter to make it Clear they're doing mem ops
-// I think we should have a global mem allocator object that anyone can access
-// Regarding global context stack, we can probably play with this as a bonus if needed, but lets see how far we get without it first please
-
-
-// Re: Memory debug tracking
-//
-// Memory debugger.jai is a good example here.
-// on alloc we add the allocation to a table
-// on free, we look for the allocation in the table
-
-// More details?
-// We maintain a hashTable with pointer as key and allocation data as value
-// Allocation data stores pointer, size, if allocation is live, the allocator used, stack trace of allocation site
-// 
-// On free, we lookup the allocation in the table, check for errors, set is isLive to false, and store stack trace of free site
-// 
-// On realloc, potentially same as alloc, but otherwise
-// Look for this allocation in the table
-// Check if new allocation is in same place as old allocation
-// If so, update the existing allocation data with the new size
-// else, make the old allocation no longer live, storing it's free site trace, and add a new entry to the table as before
-//
-// We can do two things here, report allocation errors as the alloc functions are called
-// We can also search through the table and find any live allocations so that we can tell if anything is leaking
-
 
 int main() {
+	StringExperimentalTest();
 	ArrayTest();
 	StringTest();
 	StringViewTest();
