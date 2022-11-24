@@ -174,5 +174,8 @@ int ReportMemoryLeaks() {
 			pEntry = pEntry->pNext;
 		}
 	}
+
+	if (leakCounter > 0)
+		printf("\n");
 	return leakCounter;
 }
