@@ -5,30 +5,90 @@
 #include "testing.h"
 
 
+
+// Find a place for this to live
+template <typename F>
+struct privDefer {
+	F f;
+	privDefer(F f) : f(f) {}
+	~privDefer() { f(); }
+};
+
+template <typename F>
+privDefer<F> defer_func(F f) {
+	return privDefer<F>(f);
+}
+
+#define DEFER_1(x, y) x##y
+#define DEFER_2(x, y) DEFER_1(x, y)
+#define DEFER_3(x)    DEFER_2(x, __COUNTER__)
+#define defer(code)   auto DEFER_3(_defer_) = defer_func([&](){code;})
+
+
+// Non-null terminated string
+// The functions in this struct guarantee to do zero memory operations
+// and is fully POD, trivially copyable
+
 struct MemString {
 	char* pData = nullptr;
 	size_t length = 0;
-
+	
 	// TODO
-	// Comparison operators
+	// [ ] homemade comparison
+	// [ ] homemade strlen
+	// [ ] contains/nocase
+	// [ ] create substring
+	// [ ] Tofloat/ToInt
+	// [ ] trimRight/Left
+
+	
 	MemString() {}
 	
 	MemString(const char* str) {
 		pData = const_cast<char*>(str);
-		length = strlen(str);
+		length = 0;
+		char* p = pData;
+		while (*p != 0) {
+			length++;
+			p++;
+		}
 	}
 
 	void operator=(const char* str) {
 		pData = const_cast<char*>(str);
-		length = strlen(str);
+		length = 0;
+		char* p = pData;
+		while (*p != 0) {
+			length++;
+			p++;
+		}
 	}
 
 	bool operator==(MemString& other) {
-		return strcmp(pData, other.pData) == 0;
+		if (length != other.length) return false;
+		char* s1 = pData;
+		char* s2 = other.pData;
+		size_t count = 0;
+		while (count < length) {
+			count++;
+			if (*s1 != *s2) return false;
+			s1++;
+			s2++;
+		}
+		return true;
+	}
+
+	bool operator==(const char* other) {
+		MemString str(other);
+		return operator==(str);
 	}
 
 	bool operator!=(MemString& other) {
-		return strcmp(pData, other.pData) != 0;
+		return !operator==(other);
+	}
+
+	bool operator!=(const char* other) {
+		return !operator==(other);
 	}
 };
 
@@ -36,18 +96,18 @@ template<typename AllocatorType = Allocator>
 MemString CopyCString(const char* string, AllocatorType allocator = Allocator()) {
 	MemString s;
 	size_t len = strlen(string);
-	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char));
+	s.pData = (char*)allocator.Allocate(len * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
 	s.length = len;
-	memcpy(s.pData, string, (len+1) * sizeof(char));
+	memcpy(s.pData, string, len * sizeof(char));
 	return s;
 }
 
 template<typename AllocatorType = Allocator>
 MemString CopyString(MemString& string, AllocatorType allocator = Allocator()) {
 	MemString s;
-	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char));
+	s.pData = (char*)allocator.Allocate(string.length * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
 	s.length = string.length;
-	memcpy(s.pData, string.pData, (string.length+1) * sizeof(char));
+	memcpy(s.pData, string.pData, string.length * sizeof(char));
 	return s;
 }
 
@@ -66,40 +126,49 @@ void FreeString(MemString& string, AllocatorType allocator = Allocator()) {
 	string.length = 0;
 }
 
+
+
 // ---------------------
 // Tests
 // ---------------------
 
 int StringExperimentalTest() {
-
-	// Goal, we want a string that is POD, can be memcpy'd easily
-	// Manually memory managed and tracked by memory tracker
-
-	// How about the core string class does zero memory allocations
-	// We provide some external functions which can copy a string
-	// And we provide a string builder struct which takes an allocator,
-	// which will do the grow capacity stuff as normal on append
-	// string builder is where append format lives as well and any other creation utilities
-
-	// TODO: 
-	// Write tests for all the above copy, allocation and free functions
-	// Write tests for assignment and equality functions
-
-	MemString copy;
+	StartTest("Experimental Strings");
+	int errorCount = 0;
 	{
-		const char* cstring = "Hello World";
+		MemString emptyStr;
+		VERIFY(emptyStr.pData == nullptr);
+		VERIFY(emptyStr.length == 0);
 
-		MemString str("Hello World 2");
-		str = cstring;
-		str = "Ducks";
-		copy = str;
+		MemString str("Hello World");
+		VERIFY(str == "Hello World");
+		VERIFY(str.length == 11);
 
-		copy = CopyCString("Test String");
+		str = "Hi Dave";
+		VERIFY(str == "Hi Dave");
+		VERIFY(str != "Hello World");
+		VERIFY(str.length == 7);
+
+		MemString copy = CopyCString("Ducks are cool");
+		defer(FreeString(copy));
+		VERIFY(copy == "Ducks are cool");
+		VERIFY(copy.length == 14);
+
+		MemString copy2 = CopyString(str);
+		defer(FreeString(copy2));
+		VERIFY(copy2 == "Hi Dave");
+		VERIFY(copy2.length == 7);
+
+		MemString allocated = AllocString(copy.length * sizeof(char));
+		defer(FreeString(allocated));
+		memcpy(allocated.pData, copy.pData, copy.length * sizeof(char));
+		VERIFY(allocated == copy);
+		VERIFY(allocated != str);
+		VERIFY(allocated.length == 14);
 	}
 
-	FreeString(copy);
-
-	ReportMemoryLeaks();
+	errorCount += ReportMemoryLeaks();
+	EndTest(errorCount);
 	return 0;
 }
 
