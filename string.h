@@ -15,8 +15,10 @@
 
 // Dynamic String Class
 // --------------------
-// ... TODO Documentation etc
-// NOT null terminated String Type
+// Non-null terminated string
+// The functions in this struct guarantee to do zero memory operations
+// and is fully POD, trivially copyable
+// TODO: Documentation
 
 struct String {
 	char* pData = nullptr;

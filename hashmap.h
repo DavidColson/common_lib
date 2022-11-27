@@ -163,6 +163,22 @@ struct KeyFuncs<long double> {
 };
 
 template<>
+struct KeyFuncs<String> {
+	uint64_t Hash(const String& key) const
+	{
+		size_t nChars = key.length;
+		size_t hash = 0x811C9DC5;
+		const unsigned char* pData = (const unsigned char*)key.pData;
+		while (nChars--)
+			hash = (*pData++ ^ hash) * 0x01000193;
+		return hash;
+	}
+	bool Cmp(const String& key1, const String& key2) const {
+		return key1 == key2;
+	}
+};
+
+template<>
 struct KeyFuncs<char*> {
 	uint64_t Hash(const char* key) const
 	{

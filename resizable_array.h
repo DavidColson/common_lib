@@ -11,12 +11,14 @@
 #define DEBUG_CHECK(expression)
 #endif
 
-// Dynamic Array Structure
+// Resizable Array Structure
 // -----------------------
+// Does not support non POD element types!
+// Must be freed manually
 // ... todo documentation, examples, reasoning etc
 
 template<typename type, typename AllocatorType = Allocator>
-struct Array {
+struct ResizableArray {
     type* pData{ nullptr };
     uint32_t count{ 0 };
 	uint32_t capacity { 0 };
@@ -48,7 +50,7 @@ struct Array {
 		if (count == capacity) {
 			Reserve(GrowCapacity(count + 1));
 		}
-		SYS_P_NEW(pData + count) type(value);
+		memcpy(&pData[count], &value, sizeof(type));
 		count++;
 	}
 

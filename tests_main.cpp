@@ -1,8 +1,8 @@
 #include "string.h"
+#include "string_builder.h"
 #include "hashmap.h"
-#include "array.h"
+#include "resizable_array.h"
 #include "testing.h"
-
 
 
 // Find a place for this to live
@@ -21,105 +21,64 @@ privDefer<F> defer_func(F f) {
 #define DEFER_1(x, y) x##y
 #define DEFER_2(x, y) DEFER_1(x, y)
 #define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = defer_func([&](){code;})
+#define defer(code)   auto DEFER_3(_defer_) = defer_func([&]() { code; })
 
+// Hash Node used in hashmap below
+// -------------------------------
 
-// Non-null terminated string
-// The functions in this struct guarantee to do zero memory operations
-// and is fully POD, trivially copyable
+#define NEVER_OCCUPIED_HASH 0
+#define FIRST_VALID_HASH 1
 
-// TODO: Move
-template<>
-struct KeyFuncs<String> {
-	uint64_t Hash(const String& key) const
-	{
-		size_t nChars = key.length;
-		size_t hash = 0x811C9DC5;
-		const unsigned char* pData = (const unsigned char*)key.pData;
-		while (nChars--)
-			hash = (*pData++ ^ hash) * 0x01000193;
-		return hash;
-	}
-	bool Cmp(const String& key1, const String& key2) const {
-		return key1 == key2;
-	}
+template<typename K, typename V>
+struct HashNode2 {
+	uint64_t hash { 0 };
+	K key;
+	V value;
 };
 
-template<typename AllocatorType = Allocator>
-struct StringBuilder {
-	char* pData = nullptr;
-	uint32_t length = 0;
-	uint32_t capacity = 0;
+template<typename K, typename V, typename AllocatorType = Allocator, typename KF = KeyFuncs<K>>
+struct HashMap2 {
+	HashNode2<K, V>* pTable { nullptr };
+	KF keyFuncs;
+	size_t tableSize { 0 }
+	size_t count { 0 }
 	AllocatorType allocator;
 
-	StringBuilder() {}
-
-	void AppendChars(const char* str, uint32_t len) {
-		Reserve(GrowCapacity(length + len));
-		memcpy(pData + length, str, len);
-		length += len;
+	void tempInit(size_t tableSize) {
+		pTable = (HashNode2<K, V>*)allocator.Allocate(tableSize * sizeof(HashNode<K, V>));
 	}
 
-	void Append(const char* str) {
-		uint32_t addedLength = (uint32_t)strlen(str);
-		AppendChars(str, addedLength);
-	}
+	void Add(const Key& key, const V& value) {
+		// How the fuck does open addressing work?
+		
+		// Same load factor stuff, expand allocated space if load factor goes above 1
+		// https://www.geeksforgeeks.org/open-addressing-collision-handling-technique-in-hashing/#:~:text=In%20Open%20Addressing%2C%20all%20elements,also%20known%20as%20closed%20hashing.
+		// https://fgiesen.wordpress.com/2015/02/22/triangular-numbers-mod-2n/
 
-	void Append(String str) {
-		AppendChars(str.pData, str.length);
-	}
+		float loadFactor = count / tableSize;
+		if (loadFactor > 1.0f) __debugbreak(); // TODO: Rehash here, must stop now because it'll infinite loop
 
-	void AppendFormatInternal(const char* format, va_list args) {
-		va_list argsCopy;
-		va_copy(argsCopy, args);
+		uint64_t hash = keyFuncs.Hash(key);
+		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
 
-		int addedLength = vsnprintf(nullptr, 0, format, args);
-		if (addedLength <= 0) {
-			va_end(argsCopy);
-			return;
+		uint64_t index = hash % tableSize;
+		uint64_t probeCounter = 1;
+
+		while (pTable[index].hash != NEVER_OCCUPIED_HASH) {
+			index = (index + probeCounter) % tableSize;
+			probeCounter++;
 		}
 
-		Reserve(GrowCapacity(length + addedLength));
-		vsnprintf(pData + length, addedLength + 1, format, args);
-		va_end(argsCopy);
-		length += addedLength;
+		// Index is now where we must put a new element
+		HashNode2<K, V>& node = pTable[index];
+		node.hash = hash;
+		node.key = key;
+		node.value = value;
+		count++;
 	}
 
-	void AppendFormat(const char* format, ...) {
-		va_list args;
-		va_start(args, format);
-		AppendFormatInternal(format, args);
-		va_end(args);
-	}
-
-	String CreateString(bool reset = true) {
-		String output = AllocString(length, allocator);
-		memcpy(output.pData, pData, length * sizeof(char));
-		output.length = length;
-
-		if (reset) Reset();
-		return output;
-	}
-
-	void Reset() {
-		allocator.Free(pData);
-		pData = nullptr;
-		length = 0;
-		capacity = 0;
-	}
-
-	void Reserve(uint32_t desiredCapacity) {
-		if (capacity >= desiredCapacity) return;
-		pData = (char*)allocator.Reallocate(pData, desiredCapacity * sizeof(char));
-		capacity = desiredCapacity;
-	}
-
-	uint32_t GrowCapacity(uint32_t atLeastSize) const {
-		// if we're big enough already, don't grow, otherwise double, 
-		// and if that's not enough just use atLeastSize
-		if (capacity > atLeastSize) return capacity;
-		uint32_t newCapacity = capacity ? capacity * 2 : 8;
-		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
+	V& operator[](const K& key) {
+		
 	}
 };
 
@@ -127,8 +86,12 @@ struct StringBuilder {
 // Tests
 // ---------------------
 
-int StringExperimentalTest() {
-	StartTest("Experimental Strings");
+int HashMap2Test() {
+
+}
+
+int StringTest() {
+	StartTest("String Test");
 	int errorCount = 0;
 	{
 		String emptyStr;
@@ -338,11 +301,11 @@ int HashMapTest() {
 	return 0;
 }
 
-int ArrayTest() {
-	StartTest("Array Test");
+int ResizableArrayTest() {
+	StartTest("ResizableArray Test");
 	int errorCount = 0;
 	{
-		Array<int> testArray;
+		ResizableArray<int> testArray;
 
 		// Reserve memory
 		testArray.Reserve(2);
@@ -433,8 +396,7 @@ int ArrayTest() {
 // [x] Create a memory tracker similar to jai which wraps around alloc/realloc/free for commonLib
 // [x] New POD string types that do no memory operations
 // [x] string builder class
-// [ ] Array becomes resizeable array (that is not automatically freed)
-// [ ] Array type becomes a slice of another array (c style, or resizeable)
+// [x] Array becomes resizeable array (that is not automatically freed)
 // [ ] Rewrite hashmap to be open addressing table and to not support non-POD data types
 // [ ] Mem tracker spits out error messages for Unknown Memory and Double free memory
 // [ ] Mem tracker spits out error messages for mismatched allocator
@@ -449,8 +411,8 @@ int ArrayTest() {
 
 
 int main() {
-	StringExperimentalTest();
-	ArrayTest();
+	StringTest();
+	ResizableArrayTest();
 	HashMapTest();
 	__debugbreak();
     return 0;

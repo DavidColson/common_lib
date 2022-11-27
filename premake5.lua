@@ -35,9 +35,10 @@ solution "CommonLib"
             "tests_main.cpp",
             "memory.h",
             "memory.cpp",
-            "array.h",
+            "resizable_array.h",
             "hashmap.h",
             "string.h",
+            "string_builder.h",
             "testing.h",
             "memory_tracker.h",
             "memory_tracker.cpp"

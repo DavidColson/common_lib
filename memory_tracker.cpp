@@ -2,7 +2,7 @@
 
 #include "string.h"
 #include "hashmap.h"
-#include "array.h"
+#include "resizable_array.h"
 
 #include "Windows.h"
 #include "dbghelp.h"
@@ -144,9 +144,9 @@ int ReportMemoryLeaks() {
 				printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit!\n", pEntry->value.pointer, pEntry->value.size);
 				uint32_t nFrames = pEntry->value.allocStackTraceFrames;
 
-				Array<String, ForceNoTrackAllocator> stackFuncs;
-				Array<String, ForceNoTrackAllocator> stackFiles;
-				Array<size_t, ForceNoTrackAllocator> stackLines;
+				ResizableArray<String, ForceNoTrackAllocator> stackFuncs;
+				ResizableArray<String, ForceNoTrackAllocator> stackFiles;
+				ResizableArray<size_t, ForceNoTrackAllocator> stackLines;
 
 				size_t longestName = 0;
 				for (uint32_t j = 0; j < nFrames-6; j++) {
