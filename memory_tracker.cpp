@@ -1,5 +1,6 @@
 #include "memory_tracker.h"
 
+#include "string.h"
 #include "hashmap.h"
 #include "array.h"
 
@@ -140,12 +141,11 @@ int ReportMemoryLeaks() {
 			// Do your stuff in iteration
 			if (pEntry->value.isLive) {
 				leakCounter++;
-				printf("\n------ Detected memory leak at address %p of size %zi\n", pEntry->value.pointer, pEntry->value.size);
+				printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit!\n", pEntry->value.pointer, pEntry->value.size);
 				uint32_t nFrames = pEntry->value.allocStackTraceFrames;
 
-				typedef BaseString<char, ForceNoTrackAllocator> NoTrackString;
-				Array<NoTrackString, ForceNoTrackAllocator> stackFuncs;
-				Array<NoTrackString, ForceNoTrackAllocator> stackFiles;
+				Array<String, ForceNoTrackAllocator> stackFuncs;
+				Array<String, ForceNoTrackAllocator> stackFiles;
 				Array<size_t, ForceNoTrackAllocator> stackLines;
 
 				size_t longestName = 0;
@@ -161,8 +161,8 @@ int ReportMemoryLeaks() {
 					if (len > longestName)
 						longestName = len;
 
-					stackFuncs.PushBack(symbol->Name);
-					stackFiles.PushBack(line.FileName);
+					stackFuncs.PushBack(CopyCString(symbol->Name, true, ForceNoTrackAllocator()));
+					stackFiles.PushBack(CopyCString(line.FileName, true, ForceNoTrackAllocator()));
 					stackLines.PushBack((size_t)line.LineNumber);
 				}
 
@@ -170,6 +170,13 @@ int ReportMemoryLeaks() {
 					printf(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
 				}
 
+				stackFuncs.Free([] (String& str) {
+					FreeString(str, ForceNoTrackAllocator());
+				});
+				stackFiles.Free([] (String& str) {
+				    FreeString(str, ForceNoTrackAllocator());
+				});
+				stackLines.Free();
 			}
 			pEntry = pEntry->pNext;
 		}

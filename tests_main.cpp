@@ -1,6 +1,5 @@
-#include "hashmap.h"
-#include "string_view.h"
 #include "string.h"
+#include "hashmap.h"
 #include "array.h"
 #include "testing.h"
 
@@ -29,104 +28,100 @@ privDefer<F> defer_func(F f) {
 // The functions in this struct guarantee to do zero memory operations
 // and is fully POD, trivially copyable
 
-struct MemString {
-	char* pData = nullptr;
-	size_t length = 0;
-	
-	// TODO
-	// [ ] homemade comparison
-	// [ ] homemade strlen
-	// [ ] contains/nocase
-	// [ ] create substring
-	// [ ] Tofloat/ToInt
-	// [ ] trimRight/Left
-
-	
-	MemString() {}
-	
-	MemString(const char* str) {
-		pData = const_cast<char*>(str);
-		length = 0;
-		char* p = pData;
-		while (*p != 0) {
-			length++;
-			p++;
-		}
+// TODO: Move
+template<>
+struct KeyFuncs<String> {
+	uint64_t Hash(const String& key) const
+	{
+		size_t nChars = key.length;
+		size_t hash = 0x811C9DC5;
+		const unsigned char* pData = (const unsigned char*)key.pData;
+		while (nChars--)
+			hash = (*pData++ ^ hash) * 0x01000193;
+		return hash;
 	}
-
-	void operator=(const char* str) {
-		pData = const_cast<char*>(str);
-		length = 0;
-		char* p = pData;
-		while (*p != 0) {
-			length++;
-			p++;
-		}
-	}
-
-	bool operator==(MemString& other) {
-		if (length != other.length) return false;
-		char* s1 = pData;
-		char* s2 = other.pData;
-		size_t count = 0;
-		while (count < length) {
-			count++;
-			if (*s1 != *s2) return false;
-			s1++;
-			s2++;
-		}
-		return true;
-	}
-
-	bool operator==(const char* other) {
-		MemString str(other);
-		return operator==(str);
-	}
-
-	bool operator!=(MemString& other) {
-		return !operator==(other);
-	}
-
-	bool operator!=(const char* other) {
-		return !operator==(other);
+	bool Cmp(const String& key1, const String& key2) const {
+		return key1 == key2;
 	}
 };
 
 template<typename AllocatorType = Allocator>
-MemString CopyCString(const char* string, AllocatorType allocator = Allocator()) {
-	MemString s;
-	size_t len = strlen(string);
-	s.pData = (char*)allocator.Allocate(len * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
-	s.length = len;
-	memcpy(s.pData, string, len * sizeof(char));
-	return s;
-}
+struct StringBuilder {
+	char* pData = nullptr;
+	uint32_t length = 0;
+	uint32_t capacity = 0;
+	AllocatorType allocator;
 
-template<typename AllocatorType = Allocator>
-MemString CopyString(MemString& string, AllocatorType allocator = Allocator()) {
-	MemString s;
-	s.pData = (char*)allocator.Allocate(string.length * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
-	s.length = string.length;
-	memcpy(s.pData, string.pData, string.length * sizeof(char));
-	return s;
-}
+	StringBuilder() {}
 
-template<typename AllocatorType = Allocator>
-MemString AllocString(size_t length, AllocatorType allocator = Allocator()) {
-	MemString s;
-	s.pData = (char*)allocator.Allocate(length * sizeof(char));
-	s.length = length;
-	return s;
-}
+	void AppendChars(const char* str, uint32_t len) {
+		Reserve(GrowCapacity(length + len));
+		memcpy(pData + length, str, len);
+		length += len;
+	}
 
-template<typename AllocatorType = Allocator>
-void FreeString(MemString& string, AllocatorType allocator = Allocator()) {
-	allocator.Free(string.pData);
-	string.pData = nullptr;
-	string.length = 0;
-}
+	void Append(const char* str) {
+		uint32_t addedLength = (uint32_t)strlen(str);
+		AppendChars(str, addedLength);
+	}
 
+	void Append(String str) {
+		AppendChars(str.pData, str.length);
+	}
 
+	void AppendFormatInternal(const char* format, va_list args) {
+		va_list argsCopy;
+		va_copy(argsCopy, args);
+
+		int addedLength = vsnprintf(nullptr, 0, format, args);
+		if (addedLength <= 0) {
+			va_end(argsCopy);
+			return;
+		}
+
+		Reserve(GrowCapacity(length + addedLength));
+		vsnprintf(pData + length, addedLength + 1, format, args);
+		va_end(argsCopy);
+		length += addedLength;
+	}
+
+	void AppendFormat(const char* format, ...) {
+		va_list args;
+		va_start(args, format);
+		AppendFormatInternal(format, args);
+		va_end(args);
+	}
+
+	String CreateString(bool reset = true) {
+		String output = AllocString(length, allocator);
+		memcpy(output.pData, pData, length * sizeof(char));
+		output.length = length;
+
+		if (reset) Reset();
+		return output;
+	}
+
+	void Reset() {
+		allocator.Free(pData);
+		pData = nullptr;
+		length = 0;
+		capacity = 0;
+	}
+
+	void Reserve(uint32_t desiredCapacity) {
+		if (capacity >= desiredCapacity) return;
+		pData = (char*)allocator.Reallocate(pData, desiredCapacity * sizeof(char));
+		capacity = desiredCapacity;
+	}
+
+	uint32_t GrowCapacity(uint32_t atLeastSize) const {
+		// if we're big enough already, don't grow, otherwise double, 
+		// and if that's not enough just use atLeastSize
+		if (capacity > atLeastSize) return capacity;
+		uint32_t newCapacity = capacity ? capacity * 2 : 8;
+		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
+	}
+};
 
 // ---------------------
 // Tests
@@ -136,11 +131,11 @@ int StringExperimentalTest() {
 	StartTest("Experimental Strings");
 	int errorCount = 0;
 	{
-		MemString emptyStr;
+		String emptyStr;
 		VERIFY(emptyStr.pData == nullptr);
 		VERIFY(emptyStr.length == 0);
 
-		MemString str("Hello World");
+		String str("Hello World");
 		VERIFY(str == "Hello World");
 		VERIFY(str.length == 11);
 
@@ -149,139 +144,36 @@ int StringExperimentalTest() {
 		VERIFY(str != "Hello World");
 		VERIFY(str.length == 7);
 
-		MemString copy = CopyCString("Ducks are cool");
+		String copy = CopyCString("Ducks are cool");
 		defer(FreeString(copy));
 		VERIFY(copy == "Ducks are cool");
 		VERIFY(copy.length == 14);
 
-		MemString copy2 = CopyString(str);
+		String copy2 = CopyString(str);
 		defer(FreeString(copy2));
 		VERIFY(copy2 == "Hi Dave");
 		VERIFY(copy2.length == 7);
 
-		MemString allocated = AllocString(copy.length * sizeof(char));
+		String allocated = AllocString(copy.length * sizeof(char));
 		defer(FreeString(allocated));
 		memcpy(allocated.pData, copy.pData, copy.length * sizeof(char));
 		VERIFY(allocated == copy);
 		VERIFY(allocated != str);
 		VERIFY(allocated.length == 14);
+
+		// String Builder, for dynamically constructing strings
+		StringBuilder builder;
+		builder.Append("Hello world");
+		builder.AppendFormat(" my name is %s", "David");
+		builder.AppendChars(" and this is my code bloop", 20);
+
+		String builtString = builder.CreateString();
+		defer(FreeString(builtString));
+		VERIFY(builtString == "Hello world my name is David and this is my code");
+		VERIFY(builtString != "Ducks");
+		VERIFY(builtString.length == 48);
 	}
 
-	errorCount += ReportMemoryLeaks();
-	EndTest(errorCount);
-	return 0;
-}
-
-int StringTest() {
-	StartTest("String Test");
-	int errorCount = 0;
-	{
-		// Constructing Strings
-		String myString;
-		myString = "Hello World";
-		VERIFY(strcmp(myString.pData, "Hello World") == 0);
-		VERIFY(myString.length == 11);
-		VERIFY(myString.capacity == 12);
-
-		String mySecondString("Hello World 2");
-		VERIFY(strcmp(mySecondString.pData, "Hello World 2") == 0);
-		VERIFY(mySecondString.length == 13);
-		VERIFY(mySecondString.capacity == 14);
-
-		// Changing existing string to something else
-		myString = "Hello world my name is David";
-		VERIFY(strcmp(myString.pData, "Hello world my name is David") == 0);
-		VERIFY(myString.length == 28);
-		VERIFY(myString.capacity == 29);
-
-		// Appending to the string
-		myString.Append(" and I wrote this code");
-		VERIFY(strcmp(myString.pData, "Hello world my name is David and I wrote this code") == 0);
-		VERIFY(myString.length == 50);
-		VERIFY(myString.capacity == 58);
-
-		// Appending formatted strings
-		String newString;
-		newString.AppendFormat("Hello %s %f", "world", 5.12f);
-		VERIFY(strcmp(newString.pData, "Hello world 5.120000") == 0);
-		VERIFY(newString.length == 20);
-		VERIFY(newString.capacity == 21);
-
-		newString.AppendFormat(" there are %i %s", 2000, "people");
-		VERIFY(strcmp(newString.pData, "Hello world 5.120000 there are 2000 people") == 0);
-		VERIFY(newString.length == 42);
-		VERIFY(newString.capacity == 43);
-
-		// Clearing strings
-		newString.Clear();
-		VERIFY(newString.pData == nullptr);
-		VERIFY(newString.length == 0);
-		VERIFY(newString.capacity == 0);
-
-		// Iterating characters
-		String badCopy;
-		for (char c : myString) {
-			badCopy.AppendChars(&c, 1);
-		}
-		VERIFY(strcmp(badCopy.pData, "Hello world my name is David and I wrote this code") == 0);
-		VERIFY(badCopy.length == 50);
-		VERIFY(badCopy.capacity == 64);
-
-		// Comparison
-		String comparisonTest = "David";
-		VERIFY(comparisonTest == "David");
-		VERIFY(comparisonTest != "David Colson");
-		VERIFY(comparisonTest != "Dav");
-
-		String comparisonTest2 = "David";
-		String comparisonTest3 = "David Colson";
-		VERIFY(comparisonTest == comparisonTest2);
-		VERIFY(comparisonTest != comparisonTest3);
-	}
-
-	errorCount += ReportMemoryLeaks();
-	EndTest(errorCount);
-	return 0;
-}
-
-bool StringViewParameterTest(StringView stringView, const char* comparison)
-{
-	if (strcmp(stringView.pData, comparison) == 0 && stringView.length == strlen(comparison))
-		return true;
-	return false;
-}
-
-int StringViewTest() {
-	StartTest("StringView Test");
-	int errorCount = 0;
-	{
-		StringView simpleView("Hello World");
-		VERIFY(strcmp(simpleView.pData, "Hello World") == 0);
-		VERIFY(simpleView.length == 11);
-
-		simpleView = "Hello Internet";
-		VERIFY(strcmp(simpleView.pData, "Hello Internet") == 0);
-		VERIFY(simpleView.length == 14);
-
-		// Can pass const chars to functions expecting string views
-		VERIFY(StringViewParameterTest("Hello world", "Hello world"));
-
-		// Can pass normal strings to functions expecting string views
-		String testString = "Geese are scary";
-		VERIFY(StringViewParameterTest(testString, "Geese are scary"));
-
-		// TODO string scanning functions (i.e. advance, peek, is digit etc etc) on string views
-	
-		// Comparison operators?
-		// Advance on string view (increments ptr)
-		// Peek (returns next character)
-		// Advance whitespace
-		// Match
-		// IsDigit
-		// IsAlpha
-		// IsHexDigit
-		// IsAlphaNumeric
-	}
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
 	return 0;
@@ -373,6 +265,8 @@ int HashMapTest() {
 		VERIFY(ageMap.size == 3);
 		VERIFY(ageMap.bucketCount == 2);
 
+		ageMap.Free();
+
 		// Testing a few common key types
 		HashMap<int, int> intMap;
 		intMap[2] = 1337;
@@ -381,6 +275,7 @@ int HashMapTest() {
 		VERIFY(intMap[2] == 1337);
 		VERIFY(intMap[17] == 1338);
 		VERIFY(intMap[6] == 1339);
+		intMap.Free();
 
 		HashMap<float, int> floatMap;
 		floatMap[28.31f] = 1337;
@@ -389,6 +284,7 @@ int HashMapTest() {
 		VERIFY(floatMap[28.31f] == 1337);
 		VERIFY(floatMap[4.1231f] == 1338);
 		VERIFY(floatMap[0.78f] == 1339);
+		floatMap.Free();
 
 		HashMap<char, int> charMap;
 		charMap['c'] = 1337;
@@ -397,6 +293,7 @@ int HashMapTest() {
 		VERIFY(charMap['c'] == 1337);
 		VERIFY(charMap['8'] == 1338);
 		VERIFY(charMap['U'] == 1339);
+		charMap.Free();
 
 		HashMap<const char*, int> cStringMap;
 		cStringMap["Ducks"] = 1337;
@@ -405,6 +302,7 @@ int HashMapTest() {
 		VERIFY(cStringMap["Ducks"] == 1337);
 		VERIFY(cStringMap["Cars"] == 1338);
 		VERIFY(cStringMap["Hats"] == 1339);
+		cStringMap.Free();
 
 		int arr[3];
 		arr[0] = 3;
@@ -418,6 +316,7 @@ int HashMapTest() {
 		VERIFY(pointerMap[arr] == 1337);
 		VERIFY(pointerMap[arr + 1] == 1338);
 		VERIFY(pointerMap[arr + 2] == 1339);
+		pointerMap.Free();
 
 		// Custom Key Types
 		CustomKeyType one { 1, 2 };
@@ -431,7 +330,9 @@ int HashMapTest() {
 		VERIFY(customMap[one] == 1337);
 		VERIFY(customMap[two] == 1338);
 		VERIFY(customMap[three] == 1339);
+		customMap.Free();
 	}
+
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
 	return 0;
@@ -507,7 +408,7 @@ int ArrayTest() {
 		VERIFY(testArray.count == 0);
 		VERIFY(testArray.capacity == 0);
 		VERIFY(testArray.pData == nullptr);
-
+		testArray.Free();
 
 		// TODO: test with strings and non pod stuff
 	}
@@ -531,7 +432,7 @@ int ArrayTest() {
 // [x] Make a custom allocator mechanism for commonLib
 // [x] Create a memory tracker similar to jai which wraps around alloc/realloc/free for commonLib
 // [x] New POD string types that do no memory operations
-// [ ] string builder class
+// [x] string builder class
 // [ ] Array becomes resizeable array (that is not automatically freed)
 // [ ] Array type becomes a slice of another array (c style, or resizeable)
 // [ ] Rewrite hashmap to be open addressing table and to not support non-POD data types
@@ -550,8 +451,6 @@ int ArrayTest() {
 int main() {
 	StringExperimentalTest();
 	ArrayTest();
-	StringTest();
-	StringViewTest();
 	HashMapTest();
 	__debugbreak();
     return 0;

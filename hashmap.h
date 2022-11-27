@@ -162,23 +162,6 @@ struct KeyFuncs<long double> {
 	bool Cmp(long double key1, long double key2) const { return key1 == key2; }
 };
 
-// String hashes
-template<>
-struct KeyFuncs<String> {
-	uint64_t Hash(const String& key) const
-	{
-		uint32_t nChars = key.length;
-		uint32_t hash = 0x811C9DC5;
-		const unsigned char* pData = (const unsigned char*)key.pData;
-		while (nChars--)
-			hash = (*pData++ ^ hash) * 0x01000193;
-		return hash;
-	}
-	bool Cmp(const String& key1, const String& key2) const {
-		return strcmp(key1.pData, key2.pData) == 0;
-	}
-};
-
 template<>
 struct KeyFuncs<char*> {
 	uint64_t Hash(const char* key) const
@@ -240,16 +223,32 @@ struct HashMap {
 			pTable[i] = nullptr;
 	}
 
-	~HashMap() {
+	void Free() {
 		for (uint32_t i = 0; i < bucketCount; i++) {
 			HashNode<K, V>* pEntry = pTable[i];
 			while (pEntry != nullptr) {
 				HashNode<K, V>* pPrev = pEntry;
 				pEntry = pEntry->pNext;
-				pPrev->~HashNode<K, V>(); // Note for dave, if you want an example mem leak, delete this line
 				allocator.Free(pPrev);
 			}
 			pTable[i] = nullptr;
+		}
+		allocator.Free(pTable);
+	}
+
+	template<typename F>
+	void Free(F&& freeNode) {
+		for (uint32_t i = 0; i < bucketCount; i++) {
+		HashNode<K, V>* pEntry = pTable[i];
+		while (pEntry != nullptr) {
+			HashNode<K, V>* pPrev = pEntry;
+			pEntry = pEntry->pNext;
+			if (pEntry) {
+				freeNode(pEntry);
+				allocator.Free(pPrev);
+			}
+		}
+		pTable[i] = nullptr;
 		}
 		allocator.Free(pTable);
 	}
@@ -314,6 +313,11 @@ struct HashMap {
 	}
 
 	void Erase(const K& key) {
+		Erase(key, [](HashNode<K, V>*) {});
+	}
+
+	template<typename F>
+	void Erase(const K& key, F && freeNode) {
 		uint32_t hash = keyFuncs.Hash(key) % bucketCount;
 		HashNode<K, V>* pPrev = nullptr;
 		HashNode<K, V>* pEntry = pTable[hash];
@@ -326,7 +330,7 @@ struct HashMap {
 
 		if (pEntry != nullptr) {
 			HashNode<K, V>* pNext = pEntry->pNext;
-			pEntry->~HashNode<K, V>();
+			freeNode(pEntry);
 			allocator.Free(pEntry);
 			size--;
 

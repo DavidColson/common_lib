@@ -38,7 +38,6 @@ solution "CommonLib"
             "array.h",
             "hashmap.h",
             "string.h",
-            "string_view.h",
             "testing.h",
             "memory_tracker.h",
             "memory_tracker.cpp"

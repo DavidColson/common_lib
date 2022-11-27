@@ -16,137 +16,89 @@
 // Dynamic String Class
 // --------------------
 // ... TODO Documentation etc
-// Null terminated String Type
+// NOT null terminated String Type
 
-template<typename Type, typename AllocatorType = Allocator>
-struct BaseString {
-	Type* pData = nullptr;
-	uint32_t length = 0;
-	uint32_t capacity = 0;
-	AllocatorType allocator;
+struct String {
+	char* pData = nullptr;
+	size_t length = 0;
 	
-	BaseString() {}
+	// TODOs
+	// [ ] contains/nocase
+	// [ ] create substring
+	// [ ] Tofloat/ToInt
+	// [ ] trimRight/Left
 
-	BaseString(const Type* str) {
-		length = (uint32_t)strlen(str);
-		Reserve(GrowCapacity(length + 1));
-		memcpy(pData, str, length + 1);
+	String() {}
+	
+	String(const char* str) {
+		pData = const_cast<char*>(str);
+		length = strlen(str);
 	}
 
-	BaseString(const BaseString& toCopy) {
-		length = toCopy.length;
-		Reserve(toCopy.capacity);
-		memcpy(pData, toCopy.pData, length + 1);
+	void operator=(const char* str) {
+		pData = const_cast<char*>(str);
+		length = strlen(str);
 	}
 
-	~BaseString() {
-		if (pData) allocator.Free(pData);
-	}
-
-	BaseString& operator=(const Type* str) {
-		length = (uint32_t)strlen(str);
-		Reserve(GrowCapacity(length + 1));
-		memcpy(pData, str, length + 1);
-		return *this;
-	}
-
-	BaseString& operator=(const BaseString& toCopy) {
-		length = toCopy.length;
-		Reserve(toCopy.capacity);
-		memcpy(pData, toCopy.pData, length + 1);
-		return *this;
-	}
-
-	void AppendChars(const Type* str, uint32_t len) {
-		Reserve(GrowCapacity(length + len + 1));
-		memcpy(pData + length, str, len);
-		length += len;
-		pData[length] = '\0';
-	}
-
-	void Append(const Type* str) {
-		uint32_t addedLength = (uint32_t)strlen(str);
-		AppendChars(str, addedLength);
-	}
-
-	void AppendFormatInternal(const Type* format, va_list args) {
-		va_list argsCopy;
-		va_copy(argsCopy, args);
-
-		int addedLength = vsnprintf(nullptr, 0, format, args);
-		if (addedLength <= 0) {
-			va_end(argsCopy);
-			return;
+	bool operator==(const String& other) const {
+		if (length != other.length) return false;
+		char* s1 = pData;
+		char* s2 = other.pData;
+		size_t count = 0;
+		while (count < length) {
+			count++;
+			if (*s1 != *s2) return false;
+			s1++;
+			s2++;
 		}
-
-		Reserve(GrowCapacity(length + addedLength + 1));
-		vsnprintf(pData + length, addedLength + 1, format, args);
-		va_end(argsCopy);
-		length += addedLength;
+		return true;
 	}
 
-	void AppendFormat(const Type* format, ...) {
-		va_list args;
-		va_start(args, format);
-		AppendFormatInternal(format, args);
-		va_end(args);
+	bool operator==(const char* other) const {
+		String str(other);
+		return operator==(str);
 	}
 
-	void Clear() {
-		SYS_FREE(pData);
-		pData = nullptr;
-		length = 0;
-		capacity = 0;
-	}
-
-	bool operator==(const Type* other) {
-		if (strcmp(pData, other) == 0)
-			return true;
-		return false;
-	}
-
-	bool operator!=(const Type* other) {
+	bool operator!=(const String& other) const {
 		return !operator==(other);
 	}
 
-	bool operator==(const BaseString& other) {
-		return operator==(other.pData);
-	}
-
-	bool operator!=(const BaseString& other) {
-		return !operator==(other.pData);
-	}
-
-	Type* begin() {
-		return pData;
-	}
-
-	Type* end() {
-		return pData + length;
-	}
-
-	const Type* begin() const{
-		return pData;
-	}
-
-	const Type* end() const {
-		return pData + length;
-	}
-
-	void Reserve(uint32_t desiredCapacity) {
-		if (capacity >= desiredCapacity) return;
-		pData = (Type*)allocator.Reallocate(pData, desiredCapacity * sizeof(Type));
-		capacity = desiredCapacity;
-	}
-
-	uint32_t GrowCapacity(uint32_t atLeastSize) const {
-		// if we're big enough already, don't grow, otherwise double, 
-		// and if that's not enough just use atLeastSize
-		if (capacity > atLeastSize) return capacity;
-		uint32_t newCapacity = capacity ? capacity * 2 : 8;
-		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
+	bool operator!=(const char* other) const {
+		return !operator==(other);
 	}
 };
 
-typedef BaseString<char> String;
-typedef BaseString<wchar_t> WString;
+template<typename AllocatorType = Allocator>
+String CopyCString(const char* string, bool withTerminator=false, AllocatorType allocator = Allocator()) {
+	String s;
+	size_t len = strlen(string);
+	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
+	s.length = len;
+	memcpy(s.pData, string, (len+1) * sizeof(char));
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
+String CopyString(String& string, bool withTerminator=false, AllocatorType allocator = Allocator()) {
+	String s;
+	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
+	s.length = string.length;
+	memcpy(s.pData, string.pData, string.length * sizeof(char));
+	s.pData[string.length] = 0;
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
+String AllocString(size_t length, AllocatorType allocator = Allocator()) {
+	String s;
+	s.pData = (char*)allocator.Allocate(length * sizeof(char));
+	s.length = length;
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
+void FreeString(String& string, AllocatorType allocator = Allocator()) {
+	allocator.Free(string.pData);
+	string.pData = nullptr;
+	string.length = 0;
+}

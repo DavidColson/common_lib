@@ -22,8 +22,18 @@ struct Array {
 	uint32_t capacity { 0 };
 	AllocatorType allocator;
 	
-	~Array() {
-		if (pData) allocator.Free(pData);
+	void Free() {
+		if (pData) { allocator.Free(pData); }
+	}
+
+	template<typename F>
+	void Free(F&& freeElement) {
+		if (pData) {
+			for (uint32_t i = 0; i < count; i++) {
+				freeElement(pData[i]);
+			}
+			allocator.Free(pData);
+		}
 	}
 
 	// TODO: Need a resize function, that doesn't free memory, so it can be reused
