@@ -65,25 +65,23 @@ void* ReallocTrack(void* ptr, size_t size) {
 
 	void* pMemory = realloc(ptr, size);
 
-	if (pCtx->allocationTable.Exists(ptr)) { // pre-existing allocation
-		Allocation& alloc = pCtx->allocationTable[ptr];
-
-		if (alloc.pointer != pMemory) { // Memory has changed location, so we must change the key
+	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) { // pre-existing allocation
+		if (alloc->pointer != pMemory) { // Memory has changed location, so we must change the key
 			// old alloc is effectively freed
-			alloc.isLive = false;
-			alloc.allocStackTraceFrames = CaptureStackBackTrace(1, 100, alloc.freeStackTrace, nullptr);
+			alloc->isLive = false;
+			alloc->allocStackTraceFrames = CaptureStackBackTrace(1, 100, alloc->freeStackTrace, nullptr);
 
 			Allocation newAlloc;
 			newAlloc.pointer = pMemory;
 			newAlloc.size = size;
 			newAlloc.isLive = true;
 			newAlloc.allocStackTraceFrames = CaptureStackBackTrace(1, 100, newAlloc.allocStackTrace, nullptr);
-			pCtx->allocationTable.Erase(alloc.pointer);
+			pCtx->allocationTable.Erase(alloc->pointer);
 			pCtx->allocationTable[pMemory] = newAlloc;
 		}
 		else
 		{
-			alloc.size = size;
+			alloc->size = size;
 		}
 	}
 	else { // new allocation
@@ -106,14 +104,12 @@ void FreeTrack(void* ptr) {
 		SYS_P_NEW(pCtx) MemoryTrackerState();
 	}
 
-	if (pCtx->allocationTable.Exists(ptr)) {
-		Allocation& alloc = pCtx->allocationTable[ptr];
-
-		if (!alloc.isLive)
+	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) {
+		if (!alloc->isLive)
 			__debugbreak(); // Double free
 
-		alloc.isLive = false;
-		alloc.freeStackTraceFrames = CaptureStackBackTrace(1, 100, alloc.freeStackTrace, nullptr);
+		alloc->isLive = false;
+		alloc->freeStackTraceFrames = CaptureStackBackTrace(1, 100, alloc->freeStackTrace, nullptr);
 	}
 	else {
 		__debugbreak(); // Attempting to free some memory that was never allocated
@@ -134,51 +130,50 @@ int ReportMemoryLeaks() {
 
 	DWORD displacement;
 
-	for (uint32_t i = 0; i < pCtx->allocationTable.bucketCount; i++)
+	for (size_t i = 0; i < pCtx->allocationTable.tableSize; i++)
 	{
-		HashNode<void*, Allocation>* pEntry = pCtx->allocationTable.pTable[i];
-		while (pEntry != nullptr) {
-			// Do your stuff in iteration
-			if (pEntry->value.isLive) {
-				leakCounter++;
-				printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit!\n", pEntry->value.pointer, pEntry->value.size);
-				uint32_t nFrames = pEntry->value.allocStackTraceFrames;
+		if (pCtx->allocationTable.pTable[i].hash == UNUSED_HASH) {
+			i++; continue;
+		}
+		Allocation& alloc = pCtx->allocationTable.pTable[i].value;
+		if (alloc.isLive) {
+			leakCounter++;
+			printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit!\n", alloc.pointer, alloc.size);
+			uint32_t nFrames = alloc.allocStackTraceFrames;
 
-				ResizableArray<String, ForceNoTrackAllocator> stackFuncs;
-				ResizableArray<String, ForceNoTrackAllocator> stackFiles;
-				ResizableArray<size_t, ForceNoTrackAllocator> stackLines;
+			ResizableArray<String, ForceNoTrackAllocator> stackFuncs;
+			ResizableArray<String, ForceNoTrackAllocator> stackFiles;
+			ResizableArray<size_t, ForceNoTrackAllocator> stackLines;
 
-				size_t longestName = 0;
-				for (uint32_t j = 0; j < nFrames-6; j++) {
-					if (!SymFromAddr(process, (DWORD64)(pEntry->value.allocStackTrace[j]), 0, symbol)) {
-						DWORD d = GetLastError();
-					}
-					
-					IMAGEHLP_LINE line;
-					SymGetLineFromAddr(process, (DWORD64)(pEntry->value.allocStackTrace[j]), &displacement, &line);
-
-					size_t len = strlen(symbol->Name);
-					if (len > longestName)
-						longestName = len;
-
-					stackFuncs.PushBack(CopyCString(symbol->Name, true, ForceNoTrackAllocator()));
-					stackFiles.PushBack(CopyCString(line.FileName, true, ForceNoTrackAllocator()));
-					stackLines.PushBack((size_t)line.LineNumber);
+			size_t longestName = 0;
+			for (uint32_t j = 0; j < nFrames-6; j++) {
+				if (!SymFromAddr(process, (DWORD64)(alloc.allocStackTrace[j]), 0, symbol)) {
+					DWORD d = GetLastError();
 				}
+				
+				IMAGEHLP_LINE line;
+				SymGetLineFromAddr(process, (DWORD64)(alloc.allocStackTrace[j]), &displacement, &line);
 
-				for (uint32_t j = 0; j < nFrames-6; j++) {
-					printf(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
-				}
+				size_t len = strlen(symbol->Name);
+				if (len > longestName)
+					longestName = len;
 
-				stackFuncs.Free([] (String& str) {
-					FreeString(str, ForceNoTrackAllocator());
-				});
-				stackFiles.Free([] (String& str) {
-				    FreeString(str, ForceNoTrackAllocator());
-				});
-				stackLines.Free();
+				stackFuncs.PushBack(CopyCString(symbol->Name, true, ForceNoTrackAllocator()));
+				stackFiles.PushBack(CopyCString(line.FileName, true, ForceNoTrackAllocator()));
+				stackLines.PushBack((size_t)line.LineNumber);
 			}
-			pEntry = pEntry->pNext;
+
+			for (uint32_t j = 0; j < nFrames-6; j++) {
+				printf(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
+			}
+
+			stackFuncs.Free([] (String& str) {
+				FreeString(str, ForceNoTrackAllocator());
+			});
+			stackFiles.Free([] (String& str) {
+				FreeString(str, ForceNoTrackAllocator());
+			});
+			stackLines.Free();
 		}
 	}
 
