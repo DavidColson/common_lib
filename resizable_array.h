@@ -25,7 +25,12 @@ struct ResizableArray {
 	AllocatorType allocator;
 	
 	void Free() {
-		if (pData) { allocator.Free(pData); }
+		if (pData) {
+			allocator.Free(pData);
+			count = 0;
+			capacity = 0;
+			pData = nullptr;
+		}
 	}
 
 	template<typename F>
@@ -35,6 +40,9 @@ struct ResizableArray {
 				freeElement(pData[i]);
 			}
 			allocator.Free(pData);
+			count = 0;
+			capacity = 0;
+			pData = nullptr;
 		}
 	}
 
@@ -69,9 +77,7 @@ struct ResizableArray {
 		return pData[i];
 	}
 
-	void Clear() {
-		allocator.Free(pData);
-		pData = nullptr;
+	void Reset() {
 		count = 0;
 		capacity = 0;
 	}

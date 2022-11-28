@@ -296,10 +296,10 @@ int ResizableArrayTest() {
 		VERIFY(testArray.Find(1337) == testArray.end());
 
 		// Clear the array
-		testArray.Clear();
+		testArray.Reset();
 		VERIFY(testArray.count == 0);
 		VERIFY(testArray.capacity == 0);
-		VERIFY(testArray.pData == nullptr);
+		testArray.Free();
 		testArray.Free();
 
 		// TODO: test with strings and non pod stuff
@@ -326,12 +326,11 @@ int ResizableArrayTest() {
 // [x] New POD string types that do no memory operations
 // [x] string builder class
 // [x] Array becomes resizeable array (that is not automatically freed)
-// [ ] Rewrite hashmap to be open addressing table and to not support non-POD data types
-// [ ] Mem tracker spits out error messages for Unknown Memory and Double free memory
-// [ ] Mem tracker spits out error messages for mismatched allocator
-// [ ] Container constructors allow runtime allocator assignment
+// [x] Rewrite hashmap to be open addressing table and to not support non-POD data types
+// [x] Mem tracker spits out error messages for Unknown Memory and Double free memory
 // [ ] Make linear pool allocator
 // [ ] Experiment with memory alignment in our custom allocators (i.e. perf before after alignment)
+// [ ] Container constructors allow runtime allocator assignment
 
 
 // Jai's Pool allocator
