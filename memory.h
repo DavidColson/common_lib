@@ -7,8 +7,8 @@ inline void* operator new(size_t, NewWrapper, void* ptr) { return ptr; }
 inline void operator delete(void*, NewWrapper, void*) {}
 #define SYS_P_NEW(ptr) new(NewWrapper(), ptr)
 
-#ifdef MEMORY_TRACKING
 #include "memory_tracker.h"
+#ifdef MEMORY_TRACKING
 #define SYS_ALLOC(size) MallocWrap(size)
 #define SYS_REALLOC(ptr, size, oldSize) ReallocWrap(ptr, size, oldSize)
 #define SYS_FREE(ptr) FreeWrap(ptr)

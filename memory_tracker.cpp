@@ -198,6 +198,7 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 }
 
 int ReportMemoryLeaks() {
+#ifdef MEMORY_TRACKING
 	if (pCtx == nullptr)
 		return 0;
 
@@ -216,5 +217,8 @@ int ReportMemoryLeaks() {
 
 	if (leakCounter > 0)
 		printf("\n");
-	return leakCounter;
+	return leakCounter;	
+#else
+	return 0;
+#endif
 }

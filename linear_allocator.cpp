@@ -80,7 +80,9 @@ void LinearAllocator::Reset(bool stampMemory) {
 }
 
 void LinearAllocator::Finished() {
+#ifdef MEMORY_TRACKING
 	CheckFree(this, pMemoryBase);
+#endif
 	VirtualFree(pMemoryBase, 0, MEM_RELEASE);
 }
 
@@ -91,6 +93,8 @@ void LinearAllocator::ExpandCommitted(uint8_t* pDesiredEnd) {
 
 	size_t size = Align(requiredSpace, pageSize);
 	VirtualAlloc(pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
+#ifdef MEMORY_TRACKING
 	CheckRealloc(this, pMemoryBase, pMemoryBase, currentSpace + size, currentSpace);
+#endif
 	pFirstUncommittedPage += size;
 }
