@@ -24,6 +24,12 @@ struct ResizableArray {
 	uint32_t capacity { 0 };
 	AllocatorType allocator;
 	
+	ResizableArray() {}
+
+	ResizableArray(AllocatorType _allocator) {
+		allocator = _allocator;
+	}
+
 	void Free() {
 		if (pData) {
 			allocator.Free(pData);
@@ -50,7 +56,7 @@ struct ResizableArray {
 
 	void Reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		pData = (type*)allocator.Reallocate(pData, desiredCapacity * sizeof(type));
+		pData = (type*)allocator.Reallocate(pData, desiredCapacity * sizeof(type), capacity * sizeof(type));
 		capacity = desiredCapacity;
 	}
 

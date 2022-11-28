@@ -18,6 +18,10 @@ struct StringBuilder {
 
 	StringBuilder() {}
 
+	StringBuilder(AllocatorType _allocator) {
+		allocator = _allocator;
+	}
+
 	void AppendChars(const char* str, uint32_t len) {
 		Reserve(GrowCapacity(length + len));
 		memcpy(pData + length, str, len);
@@ -56,9 +60,10 @@ struct StringBuilder {
 		va_end(args);
 	}
 
-	String CreateString(bool reset = true) {
-		String output = AllocString(length, allocator);
-		memcpy(output.pData, pData, length * sizeof(char));
+	String CreateString(bool withTerminator = false, bool reset = true) {
+		String output = AllocString(length+1, allocator);
+		memcpy(output.pData, pData, (length+1) * sizeof(char));
+		output.pData[length] = 0;
 		output.length = length;
 
 		if (reset) Reset();
@@ -74,7 +79,7 @@ struct StringBuilder {
 
 	void Reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		pData = (char*)allocator.Reallocate(pData, desiredCapacity * sizeof(char));
+		pData = (char*)allocator.Reallocate(pData, desiredCapacity * sizeof(char), capacity * sizeof(char));
 		capacity = desiredCapacity;
 	}
 

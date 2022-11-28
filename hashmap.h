@@ -175,6 +175,12 @@ struct HashMap {
 	size_t count { 0 };
 	AllocatorType allocator;
 
+	HashMap() {}
+
+	HashMap(AllocatorType _allocator) {
+		allocator = _allocator;
+	}
+
 	void Free() {
 		allocator.Free(pTable);
 	}

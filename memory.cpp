@@ -12,8 +12,8 @@ void* Allocator::Allocate(size_t size) {
 	return SYS_ALLOC(size);
 }
 
-void* Allocator::Reallocate(void* ptr, size_t size) {
-	return SYS_REALLOC(ptr, size);
+void* Allocator::Reallocate(void* ptr, size_t size, size_t oldSize) {
+	return SYS_REALLOC(ptr, size, oldSize);
 }
 
 void Allocator::Free(void* ptr) {

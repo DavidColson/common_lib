@@ -41,5 +41,7 @@ solution "CommonLib"
             "string_builder.h",
             "testing.h",
             "memory_tracker.h",
-            "memory_tracker.cpp"
+            "memory_tracker.cpp",
+            "linear_allocator.h",
+            "linear_allocator.cpp"
         }

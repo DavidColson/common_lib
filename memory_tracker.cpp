@@ -12,7 +12,7 @@ struct ForceNoTrackAllocator {
 	ForceNoTrackAllocator(const char* _name) {}
 
 	void* 	Allocate(size_t size) { return malloc(size); }
-	void* 	Reallocate(void* ptr, size_t size) { return realloc(ptr, size); }
+	void* 	Reallocate(void* ptr, size_t size, size_t oldSize) { return realloc(ptr, size); }
 	void 	Free(void* ptr) { free(ptr); }
 
 	const char* GetName() { return ""; }
@@ -21,6 +21,7 @@ struct ForceNoTrackAllocator {
 
 struct Allocation {
 	void* pointer { nullptr };
+	void* pAllocator { nullptr };
 	size_t size { 0 };
 	bool isLive { false };
 	void* allocStackTrace[100];
@@ -37,47 +38,63 @@ namespace {
 	MemoryTrackerState* pCtx { nullptr };
 };
 
-void* MallocTrack(size_t size) {
-	if (pCtx == nullptr)
-	{
-		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-		SYS_P_NEW(pCtx) MemoryTrackerState();
-	}
-
+void* MallocWrap(size_t size) {
 	void* pMemory = malloc(size);
-
-	Allocation allocation;
-	allocation.pointer = pMemory;
-	allocation.size = size;
-	allocation.isLive = true;
-	allocation.allocStackTraceFrames = CaptureStackBackTrace(1, 100, allocation.allocStackTrace, nullptr);
-	pCtx->allocationTable[pMemory] = allocation;
-
+	CheckMalloc(nullptr, pMemory, size);
 	return pMemory;
 }
 
-void* ReallocTrack(void* ptr, size_t size) {
+void* ReallocWrap(void* ptr, size_t size, size_t oldSize) {
+	void* pMemory = realloc(ptr, size);
+	CheckRealloc(nullptr, pMemory, ptr, size, oldSize);
+	return pMemory;
+}
+
+void FreeWrap(void* ptr) {
+	CheckFree(nullptr, ptr);
+	free(ptr);
+}
+
+void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
 	if (pCtx == nullptr)
 	{
 		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
 		SYS_P_NEW(pCtx) MemoryTrackerState();
 	}
 
-	void* pMemory = realloc(ptr, size);
+	Allocation allocation;
+	allocation.pointer = pAllocated;
+	allocation.pAllocator = pAllocatorPtr;
+	allocation.size = size;
+	allocation.isLive = true;
+	allocation.allocStackTraceFrames = CaptureStackBackTrace(1, 100, allocation.allocStackTrace, nullptr);
+	pCtx->allocationTable[pAllocated] = allocation;
+}
+
+void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size, size_t oldSize) {
+	if (pCtx == nullptr)
+	{
+		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
+		SYS_P_NEW(pCtx) MemoryTrackerState();
+	}
 
 	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) { // pre-existing allocation
-		if (alloc->pointer != pMemory) { // Memory has changed location, so we must change the key
+		if (alloc->pAllocator != pAllocatorPtr)
+			__debugbreak();
+		
+		if (alloc->pointer != pAllocated) { // Memory has changed location, so we must change the key
 			// old alloc is effectively freed
 			alloc->isLive = false;
 			alloc->allocStackTraceFrames = CaptureStackBackTrace(1, 100, alloc->freeStackTrace, nullptr);
 
 			Allocation newAlloc;
-			newAlloc.pointer = pMemory;
+			newAlloc.pointer = pAllocated;
+			newAlloc.pAllocator = pAllocatorPtr;
 			newAlloc.size = size;
 			newAlloc.isLive = true;
 			newAlloc.allocStackTraceFrames = CaptureStackBackTrace(1, 100, newAlloc.allocStackTrace, nullptr);
 			pCtx->allocationTable.Erase(alloc->pointer);
-			pCtx->allocationTable[pMemory] = newAlloc;
+			pCtx->allocationTable[pAllocated] = newAlloc;
 		}
 		else
 		{
@@ -86,15 +103,13 @@ void* ReallocTrack(void* ptr, size_t size) {
 	}
 	else { // new allocation
 		Allocation allocation;
-		allocation.pointer = pMemory;
+		allocation.pointer = pAllocated;
+		allocation.pAllocator = pAllocatorPtr;
 		allocation.size = size;
 		allocation.isLive = true;
 		allocation.allocStackTraceFrames = CaptureStackBackTrace(1, 100, allocation.allocStackTrace, nullptr);
-		pCtx->allocationTable[pMemory] = allocation;
-		return pMemory;
+		pCtx->allocationTable[pAllocated] = allocation;
 	}
-
-	return pMemory;
 }
 
 void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
@@ -125,8 +140,8 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 		if (len > longestName)
 			longestName = len;
 
-		stackFuncs.PushBack(CopyCString(symbol->Name, true, ForceNoTrackAllocator()));
-		stackFiles.PushBack(CopyCString(line.FileName, true, ForceNoTrackAllocator()));
+		stackFuncs.PushBack(CopyCString(symbol->Name, ForceNoTrackAllocator()));
+		stackFiles.PushBack(CopyCString(line.FileName, ForceNoTrackAllocator()));
 		stackLines.PushBack((size_t)line.LineNumber);
 	}
 
@@ -157,7 +172,7 @@ void ReportUnknownFree(void* ptr) {
 	__debugbreak();
 }
 
-void FreeTrack(void* ptr) {
+void CheckFree(void* pAllocatorPtr, void* ptr) {
 	if (pCtx == nullptr)
 	{
 		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
@@ -165,6 +180,9 @@ void FreeTrack(void* ptr) {
 	}
 
 	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) {
+		if (alloc->pAllocator != pAllocatorPtr)
+			__debugbreak();
+
 		if (!alloc->isLive) {
 			void* stackTrace[100];
 			uint32_t stackFrames = CaptureStackBackTrace(1, 100, stackTrace, nullptr);
@@ -177,10 +195,12 @@ void FreeTrack(void* ptr) {
 	else {
 		ReportUnknownFree(ptr);
 	}
-	free(ptr);
 }
 
 int ReportMemoryLeaks() {
+	if (pCtx == nullptr)
+		return 0;
+
 	int leakCounter = 0;
 	for (size_t i = 0; i < pCtx->allocationTable.tableSize; i++)
 	{

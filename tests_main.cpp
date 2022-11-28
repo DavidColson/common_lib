@@ -1,3 +1,4 @@
+#include "linear_allocator.h"
 #include "string.h"
 #include "string_builder.h"
 #include "hashmap.h"
@@ -22,10 +23,6 @@ privDefer<F> defer_func(F f) {
 #define DEFER_2(x, y) DEFER_1(x, y)
 #define DEFER_3(x)    DEFER_2(x, __COUNTER__)
 #define defer(code)   auto DEFER_3(_defer_) = defer_func([&]() { code; })
-
-// Hash Node used in hashmap below
-// -------------------------------
-
 
 
 // ---------------------
@@ -301,44 +298,53 @@ int ResizableArrayTest() {
 		VERIFY(testArray.capacity == 0);
 		testArray.Free();
 		testArray.Free();
-
-		// TODO: test with strings and non pod stuff
 	}
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
     return 0;
 }  
 
+
+void LinearAllocatorTest() {
+	StartTest("LinearAllocator Test");
+	int errorCount = 0;
+	{
+		LinearAllocator davesAllocator("Test Allocator");
+
+		// No freeing required!
+		ResizableArray<int, LinearAllocatorRef> myArray(davesAllocator);
+		for (int i = 0; i < 3000; i++) {
+			myArray.PushBack(i);
+		}
+
+		HashMap<int, int, LinearAllocatorRef> testMap(davesAllocator);
+		srand(7);
+		for (int i = 100; i > 0; i--) {
+			testMap.Add(rand(), i);
+		}
+
+		ResizableArray<String, LinearAllocatorRef> myStringArray(davesAllocator);
+		for (int i = 0; i < 1000; i++) {
+			StringBuilder<LinearAllocatorRef> builder(davesAllocator);
+			builder.AppendFormat("Hello %i", i);
+			myStringArray.PushBack(builder.CreateString());
+			myStringArray.PushBack(CopyCString<LinearAllocatorRef>("world", davesAllocator));
+		}
+		
+		davesAllocator.Finished();
+	}
+	errorCount += ReportMemoryLeaks();
+	EndTest(errorCount);
+}
+
 // Goals:
 // No copy constructors
 // No constructors, POD data everywhere
 // Explicit memory operations for things
 
-// TODO: 
-// [x] Make a dynamic array class
-// [x] Install VS2022 and try out address sanitizer
-// [x] Change array to use realloc it's cool
-// [x] Make a dynamic string class inspired by ImGuiTextBuffer and built on dyn array
-// [x] Make a string view class
-// [x] Make a simple hash map class
-// [x] Make a custom allocator mechanism for commonLib
-// [x] Create a memory tracker similar to jai which wraps around alloc/realloc/free for commonLib
-// [x] New POD string types that do no memory operations
-// [x] string builder class
-// [x] Array becomes resizeable array (that is not automatically freed)
-// [x] Rewrite hashmap to be open addressing table and to not support non-POD data types
-// [x] Mem tracker spits out error messages for Unknown Memory and Double free memory
-// [ ] Make linear pool allocator
-// [ ] Experiment with memory alignment in our custom allocators (i.e. perf before after alignment)
-// [ ] Container constructors allow runtime allocator assignment
-
-
-// Jai's Pool allocator
-// Linked list of blocks basically, allocates a new one if you try get memory more than is free in the existing block
-
-
 
 int main() {
+	LinearAllocatorTest();
 	HashMapTest();
 	StringTest();
 	ResizableArrayTest();

@@ -15,7 +15,7 @@
 
 // Dynamic String Class
 // --------------------
-// Non-null terminated string
+// Null terminated string
 // The functions in this struct guarantee to do zero memory operations
 // and is fully POD, trivially copyable
 // TODO: Documentation
@@ -71,19 +71,19 @@ struct String {
 };
 
 template<typename AllocatorType = Allocator>
-String CopyCString(const char* string, bool withTerminator=false, AllocatorType allocator = Allocator()) {
+String CopyCString(const char* string, AllocatorType allocator = Allocator()) {
 	String s;
 	size_t len = strlen(string);
-	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
+	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char));
 	s.length = len;
 	memcpy(s.pData, string, (len+1) * sizeof(char));
 	return s;
 }
 
 template<typename AllocatorType = Allocator>
-String CopyString(String& string, bool withTerminator=false, AllocatorType allocator = Allocator()) {
+String CopyString(String& string, AllocatorType allocator = Allocator()) {
 	String s;
-	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char)); // TODO don't copy the terminator when class is fully non-null terminated
+	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char));
 	s.length = string.length;
 	memcpy(s.pData, string.pData, string.length * sizeof(char));
 	s.pData[string.length] = 0;
