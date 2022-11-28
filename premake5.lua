@@ -43,5 +43,9 @@ solution "CommonLib"
             "memory_tracker.h",
             "memory_tracker.cpp",
             "linear_allocator.h",
-            "linear_allocator.cpp"
+            "linear_allocator.cpp",
+            "json.cpp",
+            "json.h",
+            "scanning.h",
+            "scanning.cpp"
         }

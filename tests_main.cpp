@@ -1,3 +1,5 @@
+
+#include "json.h"
 #include "linear_allocator.h"
 #include "string.h"
 #include "string_builder.h"
@@ -337,13 +339,63 @@ void LinearAllocatorTest() {
 	EndTest(errorCount);
 }
 
+void JsonTest() {
+	StartTest("Json Test");
+	int errorCount = 0;
+	{
+		const char* json = 
+			"{\"widget\": {"
+			"\"debug\": \"on\","
+			"\"window\": {"
+			"	\"title\": \"Sample Konfabulator Widget\","
+			"	\"name\": \"main_window\","
+			"	\"width\": 500,"
+			"	\"height\": 500"
+			"},"
+			"\"image\": { "
+			"	\"src\": \"Images/Sun.png\","
+			"	\"name\": \"sun1\","
+			"	\"hOffset\": 250,"
+			"	\"vOffset\": 250,"
+			"	\"alignment\": \"center\""
+			"},"
+			"\"text\": {"
+			"	\"data\": \"Click Here\","
+			"	\"size\": 36,"
+			"	\"style\": \"bold\","
+			"	\"name\": \"text1\","
+			"	\"hOffset\": 250,"
+			"	\"vOffset\": 100,"
+			"	\"alignment\": \"center\","
+			"	\"onMouseUp\": \"sun1.opacity = (sun1.opacity / 100) * 90;\""
+			"}"
+			"}}";
+
+		String jsonString;
+		jsonString = json;
+		JsonValue v = ParseJsonFile(jsonString);
+		defer(v.Free());
+
+		VERIFY(v["widget"]["debug"].ToString() == "on");
+		VERIFY(v["widget"]["window"]["width"].ToInt() == 500);
+		VERIFY(v["widget"]["image"]["src"].ToString() == "Images/Sun.png");
+		VERIFY(v["widget"]["text"]["hOffset"].ToInt() == 250);
+
+		//String s = SerializeJsonValue(v);
+		//printf("%s", s.pData);
+		//FreeString(s);
+	}
+	errorCount += ReportMemoryLeaks();
+	EndTest(errorCount);
+}
+
 // Goals:
 // No copy constructors
 // No constructors, POD data everywhere
 // Explicit memory operations for things
 
-
 int main() {
+	JsonTest();
 	LinearAllocatorTest();
 	HashMapTest();
 	StringTest();
