@@ -255,16 +255,16 @@ struct HashMap {
 	template<typename F>
 	void Free(F&& freeNode) {
 		for (uint32_t i = 0; i < bucketCount; i++) {
-		HashNode<K, V>* pEntry = pTable[i];
-		while (pEntry != nullptr) {
-			HashNode<K, V>* pPrev = pEntry;
-			pEntry = pEntry->pNext;
-			if (pEntry) {
-				freeNode(pEntry);
-				allocator.Free(pPrev);
+			HashNode<K, V>* pEntry = pTable[i];
+			while (pEntry != nullptr) {
+				HashNode<K, V>* pPrev = pEntry;
+				pEntry = pEntry->pNext;
+				if (pEntry) {
+					freeNode(pEntry);
+					allocator.Free(pPrev);
+				}
 			}
-		}
-		pTable[i] = nullptr;
+			pTable[i] = nullptr;
 		}
 		allocator.Free(pTable);
 	}

@@ -26,12 +26,12 @@ privDefer<F> defer_func(F f) {
 // Hash Node used in hashmap below
 // -------------------------------
 
-#define NEVER_OCCUPIED_HASH 0
+#define UNUSED_HASH 0
 #define FIRST_VALID_HASH 1
 
 template<typename K, typename V>
 struct HashNode2 {
-	uint64_t hash { 0 };
+	uint64_t hash { UNUSED_HASH };
 	K key;
 	V value;
 };
@@ -40,45 +40,139 @@ template<typename K, typename V, typename AllocatorType = Allocator, typename KF
 struct HashMap2 {
 	HashNode2<K, V>* pTable { nullptr };
 	KF keyFuncs;
-	size_t tableSize { 0 }
-	size_t count { 0 }
+	size_t tableSize { 0 };
+	size_t count { 0 };
 	AllocatorType allocator;
 
-	void tempInit(size_t tableSize) {
-		pTable = (HashNode2<K, V>*)allocator.Allocate(tableSize * sizeof(HashNode<K, V>));
+	void Free() {
+		allocator.Free(pTable);
 	}
 
-	void Add(const Key& key, const V& value) {
-		// How the fuck does open addressing work?
-		
-		// Same load factor stuff, expand allocated space if load factor goes above 1
-		// https://www.geeksforgeeks.org/open-addressing-collision-handling-technique-in-hashing/#:~:text=In%20Open%20Addressing%2C%20all%20elements,also%20known%20as%20closed%20hashing.
-		// https://fgiesen.wordpress.com/2015/02/22/triangular-numbers-mod-2n/
+	template<typename F>
+	void Free(F&& freeNode) {
+		for (size_t i = 0; i < tableSize; i++) {
+			if (pTable[i] != UNUSED_HASH) {
+				freeNode(pTable[i]);
+			}
+		}
+		allocator.Free(pTable);
+	}
 
-		float loadFactor = count / tableSize;
-		if (loadFactor > 1.0f) __debugbreak(); // TODO: Rehash here, must stop now because it'll infinite loop
+	V& Add(const K& key, const V& value) {
+		float loadFactor = tableSize == 0 ? INT_MAX : (float)count / (float)tableSize;
+		if (loadFactor >= 1.0f) Rehash(tableSize + 1);
 
 		uint64_t hash = keyFuncs.Hash(key);
 		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
-
 		uint64_t index = hash % tableSize;
 		uint64_t probeCounter = 1;
 
-		while (pTable[index].hash != NEVER_OCCUPIED_HASH) {
+		while (pTable[index].hash != UNUSED_HASH) {
 			index = (index + probeCounter) % tableSize;
 			probeCounter++;
 		}
 
-		// Index is now where we must put a new element
 		HashNode2<K, V>& node = pTable[index];
 		node.hash = hash;
 		node.key = key;
 		node.value = value;
 		count++;
+		return node.value;
+	}
+
+	V* Get(const K& key) {
+		if (tableSize == 0) return nullptr;
+
+		uint64_t hash = keyFuncs.Hash(key);
+		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
+		uint64_t index = hash % tableSize;
+		uint64_t probeCounter = 1;
+
+		while (pTable[index].hash != UNUSED_HASH) {
+			if (keyFuncs.Cmp(pTable[index].key, key)) {
+				return &pTable[index].value;
+			}
+			index = (index + probeCounter) % tableSize;
+			probeCounter++;
+		}
+		return nullptr;
+	}
+
+	V& GetOrAdd(const K& key) {
+		if (tableSize == 0) {
+			V value = V();
+			return Add(key, value);
+		}
+
+		uint64_t hash = keyFuncs.Hash(key);
+		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
+		uint64_t index = hash % tableSize;
+		uint64_t probeCounter = 1;
+
+		while (pTable[index].hash != UNUSED_HASH) {
+			if (keyFuncs.Cmp(pTable[index].key, key)) {
+				return pTable[index].value;
+			}
+			index = (index + probeCounter) % tableSize;
+			probeCounter++;
+		}
+		V value = V();
+		return Add(key, value);
 	}
 
 	V& operator[](const K& key) {
-		
+		return GetOrAdd(key);
+	}
+
+	void Erase(const K& key) {
+		Erase(key, [](HashNode2<K, V>) {});
+	}
+	
+	template<typename F>
+	void Erase(const K& key, F&& freeNode) {
+		if (tableSize == 0) return;
+
+		uint64_t hash = keyFuncs.Hash(key);
+		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
+		uint64_t index = hash % tableSize;
+		uint64_t probeCounter = 1;
+
+		while (pTable[index].hash != UNUSED_HASH) {
+			if (keyFuncs.Cmp(pTable[index].key, key)) {
+				// Found the node
+				freeNode(pTable[index]);
+				memset(&pTable[index], 0, sizeof(HashNode2<K, V>));
+				count--;
+			}
+			index = (index + probeCounter) % tableSize;
+			probeCounter++;
+		}
+	}
+
+	void Rehash(size_t requiredTableSize) {
+		if (requiredTableSize < tableSize)
+			return;
+
+		HashNode2<K, V>* pTableOld = pTable;
+
+		// Double the table size until we can fit required table size
+		constexpr size_t minTableSize = 32;
+		size_t newTableSize = tableSize == 0 ? minTableSize : tableSize * 2;
+		while (newTableSize < (requiredTableSize > minTableSize ? requiredTableSize : minTableSize))
+			newTableSize *= 2;
+
+		pTable = (HashNode2<K, V>*)allocator.Allocate(newTableSize * sizeof(HashNode2<K, V>));
+		memset(pTable, 0, newTableSize * sizeof(HashNode<K, V>));
+
+		size_t oldTableSize = tableSize;
+		tableSize = newTableSize;
+		for (int i = 0; i < oldTableSize; i++) {
+			if (pTableOld[i].hash != UNUSED_HASH) {
+				Add(pTableOld[i].key, pTableOld[i].value);
+				count--;
+			}
+		}
+		if (pTableOld) allocator.Free(pTableOld);
 	}
 };
 
@@ -86,8 +180,150 @@ struct HashMap2 {
 // Tests
 // ---------------------
 
-int HashMap2Test() {
+struct CustomKeyType {
+	int thing;
+	int thing2;
+};
 
+// Your custom type must define KeyFuncs to be able to used as a key
+template<>
+struct KeyFuncs<CustomKeyType> {
+	uint64_t Hash(const CustomKeyType& key) const
+	{
+		// This is probably not a good hash method for this type
+		// But it serves for demonstration
+		return static_cast<uint64_t>(key.thing + key.thing2);
+	}
+	bool Cmp(const CustomKeyType& key1, const CustomKeyType& key2) const {
+		return key1.thing == key2.thing && key1.thing2 == key2.thing2;
+	}
+};
+
+int HashMap2Test() {
+	StartTest("HashMap2 Test");
+	int errorCount = 0;
+	{
+		HashMap2<int, int> testMap;
+		defer(testMap.Free());
+
+		testMap.Add(1337, 22);
+		testMap.Add(52, 21);
+		testMap.Add(87, 20);
+		testMap.Add(12, 19);
+		testMap.Add(18832, 18);
+		testMap.Add(875, 17);
+		testMap.Add(123, 16);
+		testMap.Add(9812, 15);
+		VERIFY(testMap.tableSize == 32);
+		VERIFY(testMap.count == 8);
+
+		VERIFY(*testMap.Get(1337) == 22);
+		VERIFY(*testMap.Get(52) == 21);
+		VERIFY(*testMap.Get(87) == 20);
+		VERIFY(*testMap.Get(12) == 19);
+		VERIFY(*testMap.Get(18832) == 18);
+		VERIFY(*testMap.Get(875) == 17);
+		VERIFY(*testMap.Get(123) == 16);
+		VERIFY(*testMap.Get(9812) == 15);
+
+		testMap.Erase(123);
+		testMap.Erase(12);
+		testMap.Erase(87);
+		VERIFY(testMap.count == 5);
+		VERIFY(testMap.Get(123) == nullptr);
+		VERIFY(testMap.Get(12) == nullptr);
+		VERIFY(testMap.Get(87) == nullptr);
+
+		HashMap2<String, int> testMap2;
+		defer(testMap2.Free());
+		
+		testMap2.GetOrAdd("Dave") = 27;
+		testMap2.GetOrAdd("Lucy") = 27;
+		testMap2["Jonny"] = 28;
+		testMap2["Mark"] = 30;
+		VERIFY(testMap2.tableSize == 32);
+		VERIFY(testMap2.count == 4);
+
+		VERIFY(testMap2["Dave"] == 27);
+		VERIFY(testMap2["Lucy"] == 27);
+		VERIFY(testMap2["Jonny"] == 28);
+		VERIFY(testMap2["Mark"] == 30);
+
+		// Test rehashing
+		HashMap2<int, int> testMap3;
+		defer(testMap3.Free());
+		
+		srand(7);
+		for (int i = 100; i > 0; i--) {
+			testMap3.Add(rand(), i);
+		}
+		VERIFY(testMap3[6280] == 37);
+		VERIFY(testMap3[10780] == 4);
+		VERIFY(testMap3[9087] == 13);
+		VERIFY(testMap3[9185] == 79);
+		VERIFY(testMap3.tableSize == 128);
+		VERIFY(testMap3.count == 100);
+
+		// Testing some other common key types		
+		HashMap2<float, int> floatMap;
+		floatMap[28.31f] = 1337;
+		floatMap[4.1231f] = 1338;
+		floatMap[0.78f] = 1339;
+		VERIFY(floatMap[28.31f] == 1337);
+		VERIFY(floatMap[4.1231f] == 1338);
+		VERIFY(floatMap[0.78f] == 1339);
+		floatMap.Free();
+
+		HashMap2<char, int> charMap;
+		charMap['c'] = 1337;
+		charMap['8'] = 1338;
+		charMap['U'] = 1339;
+		VERIFY(charMap['c'] == 1337);
+		VERIFY(charMap['8'] == 1338);
+		VERIFY(charMap['U'] == 1339);
+		charMap.Free();
+
+		HashMap2<const char*, int> cStringMap;
+		cStringMap["Ducks"] = 1337;
+		cStringMap["Cars"] = 1338;
+		cStringMap["Hats"] = 1339;
+		VERIFY(cStringMap["Ducks"] == 1337);
+		VERIFY(cStringMap["Cars"] == 1338);
+		VERIFY(cStringMap["Hats"] == 1339);
+		cStringMap.Free();
+
+		int arr[3];
+		arr[0] = 3;
+		arr[1] = 2;
+		arr[2] = 1;
+
+		HashMap2<int*, int> pointerMap;
+		pointerMap[arr] = 1337;
+		pointerMap[arr + 1] = 1338;
+		pointerMap[arr + 2] = 1339;
+		VERIFY(pointerMap[arr] == 1337);
+		VERIFY(pointerMap[arr + 1] == 1338);
+		VERIFY(pointerMap[arr + 2] == 1339);
+		pointerMap.Free();
+
+		// Custom Key Types
+		CustomKeyType one { 1, 2 };
+		CustomKeyType two { 4, 1 };
+		CustomKeyType three { 3, 8 };
+
+		HashMap2<CustomKeyType, int> customMap;
+		customMap[one] = 1337;
+		customMap[two] = 1338;
+		customMap[three] = 1339;
+		VERIFY(customMap[one] == 1337);
+		VERIFY(customMap[two] == 1338);
+		VERIFY(customMap[three] == 1339);
+		customMap.Free();
+		
+	}
+	errorCount += ReportMemoryLeaks();
+	EndTest(errorCount);
+	return 0;
 }
 
 int StringTest() {
@@ -141,25 +377,6 @@ int StringTest() {
 	EndTest(errorCount);
 	return 0;
 }
-
-struct CustomKeyType {
-	int thing;
-	int thing2;
-};
-
-// Your custom type must define KeyFuncs to be able to used as a key
-template<>
-struct KeyFuncs<CustomKeyType> {
-	uint64_t Hash(const CustomKeyType& key) const
-	{
-		// This is probably not a good hash method for this type
-		// But it serves for demonstration
-		return static_cast<uint64_t>(key.thing + key.thing2);
-	}
-	bool Cmp(const CustomKeyType& key1, const CustomKeyType& key2) const {
-		return key1.thing == key2.thing && key1.thing2 == key2.thing2;
-	}
-};
 
 int HashMapTest() {
 	StartTest("HashMap Test");
@@ -411,9 +628,9 @@ int ResizableArrayTest() {
 
 
 int main() {
+	HashMap2Test();
 	StringTest();
 	ResizableArrayTest();
-	HashMapTest();
 	__debugbreak();
     return 0;
 }
