@@ -188,7 +188,7 @@ struct HashMap {
 	template<typename F>
 	void Free(F&& freeNode) {
 		for (size_t i = 0; i < tableSize; i++) {
-			if (pTable[i] != UNUSED_HASH) {
+			if (pTable[i].hash != UNUSED_HASH) {
 				freeNode(pTable[i]);
 			}
 		}
@@ -240,6 +240,9 @@ struct HashMap {
 			V value = V();
 			return Add(key, value);
 		}
+
+		float loadFactor = tableSize == 0 ? INT_MAX : (float)count / (float)tableSize;
+		if (loadFactor >= 1.0f) Rehash(tableSize + 1);
 
 		uint64_t hash = keyFuncs.Hash(key);
 		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
