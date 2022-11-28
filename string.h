@@ -81,6 +81,17 @@ String CopyCString(const char* string, AllocatorType allocator = Allocator()) {
 }
 
 template<typename AllocatorType = Allocator>
+String CopyCStringRange(char* start, char* end, AllocatorType allocator = Allocator()) {
+	String s;
+	size_t len = end - start;
+	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char));
+	s.length = len;
+	memcpy(s.pData, start, len * sizeof(char));
+	s.pData[s.length] = 0;
+	return s;
+}
+
+template<typename AllocatorType = Allocator>
 String CopyString(String& string, AllocatorType allocator = Allocator()) {
 	String s;
 	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char));

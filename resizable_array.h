@@ -73,12 +73,12 @@ struct ResizableArray {
 		count--;
 	}
 
-	type& operator[](uint32_t i) {
+	type& operator[](size_t i) {
 		DEBUG_CHECK(i >= 0 && i < count);
 		return pData[i];
 	}
 	
-	const type& operator[](uint32_t i) const {
+	const type& operator[](size_t i) const {
 		DEBUG_CHECK(i >= 0 && i < count);
 		return pData[i];
 	}
@@ -88,7 +88,7 @@ struct ResizableArray {
 		capacity = 0;
 	}
 
-	void Erase(uint32_t index) {
+	void Erase(size_t index) {
 		DEBUG_CHECK(index >= 0 && index < count);
 		if (index == count-1) {
 			PopBack(); count--;
@@ -99,7 +99,7 @@ struct ResizableArray {
 		}
 	}
 
-	void EraseUnsorted(uint32_t index) {
+	void EraseUnsorted(size_t index) {
 		DEBUG_CHECK(index >= 0 && index < count);
 		if (index == count-1) {
 			PopBack(); count--;
@@ -110,7 +110,7 @@ struct ResizableArray {
 		}
 	}
 	
-	void Insert(uint32_t index, const type& value) {
+	void Insert(size_t index, const type& value) {
 		DEBUG_CHECK(index >= 0 && index < count);
 		if (capacity == count) Reserve(GrowCapacity(count + 1));
 		memmove(pData + (index + 1), pData + index, (count-index) * sizeof(type));

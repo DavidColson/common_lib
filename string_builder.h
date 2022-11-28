@@ -23,9 +23,10 @@ struct StringBuilder {
 	}
 
 	void AppendChars(const char* str, uint32_t len) {
-		Reserve(GrowCapacity(length + len));
+		Reserve(GrowCapacity(length + len + 1));
 		memcpy(pData + length, str, len);
 		length += len;
+		pData[length] = 0;
 	}
 
 	void Append(const char* str) {
@@ -60,9 +61,9 @@ struct StringBuilder {
 		va_end(args);
 	}
 
-	String CreateString(bool withTerminator = false, bool reset = true) {
+	String CreateString(bool reset = true) {
 		String output = AllocString(length+1, allocator);
-		memcpy(output.pData, pData, (length+1) * sizeof(char));
+		memcpy(output.pData, pData, length * sizeof(char));
 		output.pData[length] = 0;
 		output.length = length;
 

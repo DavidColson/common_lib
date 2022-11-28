@@ -150,10 +150,10 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 	}
 
 	stackFuncs.Free([] (String& str) {
-	                FreeString(str, ForceNoTrackAllocator());
+		FreeString(str, ForceNoTrackAllocator());
 	});
 	stackFiles.Free([] (String& str) {
-	                FreeString(str, ForceNoTrackAllocator());
+		FreeString(str, ForceNoTrackAllocator());
 	});
 	stackLines.Free();
 }
@@ -204,14 +204,13 @@ int ReportMemoryLeaks() {
 	int leakCounter = 0;
 	for (size_t i = 0; i < pCtx->allocationTable.tableSize; i++)
 	{
-		if (pCtx->allocationTable.pTable[i].hash == UNUSED_HASH) {
-			i++; continue;
-		}
-		Allocation& alloc = pCtx->allocationTable.pTable[i].value;
-		if (alloc.isLive) {
-			leakCounter++;
-			printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n", alloc.pointer, alloc.size);
-			PrintStackTrace(alloc.allocStackTrace, alloc.allocStackTraceFrames);
+		if (pCtx->allocationTable.pTable[i].hash != UNUSED_HASH) {
+			Allocation& alloc = pCtx->allocationTable.pTable[i].value;
+			if (alloc.isLive) {
+				leakCounter++;
+				printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n", alloc.pointer, alloc.size);
+				PrintStackTrace(alloc.allocStackTrace, alloc.allocStackTraceFrames);
+			}
 		}
 	}
 
