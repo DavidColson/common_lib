@@ -9,20 +9,17 @@
 // TODO: Documentation
 
 
-template<typename AllocatorType = Allocator>
 struct StringBuilder {
 	char* pData = nullptr;
-	uint32_t length = 0;
-	uint32_t capacity = 0;
-	AllocatorType allocator;
+	size_t length = 0;
+	size_t capacity = 0;
+	IAllocator* pAlloc { nullptr };
 
-	StringBuilder() {}
-
-	StringBuilder(AllocatorType _allocator) {
-		allocator = _allocator;
+	StringBuilder(IAllocator* _pAlloc = &gAllocator) {
+		pAlloc = _pAlloc;
 	}
 
-	void AppendChars(const char* str, uint32_t len) {
+	void AppendChars(const char* str, size_t len) {
 		Reserve(GrowCapacity(length + len + 1));
 		memcpy(pData + length, str, len);
 		length += len;
@@ -30,7 +27,7 @@ struct StringBuilder {
 	}
 
 	void Append(const char* str) {
-		uint32_t addedLength = (uint32_t)strlen(str);
+		size_t addedLength = strlen(str);
 		AppendChars(str, addedLength);
 	}
 
@@ -61,8 +58,8 @@ struct StringBuilder {
 		va_end(args);
 	}
 
-	String CreateString(bool reset = true) {
-		String output = AllocString(length+1, allocator);
+	String CreateString(IAllocator* _pAlloc, bool reset = true) {
+		String output = AllocString(_pAlloc, length+1);
 		memcpy(output.pData, pData, length * sizeof(char));
 		output.pData[length] = 0;
 		output.length = length;
@@ -72,23 +69,23 @@ struct StringBuilder {
 	}
 
 	void Reset() {
-		allocator.Free(pData);
+		pAlloc->Free(pData);
 		pData = nullptr;
 		length = 0;
 		capacity = 0;
 	}
 
-	void Reserve(uint32_t desiredCapacity) {
+	void Reserve(size_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		pData = (char*)allocator.Reallocate(pData, desiredCapacity * sizeof(char), capacity * sizeof(char));
+		pData = (char*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(char), capacity * sizeof(char));
 		capacity = desiredCapacity;
 	}
 
-	uint32_t GrowCapacity(uint32_t atLeastSize) const {
+	size_t GrowCapacity(size_t atLeastSize) const {
 		// if we're big enough already, don't grow, otherwise double, 
 		// and if that's not enough just use atLeastSize
 		if (capacity > atLeastSize) return capacity;
-		uint32_t newCapacity = capacity ? capacity * 2 : 8;
+		size_t newCapacity = capacity ? capacity * 2 : 8;
 		return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 	}
 };

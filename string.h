@@ -70,48 +70,12 @@ struct String {
 	}
 };
 
-template<typename AllocatorType = Allocator>
-String CopyCString(const char* string, AllocatorType allocator = Allocator()) {
-	String s;
-	size_t len = strlen(string);
-	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char));
-	s.length = len;
-	memcpy(s.pData, string, (len+1) * sizeof(char));
-	return s;
-}
+String CopyCString(IAllocator* pAlloc, const char* string);
 
-template<typename AllocatorType = Allocator>
-String CopyCStringRange(char* start, char* end, AllocatorType allocator = Allocator()) {
-	String s;
-	size_t len = end - start;
-	s.pData = (char*)allocator.Allocate((len+1) * sizeof(char));
-	s.length = len;
-	memcpy(s.pData, start, len * sizeof(char));
-	s.pData[s.length] = 0;
-	return s;
-}
+String CopyCStringRange(IAllocator* pAlloc, char* start, char* end);
 
-template<typename AllocatorType = Allocator>
-String CopyString(String& string, AllocatorType allocator = Allocator()) {
-	String s;
-	s.pData = (char*)allocator.Allocate((string.length+1) * sizeof(char));
-	s.length = string.length;
-	memcpy(s.pData, string.pData, string.length * sizeof(char));
-	s.pData[string.length] = 0;
-	return s;
-}
+String CopyString(IAllocator* pAlloc, String& string);
 
-template<typename AllocatorType = Allocator>
-String AllocString(size_t length, AllocatorType allocator = Allocator()) {
-	String s;
-	s.pData = (char*)allocator.Allocate(length * sizeof(char));
-	s.length = length;
-	return s;
-}
+String AllocString(IAllocator* pAlloc, size_t length);
 
-template<typename AllocatorType = Allocator>
-void FreeString(String& string, AllocatorType allocator = Allocator()) {
-	allocator.Free(string.pData);
-	string.pData = nullptr;
-	string.length = 0;
-}
+void FreeString(IAllocator* pAlloc, String& string);

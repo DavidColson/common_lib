@@ -46,16 +46,17 @@ struct JsonValue
 	void Free();
 
 	Type m_type;
-	union Data
+	IAllocator* pAllocator{ nullptr };
+	union
 	{
-		ResizableArray<JsonValue> m_pArray{};
+		double m_floatingNumber { 0.0f };
 		HashMap<String, JsonValue> m_pObject;
+		ResizableArray<JsonValue> m_pArray;
 		String m_pString;
-		double m_floatingNumber;
 		long m_integerNumber;
 		bool m_boolean;
-	} m_internalData;
+	};
 };
 
-JsonValue ParseJsonFile(String file);
+JsonValue ParseJsonFile(IAllocator* pAllocator, String file);
 String SerializeJsonValue(JsonValue json);

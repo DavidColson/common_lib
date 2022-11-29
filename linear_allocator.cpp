@@ -21,14 +21,6 @@ uint8_t* AlignPtr(uint8_t* toAlign, size_t alignment) {
 	return (uint8_t*)Align(size_t(toAlign), alignment);
 }
 
-LinearAllocator::LinearAllocator() {
-
-}
-
-LinearAllocator::LinearAllocator(const char* _name) {
-	name = _name;
-}
-
 void* LinearAllocator::Allocate(size_t size) {
 	if (pMemoryBase == nullptr) Init();
 

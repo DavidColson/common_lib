@@ -167,22 +167,20 @@ struct HashNode {
 #define UNUSED_HASH 0
 #define FIRST_VALID_HASH 1
 
-template<typename K, typename V, typename AllocatorType = Allocator, typename KF = KeyFuncs<K>>
+template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {
 	HashNode<K, V>* pTable { nullptr };
 	KF keyFuncs;
 	size_t tableSize { 0 };
 	size_t count { 0 };
-	AllocatorType allocator;
+	IAllocator* pAlloc { nullptr };
 
-	HashMap() {}
-
-	HashMap(AllocatorType _allocator) {
-		allocator = _allocator;
+	HashMap(IAllocator* _pAlloc = &gAllocator) {
+		pAlloc = _pAlloc;
 	}
 
 	void Free() {
-		allocator.Free(pTable);
+		pAlloc->Free(pTable);
 	}
 
 	template<typename F>
@@ -192,7 +190,7 @@ struct HashMap {
 				freeNode(pTable[i]);
 			}
 		}
-		allocator.Free(pTable);
+		pAlloc->Free(pTable);
 	}
 
 	V& Add(const K& key, const V& value) {
@@ -301,7 +299,7 @@ struct HashMap {
 		while (newTableSize < (requiredTableSize > minTableSize ? requiredTableSize : minTableSize))
 			newTableSize *= 2;
 
-		pTable = (HashNode<K, V>*)allocator.Allocate(newTableSize * sizeof(HashNode<K, V>));
+		pTable = (HashNode<K, V>*)pAlloc->Allocate(newTableSize * sizeof(HashNode<K, V>));
 		memset(pTable, 0, newTableSize * sizeof(HashNode<K, V>));
 
 		size_t oldTableSize = tableSize;
@@ -312,6 +310,6 @@ struct HashMap {
 				count--;
 			}
 		}
-		if (pTableOld) allocator.Free(pTableOld);
+		if (pTableOld) pAlloc->Free(pTableOld);
 	}
 };

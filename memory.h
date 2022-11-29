@@ -18,19 +18,16 @@ inline void operator delete(void*, NewWrapper, void*) {}
 #define SYS_FREE(ptr) free(ptr)
 #endif
 
-struct Allocator {
-	// begin allocator required interface
-	Allocator();
-	Allocator(const char* _name);
-
-	void* 	Allocate(size_t size);
-	void* 	Reallocate(void* ptr, size_t size, size_t oldSize);
-	void 	Free(void* ptr);
-
-	const char* GetName();
-	void 		SetName(const char* _name);
-	// end allocator required interface
-
-private:
-	const char* name;
+struct IAllocator {
+	virtual void* 	Allocate(size_t size) = 0;
+	virtual void* 	Reallocate(void* ptr, size_t size, size_t oldSize) = 0;
+	virtual void 	Free(void* ptr) = 0;
 };
+
+struct DefaultAllocator : public IAllocator {
+	void* 	Allocate(size_t size) override;
+	void* 	Reallocate(void* ptr, size_t size, size_t oldSize) override;
+	void 	Free(void* ptr) override;
+};
+
+static DefaultAllocator gAllocator;

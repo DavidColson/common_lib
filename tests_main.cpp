@@ -194,18 +194,18 @@ int StringTest() {
 		VERIFY(str != "Hello World");
 		VERIFY(str.length == 7);
 
-		String copy = CopyCString("Ducks are cool");
-		defer(FreeString(copy));
+		String copy = CopyCString(&gAllocator, "Ducks are cool");
+		defer(FreeString(&gAllocator, copy));
 		VERIFY(copy == "Ducks are cool");
 		VERIFY(copy.length == 14);
 
-		String copy2 = CopyString(str);
-		defer(FreeString(copy2));
+		String copy2 = CopyString(&gAllocator, str);
+		defer(FreeString(&gAllocator, copy2));
 		VERIFY(copy2 == "Hi Dave");
 		VERIFY(copy2.length == 7);
 
-		String allocated = AllocString(copy.length * sizeof(char));
-		defer(FreeString(allocated));
+		String allocated = AllocString(&gAllocator, copy.length * sizeof(char));
+		defer(FreeString(&gAllocator, allocated));
 		memcpy(allocated.pData, copy.pData, copy.length * sizeof(char));
 		VERIFY(allocated == copy);
 		VERIFY(allocated != str);
@@ -217,8 +217,8 @@ int StringTest() {
 		builder.AppendFormat(" my name is %s", "David");
 		builder.AppendChars(" and this is my code bloop", 20);
 
-		String builtString = builder.CreateString();
-		defer(FreeString(builtString));
+		String builtString = builder.CreateString(&gAllocator);
+		defer(FreeString(&gAllocator, builtString));
 		VERIFY(builtString == "Hello world my name is David and this is my code");
 		VERIFY(builtString != "Ducks");
 		VERIFY(builtString.length == 48);
@@ -311,26 +311,26 @@ void LinearAllocatorTest() {
 	StartTest("LinearAllocator Test");
 	int errorCount = 0;
 	{
-		LinearAllocator davesAllocator("Test Allocator");
+		LinearAllocator davesAllocator;
 
 		// No freeing required!
-		ResizableArray<int, LinearAllocatorRef> myArray(davesAllocator);
+		ResizableArray<int> myArray(&davesAllocator);
 		for (int i = 0; i < 3000; i++) {
 			myArray.PushBack(i);
 		}
 
-		HashMap<int, int, LinearAllocatorRef> testMap(davesAllocator);
+		HashMap<int, int> testMap(&davesAllocator);
 		srand(7);
 		for (int i = 100; i > 0; i--) {
 			testMap.Add(rand(), i);
 		}
 
-		ResizableArray<String, LinearAllocatorRef> myStringArray(davesAllocator);
+		ResizableArray<String> myStringArray(&davesAllocator);
 		for (int i = 0; i < 1000; i++) {
-			StringBuilder<LinearAllocatorRef> builder(davesAllocator);
+			StringBuilder builder(&davesAllocator);
 			builder.AppendFormat("Hello %i", i);
-			myStringArray.PushBack(builder.CreateString());
-			myStringArray.PushBack(CopyCString<LinearAllocatorRef>("world", davesAllocator));
+			myStringArray.PushBack(builder.CreateString(&davesAllocator));
+			myStringArray.PushBack(CopyCString(&davesAllocator, "world"));
 		}
 		
 		davesAllocator.Finished();
@@ -373,7 +373,7 @@ void JsonTest() {
 
 		String jsonString;
 		jsonString = json;
-		JsonValue v = ParseJsonFile(jsonString);
+		JsonValue v = ParseJsonFile(&gAllocator, jsonString);
 		defer(v.Free());
 
 		VERIFY(v["widget"]["debug"].ToString() == "on");
@@ -384,6 +384,22 @@ void JsonTest() {
 		//String s = SerializeJsonValue(v);
 		//printf("%s", s.pData);
 		//FreeString(s);
+
+		//FILE* pFile = fopen("tank.gltf", "r");
+		//size_t fileSize = 0;
+		//String fileContents;
+		//defer(FreeString(&gAllocator, fileContents));
+		//if (pFile != nullptr) {
+		//	fseek(pFile, 0L, SEEK_END);
+		//	fileSize = ftell(pFile);
+		//	rewind(pFile);
+		//	fileContents = AllocString(&gAllocator, fileSize);
+		//	fread(fileContents.pData, 1, fileSize, pFile);
+		//}
+		//
+		//JsonValue tankFile = ParseJsonFile(&gAllocator, fileContents);
+		//defer(tankFile.Free());
+		//bool validGltf = tankFile["asset"]["version"].ToString() == "2.0";
 	}
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
@@ -393,6 +409,25 @@ void JsonTest() {
 // No copy constructors
 // No constructors, POD data everywhere
 // Explicit memory operations for things
+
+// SORT
+// ------
+// We want to implement a quick sort. stl sort switches to heap or merge sort to avoid worst case
+// known as introsort, but we don't need this
+// When qsort recursion depth goes past some point. How do these algorithms work?
+// https://coderslegacy.com/python/quicksort-algorithm/
+// https://www.geeksforgeeks.org/quick-sort/
+
+
+// TODO LIST
+// [x] Allocators are abstract interfaces, similar to bx library
+// [x] Json parser can use custom allocators
+// [ ] Architect functions so that allocators are optional params
+// [ ] rename old pointer type in json parser
+// [ ] Sort algorithm for ResizableArrays
+// [ ] Move math libs into common
+// [ ] Move error handling and asserts into common
+// [ ] Move utils into common
 
 int main() {
 	JsonTest();

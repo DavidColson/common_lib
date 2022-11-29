@@ -10,7 +10,7 @@ solution "CommonLib"
     configurations { "Release", "Debug" }
     platforms "x86_64"
     architecture "x86_64"
-	flags { "FatalWarnings" }
+	--flags { "FatalWarnings" }
     filter "configurations:Release"
         optimize "Full"
     filter "configurations:Debug*"
@@ -38,6 +38,7 @@ solution "CommonLib"
             "resizable_array.h",
             "hashmap.h",
             "string.h",
+            "string.cpp",
             "string_builder.h",
             "testing.h",
             "memory_tracker.h",

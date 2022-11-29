@@ -17,22 +17,20 @@
 // Must be freed manually
 // ... todo documentation, examples, reasoning etc
 
-template<typename type, typename AllocatorType = Allocator>
+template<typename type>
 struct ResizableArray {
     type* pData{ nullptr };
     uint32_t count{ 0 };
 	uint32_t capacity { 0 };
-	AllocatorType allocator;
+	IAllocator* pAlloc { nullptr };
 	
-	ResizableArray() {}
-
-	ResizableArray(AllocatorType _allocator) {
-		allocator = _allocator;
+	ResizableArray(IAllocator* _pAlloc = &gAllocator) {
+		pAlloc = _pAlloc;
 	}
 
 	void Free() {
 		if (pData) {
-			allocator.Free(pData);
+			pAlloc->Free(pData);
 			count = 0;
 			capacity = 0;
 			pData = nullptr;
@@ -45,7 +43,7 @@ struct ResizableArray {
 			for (uint32_t i = 0; i < count; i++) {
 				freeElement(pData[i]);
 			}
-			allocator.Free(pData);
+			pAlloc->Free(pData);
 			count = 0;
 			capacity = 0;
 			pData = nullptr;
@@ -56,7 +54,7 @@ struct ResizableArray {
 
 	void Reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
-		pData = (type*)allocator.Reallocate(pData, desiredCapacity * sizeof(type), capacity * sizeof(type));
+		pData = (type*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(type), capacity * sizeof(type));
 		capacity = desiredCapacity;
 	}
 

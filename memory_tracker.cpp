@@ -7,16 +7,10 @@
 #include "Windows.h"
 #include "dbghelp.h"
 
-struct ForceNoTrackAllocator {
-	ForceNoTrackAllocator() {}
-	ForceNoTrackAllocator(const char* _name) {}
-
+struct ForceNoTrackAllocator : public IAllocator {
 	void* 	Allocate(size_t size) { return malloc(size); }
 	void* 	Reallocate(void* ptr, size_t size, size_t oldSize) { return realloc(ptr, size); }
 	void 	Free(void* ptr) { free(ptr); }
-
-	const char* GetName() { return ""; }
-	void  		SetName(const char* _name) {}
 };
 
 struct Allocation {
@@ -31,12 +25,19 @@ struct Allocation {
 };
 
 struct MemoryTrackerState {
-	HashMap<void*, Allocation, ForceNoTrackAllocator> allocationTable;
+	HashMap<void*, Allocation> allocationTable;
 };
 
 namespace {
+	ForceNoTrackAllocator noTrackAllocator;
 	MemoryTrackerState* pCtx { nullptr };
 };
+
+void InitContext() {
+	pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
+	SYS_P_NEW(pCtx) MemoryTrackerState();
+	pCtx->allocationTable.pAlloc = &noTrackAllocator;
+}
 
 void* MallocWrap(size_t size) {
 	void* pMemory = malloc(size);
@@ -56,11 +57,7 @@ void FreeWrap(void* ptr) {
 }
 
 void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
-	if (pCtx == nullptr)
-	{
-		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-		SYS_P_NEW(pCtx) MemoryTrackerState();
-	}
+	if (pCtx == nullptr) InitContext();
 
 	Allocation allocation;
 	allocation.pointer = pAllocated;
@@ -72,11 +69,7 @@ void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
 }
 
 void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size, size_t oldSize) {
-	if (pCtx == nullptr)
-	{
-		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-		SYS_P_NEW(pCtx) MemoryTrackerState();
-	}
+	if (pCtx == nullptr) InitContext();
 
 	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) { // pre-existing allocation
 		if (alloc->pAllocator != pAllocatorPtr)
@@ -123,9 +116,9 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
 	DWORD displacement;
 
-	ResizableArray<String, ForceNoTrackAllocator> stackFuncs;
-	ResizableArray<String, ForceNoTrackAllocator> stackFiles;
-	ResizableArray<size_t, ForceNoTrackAllocator> stackLines;
+	ResizableArray<String> stackFuncs(&noTrackAllocator);
+	ResizableArray<String> stackFiles(&noTrackAllocator);
+	ResizableArray<size_t> stackLines(&noTrackAllocator);
 
 	size_t longestName = 0;
 	for (uint32_t j = 0; j < stackDepth-6; j++) {
@@ -140,8 +133,8 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 		if (len > longestName)
 			longestName = len;
 
-		stackFuncs.PushBack(CopyCString(symbol->Name, ForceNoTrackAllocator()));
-		stackFiles.PushBack(CopyCString(line.FileName, ForceNoTrackAllocator()));
+		stackFuncs.PushBack(CopyCString(&noTrackAllocator, symbol->Name));
+		stackFiles.PushBack(CopyCString(&noTrackAllocator, line.FileName));
 		stackLines.PushBack((size_t)line.LineNumber);
 	}
 
@@ -150,10 +143,10 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 	}
 
 	stackFuncs.Free([] (String& str) {
-		FreeString(str, ForceNoTrackAllocator());
+	   FreeString(&noTrackAllocator, str);
 	});
 	stackFiles.Free([] (String& str) {
-		FreeString(str, ForceNoTrackAllocator());
+	   FreeString(&noTrackAllocator, str);
 	});
 	stackLines.Free();
 }
@@ -173,11 +166,7 @@ void ReportUnknownFree(void* ptr) {
 }
 
 void CheckFree(void* pAllocatorPtr, void* ptr) {
-	if (pCtx == nullptr)
-	{
-		pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-		SYS_P_NEW(pCtx) MemoryTrackerState();
-	}
+	if (pCtx == nullptr) InitContext();
 
 	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) {
 		if (alloc->pAllocator != pAllocatorPtr)

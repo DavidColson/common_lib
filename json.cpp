@@ -54,7 +54,7 @@ struct Token
 
 // ***********************************************************************
 
-String ParseStringSlow(Scan::ScanningState& scan, char bound)
+String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char bound)
 {	
 	char* start = scan.current;
 	char* pos = start;
@@ -125,14 +125,14 @@ String ParseStringSlow(Scan::ScanningState& scan, char bound)
 
 	scan.current = cursor;
 
-	String result = CopyCStringRange(outputString, pos);
+	String result = CopyCStringRange(pAllocator, outputString, pos);
 	delete outputString;
 	return result;
 }
 
 // ***********************************************************************
 
-String ParseString(Scan::ScanningState& scan, char bound)
+String ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, char bound)
 {	
 	char* start = scan.current;
 	while (*(scan.current) != bound && !Scan::IsAtEnd(scan))
@@ -140,10 +140,10 @@ String ParseString(Scan::ScanningState& scan, char bound)
 		if (*(scan.current++) == '\\')
 		{
 			scan.current = start;
-			return ParseStringSlow(scan, bound);
+			return ParseStringSlow(pAllocator, scan, bound);
 		}
 	}
-	String result = CopyCStringRange(start, scan.current);
+	String result = CopyCStringRange(pAllocator, start, scan.current);
 	scan.current++;
 	return result;
 }
@@ -188,7 +188,7 @@ double ParseNumber(Scan::ScanningState& scan)
 
 // ***********************************************************************
 
-ResizableArray<Token> TokenizeJson(String jsonText)
+ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText)
 {
 	Scan::ScanningState scan;
 	scan.textStart = jsonText.pData;
@@ -196,7 +196,7 @@ ResizableArray<Token> TokenizeJson(String jsonText)
 	scan.current = (char*)scan.textStart;
 	scan.line = 1;
 
-	ResizableArray<Token> tokens;
+	ResizableArray<Token> tokens(pAllocator);
 
 	while (!Scan::IsAtEnd(scan))
 	{
@@ -246,13 +246,13 @@ ResizableArray<Token> TokenizeJson(String jsonText)
 		// String literals
 		case '\'':
 		{
-			String string = ParseString(scan, '\'');
+			String string = ParseString(pAllocator, scan, '\'');
 			tokens.PushBack(Token{TokenType::String, string}); break;
 			break;
 		}
 		case '"':
 		{
-			String string = ParseString(scan, '"');
+			String string = ParseString(pAllocator, scan, '"');
 			tokens.PushBack(Token{TokenType::String, string}); break;
 			break;		
 		}
@@ -284,7 +284,7 @@ ResizableArray<Token> TokenizeJson(String jsonText)
 				else if (identifier == "null")
 					tokens.PushBack(Token{TokenType::Null});
 				else {
-					identifier = CopyCStringRange(loc, scan.current);
+					identifier = CopyCStringRange(pAllocator, loc, scan.current);
 					tokens.PushBack(Token { TokenType::Identifier, identifier });
 				}
 			}
@@ -300,10 +300,10 @@ ResizableArray<Token> TokenizeJson(String jsonText)
 
 // ***********************************************************************
 
-HashMap<String, JsonValue> ParseObject(ResizableArray<Token>& tokens, int& currentToken);
-ResizableArray<JsonValue> ParseArray(ResizableArray<Token>& tokens, int& currentToken);
+HashMap<String, JsonValue> ParseObject(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken);
+ResizableArray<JsonValue> ParseArray(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken);
 
-JsonValue ParseValue(ResizableArray<Token>& tokens, int& currentToken)
+JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken)
 {
 	Token& token = tokens[currentToken];
 
@@ -312,14 +312,16 @@ JsonValue ParseValue(ResizableArray<Token>& tokens, int& currentToken)
 		case TokenType::LeftBrace:
 		{
 			JsonValue v;
-			v.m_internalData.m_pObject = ParseObject(tokens, currentToken);
+			v.pAllocator = pAllocator;
+			v.m_pObject = ParseObject(pAllocator, tokens, currentToken);
 			v.m_type = JsonValue::Type::Object;
 			return v; break;
 		}
 		case TokenType::LeftBracket:
 		{
 			JsonValue v;
-			v.m_internalData.m_pArray = ParseArray(tokens, currentToken);
+			v.pAllocator = pAllocator;
+			v.m_pArray = ParseArray(pAllocator, tokens, currentToken);
 			v.m_type = JsonValue::Type::Array;
 			return v; break;
 		}
@@ -327,7 +329,8 @@ JsonValue ParseValue(ResizableArray<Token>& tokens, int& currentToken)
 		{
 			currentToken++;
 			JsonValue v;
-			v.m_internalData.m_pString = token.m_stringOrIdentifier; // TODO: Potential copy required if tokens are freed
+			v.pAllocator = pAllocator;
+			v.m_pString = token.m_stringOrIdentifier; // TODO: Potential copy required if tokens are freed
 			v.m_type = JsonValue::Type::String;
 			return v; break; 
 		}
@@ -339,12 +342,12 @@ JsonValue ParseValue(ResizableArray<Token>& tokens, int& currentToken)
 			double intPart;
 			if (modf(n, &intPart) == 0.0)
 			{
-				v.m_internalData.m_integerNumber = (long)intPart;
+				v.m_integerNumber = (long)intPart;
 				v.m_type = JsonValue::Type::Integer;
 			}
 			else
 			{
-				v.m_internalData.m_floatingNumber = n;
+				v.m_floatingNumber = n;
 				v.m_type = JsonValue::Type::Floating;
 			}
 			
@@ -354,7 +357,7 @@ JsonValue ParseValue(ResizableArray<Token>& tokens, int& currentToken)
 		{
 			currentToken++;
 			JsonValue v;
-			v.m_internalData.m_boolean = token.m_boolean;
+			v.m_boolean = token.m_boolean;
 			v.m_type = JsonValue::Type::Boolean;
 			return v; break;
 		}
@@ -368,13 +371,13 @@ JsonValue ParseValue(ResizableArray<Token>& tokens, int& currentToken)
 
 // ***********************************************************************
 
-HashMap<String, JsonValue> ParseObject(ResizableArray<Token>& tokens, int& currentToken)
+HashMap<String, JsonValue> ParseObject(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken)
 {
 	currentToken++; // Advance over opening brace
 
 	// TODO: This should construct an empty jsonValue as an object and fill the map in in place, so there is no need to deep
 	// copy the map
-	HashMap<String, JsonValue> map;
+	HashMap<String, JsonValue> map(pAllocator);
 	while (currentToken < (int)tokens.count && tokens[currentToken].m_type != TokenType::RightBrace)
 	{
 		// We expect, 
@@ -392,7 +395,7 @@ HashMap<String, JsonValue> ParseObject(ResizableArray<Token>& tokens, int& curre
 		
 		// String, Number, Boolean, Null
 		// If left bracket or brace encountered, skip until closing
-		map[key] = ParseValue(tokens, currentToken);
+		map[key] = ParseValue(pAllocator, tokens, currentToken);
 
 		// Comma, or right brace
 		if (tokens[currentToken].m_type == TokenType::RightBrace)
@@ -407,16 +410,16 @@ HashMap<String, JsonValue> ParseObject(ResizableArray<Token>& tokens, int& curre
 
 // ***********************************************************************
 
-ResizableArray<JsonValue> ParseArray(ResizableArray<Token>& tokens, int& currentToken)
+ResizableArray<JsonValue> ParseArray(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken)
 {
 	currentToken++; // Advance over opening bracket
 
-	ResizableArray<JsonValue> array;
+	ResizableArray<JsonValue> array(pAllocator);
 	while (currentToken < (int)tokens.count && tokens[currentToken].m_type != TokenType::RightBracket)
 	{
 		// We expect, 
 		// String, Number, Boolean, Null
-		array.PushBack(ParseValue(tokens, currentToken));
+		array.PushBack(ParseValue(pAllocator, tokens, currentToken));
 
 		// Comma, or right brace
 		if (tokens[currentToken].m_type == TokenType::RightBracket)
@@ -446,18 +449,18 @@ JsonValue::JsonValue()
 
 void JsonValue::Free() {
 	if (m_type == Type::Object) {
-		m_internalData.m_pObject.Free([](HashNode<String, JsonValue>& node) {
-			FreeString(node.key);
+		m_pObject.Free([this](HashNode<String, JsonValue>& node) {
+		 	FreeString(pAllocator, node.key);
 			node.value.Free();
 		});
 	}
 	if (m_type == Type::Array) {
-		m_internalData.m_pArray.Free([](JsonValue& value) {
+		m_pArray.Free([](JsonValue& value) {
 			value.Free();
 		});
 	}
 	if (m_type == Type::String) {
-		FreeString(m_internalData.m_pString);
+		FreeString(pAllocator, m_pString);
 	}
 }	
 
@@ -466,7 +469,7 @@ void JsonValue::Free() {
 String JsonValue::ToString() const
 {
 	if (m_type == Type::String)
-		return m_internalData.m_pString;
+		return m_pString;
 	return String();
 }
 
@@ -475,9 +478,9 @@ String JsonValue::ToString() const
 double JsonValue::ToFloat() const
 {
 	if (m_type == Type::Floating)
-		return m_internalData.m_floatingNumber;
+		return m_floatingNumber;
 	else if (m_type == Type::Integer)
-		return (double)m_internalData.m_integerNumber;
+		return (double)m_integerNumber;
 	return 0.0f;
 }
 
@@ -486,7 +489,7 @@ double JsonValue::ToFloat() const
 long JsonValue::ToInt() const
 {
 	if (m_type == Type::Integer)
-		return m_internalData.m_integerNumber;
+		return m_integerNumber;
 	return 0;
 }
 
@@ -495,7 +498,7 @@ long JsonValue::ToInt() const
 bool JsonValue::ToBool() const
 {
 	if (m_type == Type::Boolean)
-		return m_internalData.m_boolean;
+		return m_boolean;
 	return 0;
 }
 
@@ -525,7 +528,7 @@ bool JsonValue::IsObject() const
 bool JsonValue::HasKey(String identifier)
 {
 	ASSERT(m_type == Type::Object, "Attempting to treat this value as an object when it is not.");
-	return m_internalData.m_pObject.Get(identifier) != nullptr;
+	return m_pObject.Get(identifier) != nullptr;
 }
 
 // ***********************************************************************
@@ -534,9 +537,9 @@ int JsonValue::Count() const
 {
 	ASSERT(m_type == Type::Array || m_type == Type::Object, "Attempting to treat this value as an array or object when it is not.");
 	if (m_type == Type::Array)
-		return (int)m_internalData.m_pArray.count;
+		return (int)m_pArray.count;
 	else
-		return (int)m_internalData.m_pObject.count;
+		return (int)m_pObject.count;
 }
 
 // ***********************************************************************
@@ -544,7 +547,7 @@ int JsonValue::Count() const
 JsonValue& JsonValue::operator[](String identifier)
 {
 	ASSERT(m_type == Type::Object, "Attempting to treat this value as an object when it is not.");
-	return m_internalData.m_pObject[identifier];
+	return m_pObject[identifier];
 }
 
 // ***********************************************************************
@@ -552,8 +555,8 @@ JsonValue& JsonValue::operator[](String identifier)
 JsonValue& JsonValue::operator[](size_t index)
 {
 	ASSERT(m_type == Type::Array, "Attempting to treat this value as an array when it is not.");
-	ASSERT(m_internalData.m_pArray.count > index, "Accessing an element that does not exist in this array, you probably need to append");
-	return m_internalData.m_pArray[index];
+	ASSERT(m_pArray.count > index, "Accessing an element that does not exist in this array, you probably need to append");
+	return m_pArray[index];
 }
 
 // ***********************************************************************
@@ -561,7 +564,7 @@ JsonValue& JsonValue::operator[](size_t index)
 JsonValue& JsonValue::Get(String identifier)
 {
 	ASSERT(m_type == Type::Object, "Attempting to treat this value as an object when it is not.");
-	return m_internalData.m_pObject[identifier];
+	return m_pObject[identifier];
 }
 
 // ***********************************************************************
@@ -569,8 +572,8 @@ JsonValue& JsonValue::Get(String identifier)
 JsonValue& JsonValue::Get(size_t index)
 {
 	ASSERT(m_type == Type::Array, "Attempting to treat this value as an array when it is not.");
-	ASSERT(m_internalData.m_pArray.count > index, "Accessing an element that does not exist in this array, you probably need to append");
-	return m_internalData.m_pArray[index];
+	ASSERT(m_pArray.count > index, "Accessing an element that does not exist in this array, you probably need to append");
+	return m_pArray[index];
 }
 
 // ***********************************************************************
@@ -578,7 +581,7 @@ JsonValue& JsonValue::Get(size_t index)
 void JsonValue::Append(JsonValue& value)
 {
 	ASSERT(m_type == Type::Array, "Attempting to treat this value as an array when it is not.");
-	m_internalData.m_pArray.PushBack(value);
+	m_pArray.PushBack(value);
 }
 
 // ***********************************************************************
@@ -601,20 +604,19 @@ JsonValue JsonValue::NewArray()
 
 // ***********************************************************************
 
-JsonValue ParseJsonFile(String file)
+JsonValue ParseJsonFile(IAllocator* pAllocator, String file)
 {
-	ResizableArray<Token> tokens = TokenizeJson(file);
+	ResizableArray<Token> tokens = TokenizeJson(pAllocator, file);
 
 	int firstToken = 0;
-	JsonValue json5 = ParseValue(tokens, firstToken);
+	JsonValue json5 = ParseValue(pAllocator, tokens, firstToken);
 	tokens.Free();
 	return json5;
 }
 
 // ***********************************************************************
 
-template<typename AllocatorType = Allocator>
-void SerializeJsonInternal(JsonValue json, StringBuilder<AllocatorType>& builder, int indentCount) {
+void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCount) {
 
 	auto printIndentation = [&builder] (int level) {
 		for (int j = 0; j < level; j++) {
@@ -629,7 +631,7 @@ void SerializeJsonInternal(JsonValue json, StringBuilder<AllocatorType>& builder
 			if (json.Count() > 0)
 				builder.Append("\n");
 
-			for (const JsonValue& val : json.m_internalData.m_pArray)
+			for (const JsonValue& val : json.m_pArray)
 			{
 				printIndentation(indentCount+1);
 				SerializeJsonInternal(val, builder, indentCount+1);
@@ -644,9 +646,9 @@ void SerializeJsonInternal(JsonValue json, StringBuilder<AllocatorType>& builder
 			if (json.Count() > 0)
 				builder.Append("\n");
 
-			for (size_t i = 0; i < json.m_internalData.m_pObject.tableSize; i++)
+			for (size_t i = 0; i < json.m_pObject.tableSize; i++)
 			{
-				HashNode<String, JsonValue>& node = json.m_internalData.m_pObject.pTable[i];
+				HashNode<String, JsonValue>& node = json.m_pObject.pTable[i];
 				if (node.hash != UNUSED_HASH) {
 
 					printIndentation(indentCount+1);
@@ -700,9 +702,9 @@ void SerializeJsonInternal(JsonValue json, StringBuilder<AllocatorType>& builder
 	//}
 }
 
-String SerializeJsonValue(JsonValue json)
+String SerializeJsonValue(IAllocator* pAllocator, JsonValue json)
 {
-	StringBuilder builder;
+	StringBuilder builder(pAllocator);
 	SerializeJsonInternal(json, builder, 0);
-	return builder.CreateString(true);
+	return builder.CreateString(pAllocator, true);
 }
