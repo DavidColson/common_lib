@@ -45,16 +45,16 @@ struct JsonValue
 
 	void Free();
 
-	Type m_type;
+	Type type;
 	IAllocator* pAllocator{ nullptr };
 	union
 	{
-		double m_floatingNumber { 0.0f };
-		HashMap<String, JsonValue> m_pObject;
-		ResizableArray<JsonValue> m_pArray;
-		String m_pString;
-		long m_integerNumber;
-		bool m_boolean;
+		double floatNumber { 0.0f };
+		HashMap<String, JsonValue> object;
+		ResizableArray<JsonValue> array;
+		String string;
+		long intNumber;
+		bool boolean;
 	};
 };
 

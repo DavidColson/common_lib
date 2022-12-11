@@ -9,27 +9,27 @@ namespace Scan
 
     struct ScanningState
     {
-        const char* textStart;
-        const char* textEnd;
-        char* current{ nullptr };
-        char* currentLineStart{ nullptr };
+        const char* pTextStart;
+        const char* pTextEnd;
+        char* pCurrent{ nullptr };
+        char* pCurrentLineStart{ nullptr };
         int line{ 1 };
         bool encounteredError{ false };
     };
 
     inline char Advance(ScanningState& scan)
     {
-		return *(scan.current++);
+		return *(scan.pCurrent++);
 	}
 
     inline char Peek(ScanningState& scan)
     {
-		return *(scan.current);
+		return *(scan.pCurrent);
 	}
 
     inline bool IsAtEnd(ScanningState& scan)
     {
-		return scan.current >= scan.textEnd;
+		return scan.pCurrent >= scan.pTextEnd;
 	}
 
     bool Match(ScanningState& scan, char expected);
