@@ -58,8 +58,8 @@ struct StringBuilder {
 		va_end(args);
 	}
 
-	String CreateString(IAllocator* _pAlloc, bool reset = true) {
-		String output = AllocString(_pAlloc, length+1);
+	String CreateString(bool reset = true, IAllocator* _pAlloc = &gAllocator) {
+		String output = AllocString(length+1, _pAlloc);
 		memcpy(output.pData, pData, length * sizeof(char));
 		output.pData[length] = 0;
 		output.length = length;

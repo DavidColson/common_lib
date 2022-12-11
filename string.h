@@ -70,12 +70,12 @@ struct String {
 	}
 };
 
-String CopyCString(IAllocator* pAlloc, const char* string);
+String CopyCString(const char* string, IAllocator* pAlloc = &gAllocator);
 
-String CopyCStringRange(IAllocator* pAlloc, char* start, char* end);
+String CopyCStringRange(char* start, char* end, IAllocator* pAlloc = &gAllocator);
 
-String CopyString(IAllocator* pAlloc, String& string);
+String CopyString(String& string, IAllocator* pAlloc = &gAllocator);
 
-String AllocString(IAllocator* pAlloc, size_t length);
+String AllocString(size_t length, IAllocator* pAlloc = &gAllocator);
 
-void FreeString(IAllocator* pAlloc, String& string);
+void FreeString(String& string, IAllocator* pAlloc = &gAllocator);

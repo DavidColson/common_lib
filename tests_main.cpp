@@ -26,7 +26,6 @@ privDefer<F> defer_func(F f) {
 #define DEFER_3(x)    DEFER_2(x, __COUNTER__)
 #define defer(code)   auto DEFER_3(_defer_) = defer_func([&]() { code; })
 
-
 // ---------------------
 // Tests
 // ---------------------
@@ -194,18 +193,18 @@ int StringTest() {
 		VERIFY(str != "Hello World");
 		VERIFY(str.length == 7);
 
-		String copy = CopyCString(&gAllocator, "Ducks are cool");
-		defer(FreeString(&gAllocator, copy));
+		String copy = CopyCString("Ducks are cool");
+		defer(FreeString(copy));
 		VERIFY(copy == "Ducks are cool");
 		VERIFY(copy.length == 14);
 
-		String copy2 = CopyString(&gAllocator, str);
-		defer(FreeString(&gAllocator, copy2));
+		String copy2 = CopyString(str);
+		defer(FreeString(copy2));
 		VERIFY(copy2 == "Hi Dave");
 		VERIFY(copy2.length == 7);
 
-		String allocated = AllocString(&gAllocator, copy.length * sizeof(char));
-		defer(FreeString(&gAllocator, allocated));
+		String allocated = AllocString(copy.length * sizeof(char));
+		defer(FreeString(allocated));
 		memcpy(allocated.pData, copy.pData, copy.length * sizeof(char));
 		VERIFY(allocated == copy);
 		VERIFY(allocated != str);
@@ -217,8 +216,8 @@ int StringTest() {
 		builder.AppendFormat(" my name is %s", "David");
 		builder.AppendChars(" and this is my code bloop", 20);
 
-		String builtString = builder.CreateString(&gAllocator);
-		defer(FreeString(&gAllocator, builtString));
+		String builtString = builder.CreateString();
+		defer(FreeString(builtString));
 		VERIFY(builtString == "Hello world my name is David and this is my code");
 		VERIFY(builtString != "Ducks");
 		VERIFY(builtString.length == 48);
@@ -306,7 +305,6 @@ int ResizableArrayTest() {
     return 0;
 }  
 
-
 void LinearAllocatorTest() {
 	StartTest("LinearAllocator Test");
 	int errorCount = 0;
@@ -329,8 +327,8 @@ void LinearAllocatorTest() {
 		for (int i = 0; i < 1000; i++) {
 			StringBuilder builder(&davesAllocator);
 			builder.AppendFormat("Hello %i", i);
-			myStringArray.PushBack(builder.CreateString(&davesAllocator));
-			myStringArray.PushBack(CopyCString(&davesAllocator, "world"));
+			myStringArray.PushBack(builder.CreateString(true, &davesAllocator));
+			myStringArray.PushBack(CopyCString("world", &davesAllocator));
 		}
 		
 		davesAllocator.Finished();

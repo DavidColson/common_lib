@@ -13,7 +13,6 @@
 
 // Resizable Array Structure
 // -----------------------
-// Does not support non POD element types!
 // Must be freed manually
 // ... todo documentation, examples, reasoning etc
 

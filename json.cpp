@@ -125,7 +125,7 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char b
 
 	scan.pCurrent = cursor;
 
-	String result = CopyCStringRange(pAllocator, outputString, pos);
+	String result = CopyCStringRange(outputString, pos, pAllocator);
 	delete outputString;
 	return result;
 }
@@ -143,7 +143,7 @@ String ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, char bound
 			return ParseStringSlow(pAllocator, scan, bound);
 		}
 	}
-	String result = CopyCStringRange(pAllocator, start, scan.pCurrent);
+	String result = CopyCStringRange(start, scan.pCurrent, pAllocator);
 	scan.pCurrent++;
 	return result;
 }
@@ -284,7 +284,7 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText)
 				else if (identifier == "null")
 					tokens.PushBack(Token{TokenType::Null});
 				else {
-					identifier = CopyCStringRange(pAllocator, loc, scan.pCurrent);
+					identifier = CopyCStringRange(loc, scan.pCurrent, pAllocator);
 					tokens.PushBack(Token { TokenType::Identifier, identifier });
 				}
 			}
@@ -450,7 +450,7 @@ JsonValue::JsonValue()
 void JsonValue::Free() {
 	if (type == Type::Object) {
 		object.Free([this](HashNode<String, JsonValue>& node) {
-		 	FreeString(pAllocator, node.key);
+		    FreeString(node.key, pAllocator);
 			node.value.Free();
 		});
 	}
@@ -460,7 +460,7 @@ void JsonValue::Free() {
 		});
 	}
 	if (type == Type::String) {
-		FreeString(pAllocator, string);
+		FreeString(string, pAllocator);
 	}
 }	
 
@@ -706,5 +706,5 @@ String SerializeJsonValue(IAllocator* pAllocator, JsonValue json)
 {
 	StringBuilder builder(pAllocator);
 	SerializeJsonInternal(json, builder, 0);
-	return builder.CreateString(pAllocator, true);
+	return builder.CreateString(true, pAllocator);
 }

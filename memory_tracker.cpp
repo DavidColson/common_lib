@@ -133,8 +133,8 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 		if (len > longestName)
 			longestName = len;
 
-		stackFuncs.PushBack(CopyCString(&noTrackAllocator, symbol->Name));
-		stackFiles.PushBack(CopyCString(&noTrackAllocator, line.FileName));
+		stackFuncs.PushBack(CopyCString(symbol->Name, &noTrackAllocator));
+		stackFiles.PushBack(CopyCString(line.FileName, &noTrackAllocator));
 		stackLines.PushBack((size_t)line.LineNumber);
 	}
 
@@ -143,10 +143,10 @@ void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
 	}
 
 	stackFuncs.Free([] (String& str) {
-	   FreeString(&noTrackAllocator, str);
+		FreeString(str, &noTrackAllocator);
 	});
 	stackFiles.Free([] (String& str) {
-	   FreeString(&noTrackAllocator, str);
+		FreeString(str, &noTrackAllocator);
 	});
 	stackLines.Free();
 }
@@ -170,7 +170,7 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 
 	if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) {
 		if (alloc->pAllocator != pAllocatorPtr)
-			__debugbreak();
+			__debugbreak(); // Alloc/Free allocator mismatch TODO: Report an error
 
 		if (!alloc->isLive) {
 			void* stackTrace[100];
