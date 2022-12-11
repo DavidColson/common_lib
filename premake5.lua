@@ -48,5 +48,6 @@ solution "CommonLib"
             "json.cpp",
             "json.h",
             "scanning.h",
-            "scanning.cpp"
+            "scanning.cpp",
+            "sort.h"
         }

@@ -1,4 +1,5 @@
 
+#include "sort.h"
 #include "json.h"
 #include "linear_allocator.h"
 #include "string.h"
@@ -403,36 +404,95 @@ void JsonTest() {
 	EndTest(errorCount);
 }
 
+struct CustomSortableType {
+	int height;
+	int width;
+};
+
+struct SortByHeight {
+	bool operator()(const CustomSortableType& a, const CustomSortableType& b) {
+		return a.height > b.height;
+	}
+};
+
+void SortTest() {
+	StartTest("Sort");
+	int errorCount = 0;
+
+	{
+		int sorted[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
+		VERIFY(IsSorted(sorted, 9));
+
+		int unsorted[] = { 4, 8, 9, 2, 1, 3, 7, 6 };
+		VERIFY(!IsSorted(unsorted, 8));
+
+		Sort(unsorted, 8);
+		VERIFY(IsSorted(unsorted, 8));
+
+		srand(22);
+		ResizableArray<int> randomArray;
+		defer(randomArray.Free());
+		for (int i = 0; i < 1024; i++) {
+			randomArray.PushBack(rand());
+		}
+		VERIFY(!IsSorted(randomArray.pData, randomArray.count));
+		Sort(randomArray.pData, randomArray.count);
+		VERIFY(IsSorted(randomArray.pData, randomArray.count));
+		
+		srand(21);
+		ResizableArray<float> randomFloats;
+		defer(randomFloats.Free());
+		for (int i = 0; i < 1024; i++) {
+			float x = (float)rand()/(float)(RAND_MAX/100.0f);
+			randomFloats.PushBack(x);
+		}
+		VERIFY(!IsSorted(randomFloats.pData, randomFloats.count));
+		Sort(randomFloats.pData, randomFloats.count);
+		VERIFY(IsSorted(randomFloats.pData, randomFloats.count));
+	
+		// Custom ordering
+		int descending[] = { 4, 8, 9, 2, 1, 3, 7, 6 };
+		Sort(descending, 8, SortDescending<int>());
+		VERIFY(IsSorted(descending, 8, SortDescending<int>()));
+
+		// Custom types
+		CustomSortableType custom[] = { 
+			CustomSortableType { 12, 20 },
+			CustomSortableType { 4, 10 },
+			CustomSortableType { 6, 8 },
+			CustomSortableType { 24, 17 },
+			CustomSortableType { 2, 14 },
+		};
+
+		Sort(custom, 5, SortByHeight());
+		VERIFY(IsSorted(custom, 5, SortByHeight()));
+	}
+	errorCount += ReportMemoryLeaks();
+	EndTest(errorCount);
+}
+
 // Goals:
 // No copy constructors
 // No constructors, POD data everywhere
 // Explicit memory operations for things
 
-// SORT
-// ------
-// We want to implement a quick sort. stl sort switches to heap or merge sort to avoid worst case
-// known as introsort, but we don't need this
-// When qsort recursion depth goes past some point. How do these algorithms work?
-// https://coderslegacy.com/python/quicksort-algorithm/
-// https://www.geeksforgeeks.org/quick-sort/
-
-
 // TODO LIST
 // [x] Allocators are abstract interfaces, similar to bx library
 // [x] Json parser can use custom allocators
-// [ ] Architect functions so that allocators are optional params
-// [ ] rename old pointer type in json parser
-// [ ] Sort algorithm for ResizableArrays
+// [x] Architect functions so that allocators are optional params
+// [x] rename old pointer type in json parser
+// [x] Sort algorithm for ResizableArrays
 // [ ] Move math libs into common
 // [ ] Move error handling and asserts into common
 // [ ] Move utils into common
 
 int main() {
-	JsonTest();
 	LinearAllocatorTest();
-	HashMapTest();
-	StringTest();
 	ResizableArrayTest();
+	StringTest();
+	HashMapTest();
+	SortTest();
+	JsonTest();
 	__debugbreak();
     return 0;
 }
