@@ -28,7 +28,9 @@ project "CommonLib"
 		"source/log.cpp",
 		"source/defer.h",
 		"source/platform_debug.h",
-		"source/platform_debug.cpp"
+		"source/platform_debug.cpp",
+		"source/base64.h",
+		"source/base64.cpp"
 	}
 	filter { "system:windows", "configurations:Debug*" }
 		links { "dbghelp" }
