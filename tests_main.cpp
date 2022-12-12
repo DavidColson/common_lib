@@ -1,4 +1,6 @@
 
+#include "defer.h"
+#include "log.h"
 #include "sort.h"
 #include "json.h"
 #include "linear_allocator.h"
@@ -7,25 +9,6 @@
 #include "hashmap.h"
 #include "resizable_array.h"
 #include "testing.h"
-
-
-// Find a place for this to live
-template <typename F>
-struct privDefer {
-	F f;
-	privDefer(F f) : f(f) {}
-	~privDefer() { f(); }
-};
-
-template <typename F>
-privDefer<F> defer_func(F f) {
-	return privDefer<F>(f);
-}
-
-#define DEFER_1(x, y) x##y
-#define DEFER_2(x, y) DEFER_1(x, y)
-#define DEFER_3(x)    DEFER_2(x, __COUNTER__)
-#define defer(code)   auto DEFER_3(_defer_) = defer_func([&]() { code; })
 
 // ---------------------
 // Tests
@@ -471,22 +454,59 @@ void SortTest() {
 	EndTest(errorCount);
 }
 
+void CustomLogHandler(Log::LogLevel level, String message) {
+	printf("Custom Log Handler Test! %s", message.pData);
+}
+
+void LogTest() {
+	// Not quite sure how to test this but this is an example usage anyway
+	StartTest("Log");
+	int errorCount = 0;
+
+	{
+		// Basic Logging;
+		Log::Debug("Debug log %i", 5);
+		Log::Info("Info message %i", 5);
+		Log::Warn("Warning %i", 5);
+
+		// Modifying Log Level
+		Log::SetLogLevel(Log::EWarn);
+		Log::Debug("Debug log %i", 5);
+		Log::Info("Info message %i", 5);
+		Log::Warn("Warning %i", 5);
+
+		// Criticals can cause a crash and show a callstack (uncomment to see)
+		// Log::Crit("Critical Error %i", 5);
+
+		// Assertions
+		Assert(5 == 5);
+		// Assert(5 == 4);
+		// AssertMsg(5 == 4, "woops");
+
+		// Custom handlers
+		Log::SetLogLevel(Log::EDebug);
+		Log::LogConfig cfg;
+		cfg.customHandler1 = CustomLogHandler;
+		Log::SetConfig(cfg);
+
+		Log::Debug("A Debug Message");
+	}
+
+	errorCount += ReportMemoryLeaks();
+	EndTest(errorCount);
+}
+
 // Goals:
 // No copy constructors
 // No constructors, POD data everywhere
 // Explicit memory operations for things
 
 // TODO LIST
-// [x] Allocators are abstract interfaces, similar to bx library
-// [x] Json parser can use custom allocators
-// [x] Architect functions so that allocators are optional params
-// [x] rename old pointer type in json parser
-// [x] Sort algorithm for ResizableArrays
 // [ ] Move math libs into common
-// [ ] Move error handling and asserts into common
 // [ ] Move utils into common
 
 int main() {
+	//LogTest();
 	LinearAllocatorTest();
 	ResizableArrayTest();
 	StringTest();

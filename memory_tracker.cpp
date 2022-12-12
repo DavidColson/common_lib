@@ -3,9 +3,8 @@
 #include "string.h"
 #include "hashmap.h"
 #include "resizable_array.h"
-
-#include "Windows.h"
-#include "dbghelp.h"
+#include "platform_debug.h"
+#include "defer.h"
 
 struct ForceNoTrackAllocator : public IAllocator {
 	void* 	Allocate(size_t size) { return malloc(size); }
@@ -19,9 +18,9 @@ struct Allocation {
 	size_t size { 0 };
 	bool isLive { false };
 	void* allocStackTrace[100];
-	uint32_t allocStackTraceFrames { 0 };
+	size_t allocStackTraceFrames { 0 };
 	void* freeStackTrace[100];
-	uint32_t freeStackTraceFrames { 0 };
+	size_t freeStackTraceFrames { 0 };
 };
 
 struct MemoryTrackerState {
@@ -64,7 +63,7 @@ void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
 	allocation.pAllocator = pAllocatorPtr;
 	allocation.size = size;
 	allocation.isLive = true;
-	allocation.allocStackTraceFrames = CaptureStackBackTrace(1, 100, allocation.allocStackTrace, nullptr);
+	allocation.allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.allocStackTrace, 100, 2);
 	pCtx->allocationTable[pAllocated] = allocation;
 }
 
@@ -78,14 +77,14 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 		if (alloc->pointer != pAllocated) { // Memory has changed location, so we must change the key
 			// old alloc is effectively freed
 			alloc->isLive = false;
-			alloc->allocStackTraceFrames = CaptureStackBackTrace(1, 100, alloc->freeStackTrace, nullptr);
+			alloc->freeStackTraceFrames = PlatformDebug::CollectStackTrace(alloc->freeStackTrace, 100, 2);
 
 			Allocation newAlloc;
 			newAlloc.pointer = pAllocated;
 			newAlloc.pAllocator = pAllocatorPtr;
 			newAlloc.size = size;
 			newAlloc.isLive = true;
-			newAlloc.allocStackTraceFrames = CaptureStackBackTrace(1, 100, newAlloc.allocStackTrace, nullptr);
+			newAlloc.allocStackTraceFrames = PlatformDebug::CollectStackTrace(newAlloc.allocStackTrace, 100, 2);
 			pCtx->allocationTable.Erase(alloc->pointer);
 			pCtx->allocationTable[pAllocated] = newAlloc;
 		}
@@ -100,63 +99,23 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 		allocation.pAllocator = pAllocatorPtr;
 		allocation.size = size;
 		allocation.isLive = true;
-		allocation.allocStackTraceFrames = CaptureStackBackTrace(1, 100, allocation.allocStackTrace, nullptr);
+		allocation.allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.allocStackTrace, 100);
 		pCtx->allocationTable[pAllocated] = allocation;
 	}
 }
 
-void PrintStackTrace(void** stackTrace, uint32_t stackDepth) {
-	HANDLE process = GetCurrentProcess();
-	SymInitialize(process, nullptr, true);
-
-	// We allocate space for the symbol info and space for the name string
-	SYMBOL_INFO* symbol;
-	symbol = (SYMBOL_INFO*)calloc(sizeof(SYMBOL_INFO) + 256 * sizeof(char), 1);
-	symbol->MaxNameLen = 255;
-	symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
-	DWORD displacement;
-
-	ResizableArray<String> stackFuncs(&noTrackAllocator);
-	ResizableArray<String> stackFiles(&noTrackAllocator);
-	ResizableArray<size_t> stackLines(&noTrackAllocator);
-
-	size_t longestName = 0;
-	for (uint32_t j = 0; j < stackDepth-6; j++) {
-		if (!SymFromAddr(process, (DWORD64)(stackTrace[j]), 0, symbol)) {
-			DWORD d = GetLastError();
-		}
-				
-		IMAGEHLP_LINE line;
-		SymGetLineFromAddr(process, (DWORD64)(stackTrace[j]), &displacement, &line);
-
-		size_t len = strlen(symbol->Name);
-		if (len > longestName)
-			longestName = len;
-
-		stackFuncs.PushBack(CopyCString(symbol->Name, &noTrackAllocator));
-		stackFiles.PushBack(CopyCString(line.FileName, &noTrackAllocator));
-		stackLines.PushBack((size_t)line.LineNumber);
-	}
-
-	for (uint32_t j = 0; j < stackDepth-6; j++) {
-		printf(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
-	}
-
-	stackFuncs.Free([] (String& str) {
-		FreeString(str, &noTrackAllocator);
-	});
-	stackFiles.Free([] (String& str) {
-		FreeString(str, &noTrackAllocator);
-	});
-	stackLines.Free();
-}
-
-void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, uint32_t newFreeTraceFrames) {
+void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTraceFrames) {
 	printf("\n------ Hey idiot, detected double free at %p. Fix your shit! ------\n", alloc.pointer);
 	printf("     Previously Freed at: \n");
-	PrintStackTrace(alloc.freeStackTrace, alloc.freeStackTraceFrames);
+
+	String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, &noTrackAllocator);
+	defer(FreeString(trace, &noTrackAllocator));
+	printf("%s", trace.pData);
+
 	printf("     Freed again at: \n");
-	PrintStackTrace(newFreeTrace, newFreeTraceFrames);
+	String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &noTrackAllocator);
+	defer(FreeString(trace2, &noTrackAllocator));
+	printf("%s", trace2.pData);
 	__debugbreak();
 }
 
@@ -174,12 +133,12 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 
 		if (!alloc->isLive) {
 			void* stackTrace[100];
-			uint32_t stackFrames = CaptureStackBackTrace(1, 100, stackTrace, nullptr);
+			size_t stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
 			ReportDoubleFree(*alloc, stackTrace, stackFrames);
 		}
 
 		alloc->isLive = false;
-		alloc->freeStackTraceFrames = CaptureStackBackTrace(1, 100, alloc->freeStackTrace, nullptr);
+		alloc->freeStackTraceFrames = PlatformDebug::CollectStackTrace(alloc->freeStackTrace, 100);
 	}
 	else {
 		ReportUnknownFree(ptr);
@@ -199,7 +158,9 @@ int ReportMemoryLeaks() {
 			if (alloc.isLive) {
 				leakCounter++;
 				printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n", alloc.pointer, alloc.size);
-				PrintStackTrace(alloc.allocStackTrace, alloc.allocStackTraceFrames);
+				String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
+				defer(FreeString(trace, &noTrackAllocator));
+				printf("%s", trace.pData);
 			}
 		}
 	}

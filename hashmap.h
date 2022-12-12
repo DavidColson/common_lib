@@ -13,7 +13,6 @@ struct KeyFuncs {
 	{
 		// This code intentionally doesn't compile
 		// You must provide a custom hash for your key type
-		DEBUG_CHECK(false)
 		return 0;
 	}
 

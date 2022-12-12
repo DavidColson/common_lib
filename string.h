@@ -7,12 +7,6 @@
 #include <stdarg.h>
 #include <string.h>
 
-#ifdef _DEBUG
-#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
-#else
-#define DEBUG_CHECK(expression)
-#endif
-
 // Dynamic String Class
 // --------------------
 // Null terminated string

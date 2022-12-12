@@ -49,5 +49,10 @@ solution "CommonLib"
             "json.h",
             "scanning.h",
             "scanning.cpp",
-            "sort.h"
+            "sort.h",
+            "log.h",
+            "log.cpp",
+            "defer.h",
+            "platform_debug.h",
+            "platform_debug.cpp"
         }

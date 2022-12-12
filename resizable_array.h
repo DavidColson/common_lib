@@ -1,15 +1,10 @@
 #pragma once
 
 #include "memory.h"
+#include "log.h"
 
 #include <stdint.h>
 #include <string.h>
-
-#ifdef _DEBUG
-#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
-#else
-#define DEBUG_CHECK(expression)
-#endif
 
 // Resizable Array Structure
 // -----------------------
@@ -66,17 +61,17 @@ struct ResizableArray {
 	}
 
 	void PopBack() {
-		DEBUG_CHECK(count > 0);
+		Assert(count > 0);
 		count--;
 	}
 
 	type& operator[](size_t i) {
-		DEBUG_CHECK(i >= 0 && i < count);
+		Assert(i >= 0 && i < count);
 		return pData[i];
 	}
 	
 	const type& operator[](size_t i) const {
-		DEBUG_CHECK(i >= 0 && i < count);
+		Assert(i >= 0 && i < count);
 		return pData[i];
 	}
 
@@ -86,7 +81,7 @@ struct ResizableArray {
 	}
 
 	void Erase(size_t index) {
-		DEBUG_CHECK(index >= 0 && index < count);
+		Assert(index >= 0 && index < count);
 		if (index == count-1) {
 			PopBack(); count--;
 		}
@@ -97,7 +92,7 @@ struct ResizableArray {
 	}
 
 	void EraseUnsorted(size_t index) {
-		DEBUG_CHECK(index >= 0 && index < count);
+		Assert(index >= 0 && index < count);
 		if (index == count-1) {
 			PopBack(); count--;
 		}
@@ -108,7 +103,7 @@ struct ResizableArray {
 	}
 	
 	void Insert(size_t index, const type& value) {
-		DEBUG_CHECK(index >= 0 && index < count);
+		Assert(index >= 0 && index < count);
 		if (capacity == count) Reserve(GrowCapacity(count + 1));
 		memmove(pData + (index + 1), pData + index, (count-index) * sizeof(type));
 		memcpy(pData + index, &value, sizeof(type));
@@ -143,7 +138,7 @@ struct ResizableArray {
 	}
 
 	uint32_t IndexFromPointer(const type* ptr) const {
-		DEBUG_CHECK(ptr >= pData && ptr < pData + count);
+		Assert(ptr >= pData && ptr < pData + count);
 		ptrdiff_t diff = ptr - pData;
 		return (uint32_t)diff;
 	}

@@ -1,16 +1,11 @@
 #include "linear_allocator.h"
 
 #include "memory.h"
+#include "log.h"
 
 #include <stdio.h>
 #include <Windows.h>
 #include <Memoryapi.h>
-
-#ifdef _DEBUG
-#define DEBUG_CHECK(expression) if (!(expression)) __debugbreak();
-#else
-#define DEBUG_CHECK(expression)
-#endif
 
 size_t Align(size_t toAlign, size_t alignment) {
 	// Rounds up to nearest multiple of alignment (works if alignment is power of 2)
@@ -28,7 +23,7 @@ void* LinearAllocator::Allocate(size_t size) {
 	uint8_t* pEnd = pOutput + size;
 
 	if (pEnd > pFirstUncommittedPage) {
-		DEBUG_CHECK(pEnd < pAddressLimit);
+		Assert(pEnd < pAddressLimit);
 		ExpandCommitted(pEnd);
 	}
 
@@ -54,7 +49,7 @@ void LinearAllocator::Init(size_t defaultReserve) {
 
 	reserveSize = Align(defaultReserve, pageSize);
 	pMemoryBase = (uint8_t*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
-	DEBUG_CHECK(pMemoryBase != nullptr);
+	Assert(pMemoryBase != nullptr);
 
 	pFirstUncommittedPage = pMemoryBase;
 	pAddressLimit = pMemoryBase + reserveSize;
@@ -81,7 +76,7 @@ void LinearAllocator::Finished() {
 void LinearAllocator::ExpandCommitted(uint8_t* pDesiredEnd) {
 	size_t currentSpace = pFirstUncommittedPage - pMemoryBase;
 	size_t requiredSpace = pDesiredEnd - pFirstUncommittedPage;
-	DEBUG_CHECK(requiredSpace > 0);
+	Assert(requiredSpace > 0);
 
 	size_t size = Align(requiredSpace, pageSize);
 	VirtualAlloc(pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
