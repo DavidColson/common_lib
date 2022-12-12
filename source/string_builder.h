@@ -69,10 +69,13 @@ struct StringBuilder {
 	}
 
 	void Reset() {
-		pAlloc->Free(pData);
-		pData = nullptr;
-		length = 0;
-		capacity = 0;
+		if (pData)
+		{
+			pAlloc->Free(pData);
+			pData = nullptr;
+			length = 0;
+			capacity = 0;
+		}
 	}
 
 	void Reserve(size_t desiredCapacity) {

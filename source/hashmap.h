@@ -7,17 +7,47 @@
 // for each key. So the hashing function and the key comparison
 // -------------------------------
 
-template<typename K>
-struct KeyFuncs {
-	uint64_t Hash(K& key) const
+namespace Internal
+{
+	template <typename T, T v>
+	struct integral_constant
 	{
-		// This code intentionally doesn't compile
-		// You must provide a custom hash for your key type
-		return 0;
+		static constexpr T value = v;
+		typedef T value_type;
+		typedef integral_constant<T, v> type;
+
+		constexpr operator value_type() const { return value; }
+		constexpr value_type operator()() const { return value; }
+	};
+
+	template <typename T>
+	struct is_enum : public integral_constant<bool, __is_enum(T)> {};
+
+	template<typename T>
+	constexpr bool is_enum_v = is_enum<T>::value;
+
+	// utility to disable the generic template specialization that is
+	// used for enum types only.
+	template <typename T, bool Enabled>
+	struct EnableHashIf
+	{
+	};
+
+	template <typename T>
+	struct EnableHashIf<T, true>
+	{
+		size_t operator()(const T& p) const { return size_t(p); }
+	};
+}
+
+template<typename K>
+struct KeyFuncs : Internal::EnableHashIf<K, Internal::is_enum_v<K>> {
+	uint64_t Hash(K key) const {
+		return static_cast<uint64_t>(key);
 	}
 
-	bool Cmp(K& key1, K& key2) const {
-		return false;
+	bool Cmp(K key1, K key2) const {
+		return static_cast<uint64_t>(key1) == static_cast<uint64_t>(key2);
 	}
 };
 
@@ -179,7 +209,8 @@ struct HashMap {
 	}
 
 	void Free() {
-		pAlloc->Free(pTable);
+		if (pTable)
+			pAlloc->Free(pTable);
 	}
 
 	template<typename F>
@@ -193,8 +224,8 @@ struct HashMap {
 	}
 
 	V& Add(const K& key, const V& value) {
-		float loadFactor = tableSize == 0 ? INT_MAX : (float)count / (float)tableSize;
-		if (loadFactor >= 1.0f) Rehash(tableSize + 1);
+		float loadFactor = tableSize == 0 ? INT_MAX : (float)(count) / (float)tableSize;
+		if (loadFactor >= 0.9f) Rehash(tableSize + 1);
 
 		uint64_t hash = keyFuncs.Hash(key);
 		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;
@@ -238,8 +269,8 @@ struct HashMap {
 			return Add(key, value);
 		}
 
-		float loadFactor = tableSize == 0 ? INT_MAX : (float)count / (float)tableSize;
-		if (loadFactor >= 1.0f) Rehash(tableSize + 1);
+		float loadFactor = tableSize == 0 ? INT_MAX : (float)(count) / (float)tableSize;
+		if (loadFactor >= 0.9f) Rehash(tableSize + 1);
 
 		uint64_t hash = keyFuncs.Hash(key);
 		if (hash < FIRST_VALID_HASH) hash += FIRST_VALID_HASH;

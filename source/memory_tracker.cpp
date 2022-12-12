@@ -1,5 +1,6 @@
 #include "memory_tracker.h"
 
+#include "log.h"
 #include "light_string.h"
 #include "hashmap.h"
 #include "resizable_array.h"
@@ -85,7 +86,6 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 			newAlloc.size = size;
 			newAlloc.isLive = true;
 			newAlloc.allocStackTraceFrames = PlatformDebug::CollectStackTrace(newAlloc.allocStackTrace, 100, 2);
-			pCtx->allocationTable.Erase(alloc->pointer);
 			pCtx->allocationTable[pAllocated] = newAlloc;
 		}
 		else
@@ -105,22 +105,26 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 }
 
 void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTraceFrames) {
-	printf("\n------ Hey idiot, detected double free at %p. Fix your shit! ------\n", alloc.pointer);
-	printf("     Previously Freed at: \n");
+	Log::Warn("\n------ Hey idiot, detected double free at %p. Fix your shit! ------\n", alloc.pointer);
+	Log::Warn("     Allocated at:");
+	String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
+	defer(FreeString(allocTrace, &noTrackAllocator));
+	Log::Warn("%s", allocTrace.pData);
 
+	Log::Warn("     Previously Freed at:");
 	String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, &noTrackAllocator);
 	defer(FreeString(trace, &noTrackAllocator));
-	printf("%s", trace.pData);
+	Log::Warn("%s", trace.pData);
 
-	printf("     Freed again at: \n");
+	Log::Warn("     Freed again at:");
 	String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &noTrackAllocator);
 	defer(FreeString(trace2, &noTrackAllocator));
-	printf("%s", trace2.pData);
+	Log::Warn("%s", trace2.pData);
 	__debugbreak();
 }
 
 void ReportUnknownFree(void* ptr) {
-	printf("\n------ Hey idiot, detected free of untracked memory %p. Fix your shit! ------\n", ptr);
+	Log::Warn("\n------ Hey idiot, detected free of untracked memory %p. Fix your shit! ------\n", ptr);
 	__debugbreak();
 }
 
@@ -157,16 +161,16 @@ int ReportMemoryLeaks() {
 			Allocation& alloc = pCtx->allocationTable.pTable[i].value;
 			if (alloc.isLive) {
 				leakCounter++;
-				printf("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n", alloc.pointer, alloc.size);
+				Log::Warn("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n", alloc.pointer, alloc.size);
 				String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
 				defer(FreeString(trace, &noTrackAllocator));
-				printf("%s", trace.pData);
+				Log::Warn("%s", trace.pData);
 			}
 		}
 	}
 
 	if (leakCounter > 0)
-		printf("\n");
+		Log::Warn("\n");
 	return leakCounter;	
 #else
 	return 0;
