@@ -1,6 +1,6 @@
 #pragma once
 
-#include "string.h"
+#include "light_string.h"
 
 namespace PlatformDebug {
 	size_t CollectStackTrace(void** stackFramesArray, size_t arraySize, size_t framesToSkip = 0);

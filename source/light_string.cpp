@@ -1,4 +1,4 @@
-#include "string.h"
+#include "light_string.h"
 
 String CopyCString(const char* string, IAllocator* pAlloc) {
 	String s;

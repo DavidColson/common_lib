@@ -4,7 +4,7 @@
 
 #include "resizable_array.h"
 #include "hashmap.h"
-#include "string.h"
+#include "light_string.h"
 
 struct JsonValue
 {

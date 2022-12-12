@@ -7,7 +7,7 @@
 #include <stdarg.h>
 #include <string.h>
 
-// Dynamic String Class
+// String Class
 // --------------------
 // Null terminated string
 // The functions in this struct guarantee to do zero memory operations

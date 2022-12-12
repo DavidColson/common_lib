@@ -1,6 +1,6 @@
 #include "memory_tracker.h"
 
-#include "string.h"
+#include "light_string.h"
 #include "hashmap.h"
 #include "resizable_array.h"
 #include "platform_debug.h"

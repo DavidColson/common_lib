@@ -4,7 +4,7 @@
 #include "sort.h"
 #include "json.h"
 #include "linear_allocator.h"
-#include "string.h"
+#include "light_string.h"
 #include "string_builder.h"
 #include "hashmap.h"
 #include "resizable_array.h"

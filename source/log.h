@@ -1,6 +1,6 @@
 #pragma once
 
-#include "string.h"
+#include "light_string.h"
 
 namespace Log
 {

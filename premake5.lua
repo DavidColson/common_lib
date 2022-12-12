@@ -1,5 +1,5 @@
 
-local BUILD_DIR = path.join("Build", _ACTION)
+local BUILD_DIR = path.join("build", _ACTION)
 if _OPTIONS["cc"] ~= nil then
 	BUILD_DIR = BUILD_DIR .. "_" .. _OPTIONS["cc"]
 end
@@ -22,7 +22,9 @@ solution "CommonLib"
 		flags { "NoIncrementalLink" }
 		editandcontinue "Off"
 		links { "dbghelp" }
-			
+	
+	dofile("commonlib.lua")
+
     project "Tests"
         kind "ConsoleApp"
         language "C++"
@@ -32,27 +34,13 @@ solution "CommonLib"
         debugdir ""
         files 
         {
-            "tests_main.cpp",
-            "memory.h",
-            "memory.cpp",
-            "resizable_array.h",
-            "hashmap.h",
-            "string.h",
-            "string.cpp",
-            "string_builder.h",
-            "testing.h",
-            "memory_tracker.h",
-            "memory_tracker.cpp",
-            "linear_allocator.h",
-            "linear_allocator.cpp",
-            "json.cpp",
-            "json.h",
-            "scanning.h",
-            "scanning.cpp",
-            "sort.h",
-            "log.h",
-            "log.cpp",
-            "defer.h",
-            "platform_debug.h",
-            "platform_debug.cpp"
+            "tests/tests_main.cpp",
         }
+		includedirs
+		{
+			"source/"
+		}
+		links
+		{
+			"CommonLib"
+		}
