@@ -58,5 +58,5 @@ struct JsonValue
 	};
 };
 
-JsonValue ParseJsonFile(IAllocator* pAllocator, String file);
+JsonValue ParseJsonFile(String file, IAllocator* pAllocator = &gAllocator);
 String SerializeJsonValue(JsonValue json);

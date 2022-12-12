@@ -62,6 +62,17 @@ struct String {
 	bool operator!=(const char* other) const {
 		return !operator==(other);
 	}
+
+	String SubStr(size_t start, size_t len = -1) {
+		String result;
+		result.pData = pData + start;
+
+		if (len == (size_t)-1)
+			result.length = length - start;
+		else
+			result.length = len;
+		return result;
+	}
 };
 
 String CopyCString(const char* string, IAllocator* pAlloc = &gAllocator);

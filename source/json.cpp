@@ -604,7 +604,7 @@ JsonValue JsonValue::NewArray()
 
 // ***********************************************************************
 
-JsonValue ParseJsonFile(IAllocator* pAllocator, String file)
+JsonValue ParseJsonFile(String file, IAllocator* pAllocator)
 {
 	ResizableArray<Token> tokens = TokenizeJson(pAllocator, file);
 

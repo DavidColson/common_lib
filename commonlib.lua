@@ -30,3 +30,5 @@ project "CommonLib"
 		"source/platform_debug.h",
 		"source/platform_debug.cpp"
 	}
+	filter { "system:windows", "configurations:Debug*" }
+		links { "dbghelp" }
