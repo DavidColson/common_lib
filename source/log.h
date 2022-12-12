@@ -19,8 +19,8 @@ namespace Log
 		bool fileOutput{ true };
 		bool critCrashes{ true };
 		
-		void (*customHandler1)(LogLevel, String);
-		void (*customHandler2)(LogLevel, String);
+		void (*customHandler1)(LogLevel, String) = nullptr;
+		void (*customHandler2)(LogLevel, String) = nullptr;
 	};
 
 	void SetConfig(LogConfig config);

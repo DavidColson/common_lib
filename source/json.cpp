@@ -693,9 +693,9 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
 	//	while (true) {
 	//		index = result.find("\n", index);
 	//		int count = 1;
-	//		while((index+count) != std::string::npos && result[index+count] == ' ')
+	//		while((index+count) != size_t(-1) && result[index+count] == ' ')
 	//			count++;
-	//		if (index == std::string::npos) break;
+	//		if (index == size_t(-1)) break;
 	//		result.replace(index, count, "");
 	//		index += 1;
 	//	}

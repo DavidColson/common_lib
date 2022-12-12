@@ -30,29 +30,30 @@ namespace Log {
 		if (config.consoleOutput)
 			printf("%s", message.pData);
 
-		if (config.customHandler1)
-			config.customHandler1(level, message);
-		
-		if (config.customHandler2)
-			config.customHandler2(level, message);
-
-		if (config.critCrashes && level <= Log::ECrit)
+		if (level <= Log::ECrit)
 		{
 			void* trace[100];
 			size_t frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
 
-			String strackTrace = PlatformDebug::PrintStackTraceToString(trace, frames);
+			String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames);
 			if (config.fileOutput) {
-				fprintf(pLogFile, strackTrace.pData);
+				fprintf(pLogFile, stackTrace.pData);
 				fflush(pLogFile);
 			}
 			if (config.winOutput)
-				OutputDebugStringA(strackTrace.pData);
+				OutputDebugStringA(stackTrace.pData);
 			if (config.consoleOutput)
-				printf("%s", strackTrace.pData);
-
-			__debugbreak();
+				printf("%s", stackTrace.pData);
 		}
+
+		if (config.customHandler1)
+			config.customHandler1(level, message);
+
+		if (config.customHandler2)
+			config.customHandler2(level, message);
+
+		if (config.critCrashes && level <= Log::ECrit)
+			__debugbreak();
 	}
 }
 
@@ -124,7 +125,7 @@ void Log::Debug(const char* text, ...)
 void Log::_Assertion(bool expression, const char* message) {
 	if (!expression) {
 		StringBuilder builder;
-		builder.Append("[ASSERTION] ");
+		builder.Append("[ASSERT FAIL] ");
 		builder.Append(message);
 		builder.Append("\n");
 
