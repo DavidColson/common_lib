@@ -44,7 +44,12 @@ struct ResizableArray {
 		}
 	}
 
-	// TODO: Need a resize function, that doesn't free memory, so it can be reused
+	void Resize(uint32_t desiredCount) {
+		if (desiredCount > capacity) {
+			Reserve(desiredCount);
+		}
+		count = desiredCount;
+	}
 
 	void Reserve(uint32_t desiredCapacity) {
 		if (capacity >= desiredCapacity) return;
@@ -75,18 +80,13 @@ struct ResizableArray {
 		return pData[i];
 	}
 
-	void Reset() {
-		count = 0;
-		capacity = 0;
-	}
-
 	void Erase(size_t index) {
 		Assert(index >= 0 && index < count);
 		if (index == count-1) {
 			PopBack(); count--;
 		}
 		if (index < count-1) {
-			memmove(pData + index, pData + (index + 1), (count - index) * sizeof(type));
+			memmove(pData + index, pData + (index + 1), (count - index - 1) * sizeof(type));
 			count--;
 		}
 	}

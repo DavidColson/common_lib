@@ -277,12 +277,16 @@ int ResizableArrayTest() {
 		VERIFY(testArray.IndexFromPointer(testArray.Find(1111)) == 2);
 		VERIFY(testArray.Find(1337) == testArray.end());
 
+		// Resize an array (does not change capacity if lower, (memory can be reused)
+		testArray.Resize(3);
+		VERIFY(testArray.count == 3);
+		VERIFY(testArray.capacity == 50);
+
 		// Clear the array
-		testArray.Reset();
+		testArray.Free();
+		VERIFY(testArray.pData == nullptr);
 		VERIFY(testArray.count == 0);
 		VERIFY(testArray.capacity == 0);
-		testArray.Free();
-		testArray.Free();
 	}
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
@@ -355,7 +359,7 @@ void JsonTest() {
 
 		String jsonString;
 		jsonString = json;
-		JsonValue v = ParseJsonFile(&gAllocator, jsonString);
+		JsonValue v = ParseJsonFile(jsonString);
 		defer(v.Free());
 
 		VERIFY(v["widget"]["debug"].ToString() == "on");
