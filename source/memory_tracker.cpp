@@ -105,21 +105,16 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 }
 
 void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTraceFrames) {
-	Log::Warn("\n------ Hey idiot, detected double free at %p. Fix your shit! ------\n", alloc.pointer);
-	Log::Warn("     Allocated at:");
 	String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
 	defer(FreeString(allocTrace, &noTrackAllocator));
-	Log::Warn("%s", allocTrace.pData);
 
-	Log::Warn("     Previously Freed at:");
 	String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, &noTrackAllocator);
 	defer(FreeString(trace, &noTrackAllocator));
-	Log::Warn("%s", trace.pData);
 
-	Log::Warn("     Freed again at:");
 	String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &noTrackAllocator);
 	defer(FreeString(trace2, &noTrackAllocator));
-	Log::Warn("%s", trace2.pData);
+
+	Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
 	__debugbreak();
 }
 
@@ -161,16 +156,12 @@ int ReportMemoryLeaks() {
 			Allocation& alloc = pCtx->allocationTable.pTable[i].value;
 			if (alloc.isLive) {
 				leakCounter++;
-				Log::Warn("\n------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n", alloc.pointer, alloc.size);
 				String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
 				defer(FreeString(trace, &noTrackAllocator));
-				Log::Warn("%s", trace.pData);
+				Log::Warn(" ------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n%s", alloc.pointer, alloc.size, trace.pData);
 			}
 		}
 	}
-
-	if (leakCounter > 0)
-		Log::Warn("\n");
 	return leakCounter;	
 #else
 	return 0;
