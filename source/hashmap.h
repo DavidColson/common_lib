@@ -177,6 +177,8 @@ struct KeyFuncs<const char*> {
 };
 
 
+#define UNUSED_HASH 0
+#define FIRST_VALID_HASH 1
 
 // Hash Node used in hashmap below
 // -------------------------------
@@ -191,10 +193,7 @@ struct HashNode {
 // Hashmap data structure
 // -----------------------
 // Open addressing to reduce memory allocs and improve cache coherency, requires manual freeing
-// TODO Documentation etc
-
-#define UNUSED_HASH 0
-#define FIRST_VALID_HASH 1
+// TODO Documentation etca
 
 template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {
