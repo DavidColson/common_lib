@@ -13,6 +13,8 @@ project "common_lib"
 	}
 	filter { "system:windows", "configurations:Debug*" }
 		links { "dbghelp" }
+	if ASAN_Enabled then
         buildoptions { "/fsanitize=address" }
         flags { "NoIncrementalLink" }
         editandcontinue "Off"
+	end
