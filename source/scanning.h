@@ -2,53 +2,48 @@
 
 #pragma once
 
-namespace Scan
-{
-    // Scanning utilities
-    ///////////////////////
+namespace Scan {
+// Scanning utilities
+///////////////////////
 
-    struct ScanningState
-    {
-        const char* pTextStart;
-        const char* pTextEnd;
-        char* pCurrent{ nullptr };
-        char* pCurrentLineStart{ nullptr };
-        int line{ 1 };
-        bool encounteredError{ false };
-    };
+struct ScanningState {
+    const char* pTextStart;
+    const char* pTextEnd;
+    char* pCurrent { nullptr };
+    char* pCurrentLineStart { nullptr };
+    int line { 1 };
+    bool encounteredError { false };
+};
 
-    inline char Advance(ScanningState& scan)
-    {
-		return *(scan.pCurrent++);
-	}
+inline char Advance(ScanningState& scan) {
+    return *(scan.pCurrent++);
+}
 
-    inline char Peek(ScanningState& scan)
-    {
-		return *(scan.pCurrent);
-	}
+inline char Peek(ScanningState& scan) {
+    return *(scan.pCurrent);
+}
 
-    inline bool IsAtEnd(ScanningState& scan)
-    {
-		return scan.pCurrent >= scan.pTextEnd;
-	}
+inline bool IsAtEnd(ScanningState& scan) {
+    return scan.pCurrent >= scan.pTextEnd;
+}
 
-    bool Match(ScanningState& scan, char expected);
+bool Match(ScanningState& scan, char expected);
 
-    char PeekNext(ScanningState& scan);
+char PeekNext(ScanningState& scan);
 
-    bool IsWhitespace(char c);
+bool IsWhitespace(char c);
 
-    void AdvanceOverWhitespace(ScanningState& scan);
+void AdvanceOverWhitespace(ScanningState& scan);
 
-    void AdvanceOverWhitespaceNoNewline(ScanningState& scan);
+void AdvanceOverWhitespaceNoNewline(ScanningState& scan);
 
-    bool IsPartOfNumber(char c);
+bool IsPartOfNumber(char c);
 
-    bool IsDigit(char c);
+bool IsDigit(char c);
 
-    bool IsHexDigit(char c);
+bool IsHexDigit(char c);
 
-    bool IsAlpha(char c);
-    
-    bool IsAlphaNumeric(char c);
+bool IsAlpha(char c);
+
+bool IsAlphaNumeric(char c);
 }

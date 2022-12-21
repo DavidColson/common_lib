@@ -2,9 +2,9 @@
 
 #include "memory.h"
 
+#include <stdarg.h>
 #include <stdint.h>
 #include <stdio.h>
-#include <stdarg.h>
 #include <string.h>
 
 // String Class
@@ -15,64 +15,66 @@
 // TODO: Documentation
 
 struct String {
-	char* pData = nullptr;
-	size_t length = 0;
-	
-	// TODOs
-	// [ ] contains/nocase
-	// [ ] create substring
-	// [ ] Tofloat/ToInt
-	// [ ] trimRight/Left
+    char* pData = nullptr;
+    size_t length = 0;
 
-	String() {}
-	
-	String(const char* str) {
-		pData = const_cast<char*>(str);
-		length = strlen(str);
-	}
+    // TODOs
+    // [ ] contains/nocase
+    // [ ] create substring
+    // [ ] Tofloat/ToInt
+    // [ ] trimRight/Left
 
-	void operator=(const char* str) {
-		pData = const_cast<char*>(str);
-		length = strlen(str);
-	}
+    String() {}
 
-	bool operator==(const String& other) const {
-		if (length != other.length) return false;
-		char* s1 = pData;
-		char* s2 = other.pData;
-		size_t count = 0;
-		while (count < length) {
-			count++;
-			if (*s1 != *s2) return false;
-			s1++;
-			s2++;
-		}
-		return true;
-	}
+    String(const char* str) {
+        pData = const_cast<char*>(str);
+        length = strlen(str);
+    }
 
-	bool operator==(const char* other) const {
-		String str(other);
-		return operator==(str);
-	}
+    void operator=(const char* str) {
+        pData = const_cast<char*>(str);
+        length = strlen(str);
+    }
 
-	bool operator!=(const String& other) const {
-		return !operator==(other);
-	}
+    bool operator==(const String& other) const {
+        if (length != other.length)
+            return false;
+        char* s1 = pData;
+        char* s2 = other.pData;
+        size_t count = 0;
+        while (count < length) {
+            count++;
+            if (*s1 != *s2)
+                return false;
+            s1++;
+            s2++;
+        }
+        return true;
+    }
 
-	bool operator!=(const char* other) const {
-		return !operator==(other);
-	}
+    bool operator==(const char* other) const {
+        String str(other);
+        return operator==(str);
+    }
 
-	String SubStr(size_t start, size_t len = -1) {
-		String result;
-		result.pData = pData + start;
+    bool operator!=(const String& other) const {
+        return !operator==(other);
+    }
 
-		if (len == (size_t)-1)
-			result.length = length - start;
-		else
-			result.length = len;
-		return result;
-	}
+    bool operator!=(const char* other) const {
+        return !operator==(other);
+    }
+
+    String SubStr(size_t start, size_t len = -1) {
+        String result;
+        result.pData = pData + start;
+
+        if (len == (size_t)-1)
+            result.length = length - start;
+        else
+            result.length = len;
+        return result;
+    }
 };
 
 String CopyCString(const char* string, IAllocator* pAlloc = &gAllocator);

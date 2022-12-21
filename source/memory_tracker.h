@@ -9,4 +9,3 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 void CheckFree(void* pAllocatorPtr, void* ptr);
 
 int ReportMemoryLeaks();
-

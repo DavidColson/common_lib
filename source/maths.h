@@ -4,14 +4,13 @@
 
 #include <cmath>
 
-#define PI  3.141592653589793238f
+#define PI 3.141592653589793238f
 #define PI2 6.283185307179586476f
 
-#define ToRadian(x) ((x) * 3.14159f /180.0f)
-#define ToDegree(x) ((x) * 180.0f / 3.14159f)
+#define ToRadian(x) ((x)*3.14159f / 180.0f)
+#define ToDegree(x) ((x)*180.0f / 3.14159f)
 
-inline float LinearMap(float x, float fromMin, float fromMax, float toMin, float toMax)
-{
+inline float LinearMap(float x, float fromMin, float fromMax, float toMin, float toMax) {
     return toMin + ((x - fromMin) / (fromMax - fromMin)) * (toMax - toMin);
 }
 
@@ -24,8 +23,7 @@ inline int mod_floor(int a, size_t n) {
 }
 
 template<typename T>
-inline T clamp(T val, T min, T max)
-{
+inline T clamp(T val, T min, T max) {
     if (val < min)
         return min;
     if (val > max)
