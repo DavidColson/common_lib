@@ -5,8 +5,8 @@
 #include "log.h"
 #include "memory.h"
 
+#include <windows.h>
 #include <Memoryapi.h>
-#include <Windows.h>
 #include <stdio.h>
 
 // ***********************************************************************

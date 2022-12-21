@@ -1,5 +1,5 @@
 
-project "CommonLib"
+project "common_lib"
 	kind "StaticLib"
 	language "C++"
 	cppdialect "C++14"
