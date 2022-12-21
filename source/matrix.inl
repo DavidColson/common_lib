@@ -2,6 +2,8 @@
 
 #include "Maths.h"
 
+// ***********************************************************************
+
 template<typename T>
 Matrix<T>::Matrix() {
     m[0][0] = T(1.0);
@@ -22,6 +24,8 @@ Matrix<T>::Matrix() {
     m[3][3] = T(1.0);
 }
 
+// ***********************************************************************
+
 template<typename T>
 Matrix<T>::Matrix(const Matrix& copy) {
     m[0][0] = copy.m[0][0];
@@ -41,6 +45,8 @@ Matrix<T>::Matrix(const Matrix& copy) {
     m[2][3] = copy.m[2][3];
     m[3][3] = copy.m[3][3];
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::Identity() {
@@ -63,6 +69,8 @@ inline Matrix<T> Matrix<T>::Identity() {
     mat.m[3][3] = T(1.0);
     return mat;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::operator*(const Matrix<T>& rhs) const {
@@ -94,11 +102,15 @@ inline Matrix<T> Matrix<T>::operator*(const Matrix<T>& rhs) const {
     return mat;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Matrix<T> Matrix<T>::operator*=(const Matrix<T>& rhs) {
     *this = operator*(rhs);
     return *this;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec4<T> Matrix<T>::operator*(const Vec4<T>& rhs) const {
@@ -112,6 +124,8 @@ inline Vec4<T> Matrix<T>::operator*(const Vec4<T>& rhs) const {
     return vec;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Matrix<T>::operator*(const Vec3<T>& rhs) const {
     Vec3<T> vec;
@@ -122,6 +136,8 @@ inline Vec3<T> Matrix<T>::operator*(const Vec3<T>& rhs) const {
 
     return vec;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::GetTranspose() const {
@@ -148,6 +164,8 @@ inline Matrix<T> Matrix<T>::GetTranspose() const {
     return mat;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline T Matrix<T>::GetDeterminant() const {
     return m[0][0] * (m[1][1] * m[2][2] * m[3][3] + m[2][1] * m[3][2] * m[1][3] + m[3][1] * m[1][2] * m[2][3] - m[3][1] * m[2][2] * m[1][3] - m[2][1] * m[1][2] * m[3][3] - m[1][1] * m[3][2] * m[2][3])
@@ -155,6 +173,8 @@ inline T Matrix<T>::GetDeterminant() const {
            + m[2][0] * (m[0][1] * m[1][2] * m[3][3] + m[1][1] * m[3][2] * m[0][3] + m[3][1] * m[0][2] * m[1][3] - m[3][1] * m[1][2] * m[0][3] - m[1][1] * m[0][2] * m[3][3] - m[0][1] * m[3][2] * m[1][3])
            - m[3][0] * (m[0][1] * m[1][2] * m[2][1] + m[1][1] * m[2][2] * m[0][3] + m[2][1] * m[0][2] * m[1][3] - m[2][1] * m[1][2] * m[0][3] - m[1][1] * m[0][2] * m[2][3] - m[0][1] * m[2][2] * m[1][3]);
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::GetInverse() const {
@@ -182,6 +202,8 @@ inline Matrix<T> Matrix<T>::GetInverse() const {
     res.m[3][3] = iDet * (m[0][0] * m[1][1] * m[2][2] + m[1][0] * m[2][1] * m[0][2] + m[2][0] * m[0][1] * m[1][2] - m[2][0] * m[1][1] * m[0][2] - m[1][0] * m[0][1] * m[2][2] - m[0][0] * m[2][1] * m[1][2]);
     return res;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec4<T> Matrix<T>::InverseTransformVec(const Vec4<T>& rhs) const {
@@ -225,6 +247,8 @@ inline Vec4<T> Matrix<T>::InverseTransformVec(const Vec4<T>& rhs) const {
     return vec;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Matrix<T>::GetRightVector() const {
     Vec3<T> vec;
@@ -233,6 +257,8 @@ inline Vec3<T> Matrix<T>::GetRightVector() const {
     vec.z = m[0][2];
     return vec;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec3<T> Matrix<T>::GetUpVector() const {
@@ -243,6 +269,8 @@ inline Vec3<T> Matrix<T>::GetUpVector() const {
     return vec;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Matrix<T>::GetForwardVector() const {
     Vec3<T> vec;
@@ -252,6 +280,8 @@ inline Vec3<T> Matrix<T>::GetForwardVector() const {
     return vec;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline bool Matrix<T>::IsRotationOrthonormal() const {
     bool a = Vec3<T>::IsEquivalent(GetRightVector(), Vec3<T>::Cross(GetUpVector(), GetForwardVector()));
@@ -259,6 +289,8 @@ inline bool Matrix<T>::IsRotationOrthonormal() const {
     bool c = Vec3<T>::IsEquivalent(GetForwardVector(), Vec3<T>::Cross(GetRightVector(), GetUpVector()));
     return a && b && c;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec3<T> Matrix<T>::ExtractScaling() {
@@ -285,6 +317,8 @@ inline Vec3<T> Matrix<T>::ExtractScaling() {
 
     return sca;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Quat<T> Matrix<T>::ToQuat() const {
@@ -322,6 +356,8 @@ inline Quat<T> Matrix<T>::ToQuat() const {
     return q;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline void Matrix<T>::ToTQS(Vec3<T>& outTranslation, Quat<T> outOrientation, Vec3<T> outScale) {
     Matrix<T> m = *this;
@@ -343,6 +379,8 @@ inline void Matrix<T>::ToTQS(Vec3<T>& outTranslation, Quat<T> outOrientation, Ve
     outTranslation.y = m.m[3][1];
     outTranslation.z = m.m[3][2];
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline void Matrix<T>::ToTRS(Vec3<T>& outTranslation, Vec3<T>& outEulerAngles, Vec3<T>& outScale) {
@@ -366,11 +404,15 @@ inline void Matrix<T>::ToTRS(Vec3<T>& outTranslation, Vec3<T>& outEulerAngles, V
     outTranslation.z = m.m[3][2];
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Matrix<T>::GetScaling() const {
     Matrix<T> m = *this;
     return m.ExtractScaling();
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline void Matrix<T>::SetScaling(Vec3<T> scale) {
@@ -389,6 +431,8 @@ inline void Matrix<T>::SetScaling(Vec3<T> scale) {
     m[2][2] *= scale.z;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Matrix<T>::GetEulerRotation() const {
     Matrix<T> m = *this;
@@ -403,6 +447,8 @@ inline Vec3<T> Matrix<T>::GetEulerRotation() const {
 
     return m.ToQuat().GetEulerAngles();
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline void Matrix<T>::SetEulerRotation(Vec3<T> rotation) {
@@ -429,6 +475,8 @@ inline void Matrix<T>::SetEulerRotation(Vec3<T> rotation) {
     m[2][2] = cx * cy * scale.z;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline void Matrix<T>::SetQuatRotation(Quat<T> rot) {
     Vec3<T> scale = ExtractScaling();
@@ -447,6 +495,8 @@ inline void Matrix<T>::SetQuatRotation(Quat<T> rot) {
     m[2][2] = (1.0f - 2.0f * rot.x * rot.x - 2.0f * rot.y * rot.y) * scale.z;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Matrix<T>::GetTranslation() const {
     Vec3<T> outTrans;
@@ -464,6 +514,8 @@ inline void Matrix<T>::SetTranslation(Vec3<T> translation) {
     m[3][1] = translation.y;
     m[3][2] = translation.z;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline static Matrix<T> Matrix<T>::MakeTRS(Vec3<T> translation, Vec3<T> eulerAngles, Vec3<T> scale) {
@@ -498,6 +550,8 @@ inline static Matrix<T> Matrix<T>::MakeTRS(Vec3<T> translation, Vec3<T> eulerAng
     return res;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline static Matrix<T> Matrix<T>::MakeTQS(Vec3<T> translation, Quat<T> rot, Vec3<T> scale) {
     Matrix<T> mat;
@@ -523,6 +577,8 @@ inline static Matrix<T> Matrix<T>::MakeTQS(Vec3<T> translation, Quat<T> rot, Vec
     return mat;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Matrix<T> Matrix<T>::MakeTranslation(Vec3<T> translate) {
     Matrix<T> mat;
@@ -547,6 +603,8 @@ inline Matrix<T> Matrix<T>::MakeTranslation(Vec3<T> translate) {
     mat.m[3][3] = T(1.0);
     return mat;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::MakeRotation(Vec3<T> rotation) {
@@ -581,6 +639,8 @@ inline Matrix<T> Matrix<T>::MakeRotation(Vec3<T> rotation) {
     return res;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Matrix<T> Matrix<T>::MakeScale(Vec3<T> scale) {
     Matrix<T> mat;
@@ -605,6 +665,8 @@ inline Matrix<T> Matrix<T>::MakeScale(Vec3<T> scale) {
     mat.m[3][3] = T(1.0);
     return mat;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::Perspective(T screenWidth, T screenHeight, T nearPlane, T farPlane, T fov) {
@@ -636,6 +698,8 @@ inline Matrix<T> Matrix<T>::Perspective(T screenWidth, T screenHeight, T nearPla
     return mat;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Matrix<T> Matrix<T>::Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane) {
     Matrix<T> mat;
@@ -660,6 +724,8 @@ inline Matrix<T> Matrix<T>::Orthographic(float left, float right, float bottom, 
     mat.m[3][3] = T(1.0);
     return mat;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Matrix<T>::MakeLookAt(Vec3<T> Forward, Vec3<T> Up) {

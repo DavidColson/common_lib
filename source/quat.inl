@@ -1,5 +1,7 @@
 #include "quat.h"
 
+// ***********************************************************************
+
 template<typename T>
 Quat<T>::Quat(Vec3<T> axis, T angle) {
     float sa2 = sinf(angle * 0.5f);
@@ -9,15 +11,21 @@ Quat<T>::Quat(Vec3<T> axis, T angle) {
     w = cosf(angle * 0.5f);
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Quat<T> Quat<T>::Identity() {
     return Quat<T>(0.0f, 0.0f, 0.0f, 1.0f);
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline static Quat<T> Quat<T>::MakeFromEuler(Vec3<T> v) {
     return MakeFromEuler(v.x, v.y, v.z);
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline static Quat<T> Quat<T>::MakeFromEuler(T x, T y, T z) {
@@ -36,6 +44,8 @@ inline static Quat<T> Quat<T>::MakeFromEuler(T x, T y, T z) {
     res.w = cx * cy * cz + sx * sy * sz;
     return res;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Matrix<T> Quat<T>::ToMatrix() const {
@@ -64,11 +74,15 @@ inline Matrix<T> Quat<T>::ToMatrix() const {
     return mat;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Quat<T> Quat<T>::GetInverse() const {
     // Note this is actually the conjugate, but since we always have it be unit length the conjugate is equal to the inverse
     return Quat<T>(-x, -y, -z, w);
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline void Quat<T>::Normalize() {
@@ -79,12 +93,16 @@ inline void Quat<T>::Normalize() {
     w *= invNorm;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Quat<T> Quat<T>::GetNormalized() {
     Quat<T> copy(*this);
     copy.Normalize();
     return copy;
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Quat<T> Quat<T>::operator*(const Quat& rhs) const {
@@ -94,6 +112,8 @@ inline Quat<T> Quat<T>::operator*(const Quat& rhs) const {
         x * rhs.y - y * rhs.x + w * rhs.z + rhs.w * z,
         w * rhs.w - (x * rhs.x + y * rhs.y + z * rhs.z));
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec3<T> Quat<T>::operator*(const Vec3<T> v) const {
@@ -117,30 +137,42 @@ inline Vec3<T> Quat<T>::operator*(const Vec3<T> v) const {
     return res;
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Quat<T>::GetForwardVector() {
     return Vec3<T>(2 * (x * z + y * w), 2 * (y * z - x * w), z * z + w * w - x * x - y * y);
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec3<T> Quat<T>::GetRightVector() {
     return Vec3<T>(x * x + w * w - y * y - z * z, 2 * (x * y + z * w), 2 * (x * z - y * w));
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline Vec3<T> Quat<T>::GetUpVector() {
     return Vec3<T>(2 * (x * y - z * w), y * y + w * w - x * x - z * z, 2 * (y * z + x * w));
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec3<T> Quat<T>::GetAxis() {
     return Vec3<T>(x, y, z).GetNormalized();
 }
 
+// ***********************************************************************
+
 template<typename T>
 inline T Quat<T>::GetAngle() {
     return 2 * acosf(w);
 }
+
+// ***********************************************************************
 
 template<typename T>
 inline Vec3<T> Quat<T>::GetEulerAngles() {
