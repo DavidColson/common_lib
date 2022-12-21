@@ -1,3 +1,5 @@
+// Copyright 2020-2022 David Colson. All rights reserved.
+
 #include "memory_tracker.h"
 
 #include "defer.h"
@@ -39,6 +41,8 @@ ForceNoTrackAllocator noTrackAllocator;
 MemoryTrackerState* pCtx { nullptr };
 };
 
+// ***********************************************************************
+
 void InitContext() {
     pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
     SYS_P_NEW(pCtx)
@@ -46,11 +50,15 @@ void InitContext() {
     pCtx->allocationTable.pAlloc = &noTrackAllocator;
 }
 
+// ***********************************************************************
+
 void* MallocWrap(size_t size) {
     void* pMemory = malloc(size);
     CheckMalloc(nullptr, pMemory, size);
     return pMemory;
 }
+
+// ***********************************************************************
 
 void* ReallocWrap(void* ptr, size_t size, size_t oldSize) {
     void* pMemory = realloc(ptr, size);
@@ -58,10 +66,14 @@ void* ReallocWrap(void* ptr, size_t size, size_t oldSize) {
     return pMemory;
 }
 
+// ***********************************************************************
+
 void FreeWrap(void* ptr) {
     CheckFree(nullptr, ptr);
     free(ptr);
 }
+
+// ***********************************************************************
 
 void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
     if (pCtx == nullptr)
@@ -75,6 +87,8 @@ void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
     allocation.allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.allocStackTrace, 100, 2);
     pCtx->allocationTable[pAllocated] = allocation;
 }
+
+// ***********************************************************************
 
 void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size, size_t oldSize) {
     if (pCtx == nullptr)
@@ -110,6 +124,8 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
     }
 }
 
+// ***********************************************************************
+
 void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTraceFrames) {
     String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
     defer(FreeString(allocTrace, &noTrackAllocator));
@@ -124,10 +140,14 @@ void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTrac
     __debugbreak();
 }
 
+// ***********************************************************************
+
 void ReportUnknownFree(void* ptr) {
     Log::Warn("\n------ Hey idiot, detected free of untracked memory %p. Fix your shit! ------\n", ptr);
     __debugbreak();
 }
+
+// ***********************************************************************
 
 void CheckFree(void* pAllocatorPtr, void* ptr) {
     if (pCtx == nullptr)
@@ -149,6 +169,8 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
         ReportUnknownFree(ptr);
     }
 }
+
+// ***********************************************************************
 
 int ReportMemoryLeaks() {
 #ifdef MEMORY_TRACKING

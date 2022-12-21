@@ -1,4 +1,8 @@
+// Copyright 2020-2022 David Colson. All rights reserved.
+
 #include "light_string.h"
+
+// ***********************************************************************
 
 String CopyCString(const char* string, IAllocator* pAlloc) {
     String s;
@@ -8,6 +12,8 @@ String CopyCString(const char* string, IAllocator* pAlloc) {
     memcpy(s.pData, string, (len + 1) * sizeof(char));
     return s;
 }
+
+// ***********************************************************************
 
 String CopyCStringRange(char* start, char* end, IAllocator* pAlloc) {
     String s;
@@ -19,6 +25,8 @@ String CopyCStringRange(char* start, char* end, IAllocator* pAlloc) {
     return s;
 }
 
+// ***********************************************************************
+
 String CopyString(String& string, IAllocator* pAlloc) {
     String s;
     s.pData = (char*)pAlloc->Allocate((string.length + 1) * sizeof(char));
@@ -28,12 +36,16 @@ String CopyString(String& string, IAllocator* pAlloc) {
     return s;
 }
 
+// ***********************************************************************
+
 String AllocString(size_t length, IAllocator* pAlloc) {
     String s;
     s.pData = (char*)pAlloc->Allocate(length * sizeof(char));
     s.length = length;
     return s;
 }
+
+// ***********************************************************************
 
 void FreeString(String& string, IAllocator* pAlloc) {
     pAlloc->Free(string.pData);

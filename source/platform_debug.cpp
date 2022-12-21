@@ -1,3 +1,5 @@
+// Copyright 2020-2022 David Colson. All rights reserved.
+
 #include "platform_debug.h"
 
 #include "memory.h"
@@ -9,9 +11,14 @@
 
 #ifdef _WIN32
 namespace PlatformDebug {
+
+// ***********************************************************************
+
 size_t CollectStackTrace(void** stackFramesArray, size_t arraySize, size_t framesToSkip) {
     return CaptureStackBackTrace(DWORD(1 + framesToSkip), (DWORD)arraySize, stackFramesArray, nullptr);
 }
+
+// ***********************************************************************
 
 String PrintStackTraceToString(void** stackFramesArray, size_t nframes, IAllocator* pAlloc) {
     HANDLE process = GetCurrentProcess();

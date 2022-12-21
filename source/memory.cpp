@@ -1,5 +1,6 @@
-#include "memory.h"
+// Copyright 2020-2022 David Colson. All rights reserved.
 
+#include "memory.h"
 
 void* DefaultAllocator::Allocate(size_t size) {
     return SYS_ALLOC(size);

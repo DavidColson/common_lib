@@ -1,3 +1,5 @@
+// Copyright 2020-2022 David Colson. All rights reserved.
+
 #include "linear_allocator.h"
 
 #include "log.h"
@@ -7,14 +9,20 @@
 #include <Windows.h>
 #include <stdio.h>
 
+// ***********************************************************************
+
 size_t Align(size_t toAlign, size_t alignment) {
     // Rounds up to nearest multiple of alignment (works if alignment is power of 2)
     return (toAlign + alignment - 1) & ~(alignment - 1);
 }
 
+// ***********************************************************************
+
 uint8_t* AlignPtr(uint8_t* toAlign, size_t alignment) {
     return (uint8_t*)Align(size_t(toAlign), alignment);
 }
+
+// ***********************************************************************
 
 void* LinearAllocator::Allocate(size_t size) {
     if (pMemoryBase == nullptr)
@@ -32,6 +40,8 @@ void* LinearAllocator::Allocate(size_t size) {
     return (void*)pOutput;
 }
 
+// ***********************************************************************
+
 void* LinearAllocator::Reallocate(void* ptr, size_t size, size_t oldSize) {
     uint8_t* pOutput = (uint8_t*)Allocate(size);
     size_t sizeToCopy = size < oldSize ? size : oldSize;
@@ -39,9 +49,13 @@ void* LinearAllocator::Reallocate(void* ptr, size_t size, size_t oldSize) {
     return (void*)pOutput;
 }
 
+// ***********************************************************************
+
 void LinearAllocator::Free(void* ptr) {
     // Do nothing
 }
+
+// ***********************************************************************
 
 void LinearAllocator::Init(size_t defaultReserve) {
     SYSTEM_INFO sysInfo;
@@ -57,6 +71,8 @@ void LinearAllocator::Init(size_t defaultReserve) {
     pCurrentHead = pMemoryBase;
 }
 
+// ***********************************************************************
+
 void LinearAllocator::Reset(bool stampMemory) {
     if (pMemoryBase == nullptr)
         return;
@@ -68,12 +84,16 @@ void LinearAllocator::Reset(bool stampMemory) {
     pCurrentHead = pMemoryBase;
 }
 
+// ***********************************************************************
+
 void LinearAllocator::Finished() {
 #ifdef MEMORY_TRACKING
     CheckFree(this, pMemoryBase);
 #endif
     VirtualFree(pMemoryBase, 0, MEM_RELEASE);
 }
+
+// ***********************************************************************
 
 void LinearAllocator::ExpandCommitted(uint8_t* pDesiredEnd) {
     size_t currentSpace = pFirstUncommittedPage - pMemoryBase;

@@ -1,3 +1,5 @@
+// Copyright 2020-2022 David Colson. All rights reserved.
+
 #include "log.h"
 
 #include "defer.h"
@@ -10,6 +12,8 @@ namespace Log {
 LogLevel globalLogLevel { Log::EDebug };
 LogConfig config;
 FILE* pLogFile { nullptr };
+
+// ***********************************************************************
 
 void PushLogMessage(LogLevel level, String message) {
     defer(FreeString(message));
@@ -56,13 +60,19 @@ void PushLogMessage(LogLevel level, String message) {
 }
 }
 
+// ***********************************************************************
+
 void Log::SetConfig(LogConfig _config) {
     config = _config;
 }
 
+// ***********************************************************************
+
 void Log::SetLogLevel(LogLevel level) {
     globalLogLevel = level;
 }
+
+// ***********************************************************************
 
 void Log::Crit(const char* text, ...) {
     StringBuilder builder;
@@ -77,6 +87,8 @@ void Log::Crit(const char* text, ...) {
     PushLogMessage(LogLevel::ECrit, message);
 }
 
+// ***********************************************************************
+
 void Log::Warn(const char* text, ...) {
     StringBuilder builder;
     builder.Append("[WARNING] ");
@@ -89,6 +101,8 @@ void Log::Warn(const char* text, ...) {
     String message = builder.CreateString();
     PushLogMessage(LogLevel::EWarn, message);
 }
+
+// ***********************************************************************
 
 void Log::Info(const char* text, ...) {
     StringBuilder builder;
@@ -103,6 +117,8 @@ void Log::Info(const char* text, ...) {
     PushLogMessage(LogLevel::EInfo, message);
 }
 
+// ***********************************************************************
+
 void Log::Debug(const char* text, ...) {
     StringBuilder builder;
     builder.Append("[DEBUG] ");
@@ -115,6 +131,8 @@ void Log::Debug(const char* text, ...) {
     String message = builder.CreateString();
     PushLogMessage(LogLevel::EDebug, message);
 }
+
+// ***********************************************************************
 
 void Log::_Assertion(bool expression, const char* message) {
     if (!expression) {

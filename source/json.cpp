@@ -623,6 +623,8 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
     // }
 }
 
+// ***********************************************************************
+
 String SerializeJsonValue(IAllocator* pAllocator, JsonValue json) {
     StringBuilder builder(pAllocator);
     SerializeJsonInternal(json, builder, 0);
