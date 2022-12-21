@@ -56,7 +56,7 @@ String PrintStackTraceToString(void** stackFramesArray, size_t nframes, IAllocat
 
     StringBuilder builder;
     for (uint32_t j = 0; j < nframes - 6; j++) {
-        builder.AppendFormat(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
+        builder.AppendFormat(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].m_pData, stackFiles[j].m_pData, stackLines[j]);
     }
     String output = builder.CreateString(true, pAlloc);
 

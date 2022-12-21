@@ -17,8 +17,8 @@
 // TODO: Documentation
 
 struct String {
-    char* pData = nullptr;
-    size_t length = 0;
+    char* m_pData = nullptr;
+    size_t m_length = 0;
 
     // TODOs
     // [ ] contains/nocase
@@ -29,22 +29,22 @@ struct String {
     String() {}
 
     String(const char* str) {
-        pData = const_cast<char*>(str);
-        length = strlen(str);
+        m_pData = const_cast<char*>(str);
+        m_length = strlen(str);
     }
 
     void operator=(const char* str) {
-        pData = const_cast<char*>(str);
-        length = strlen(str);
+        m_pData = const_cast<char*>(str);
+        m_length = strlen(str);
     }
 
     bool operator==(const String& other) const {
-        if (length != other.length)
+        if (m_length != other.m_length)
             return false;
-        char* s1 = pData;
-        char* s2 = other.pData;
+        char* s1 = m_pData;
+        char* s2 = other.m_pData;
         size_t count = 0;
-        while (count < length) {
+        while (count < m_length) {
             count++;
             if (*s1 != *s2)
                 return false;
@@ -69,22 +69,22 @@ struct String {
 
     String SubStr(size_t start, size_t len = -1) {
         String result;
-        result.pData = pData + start;
+        result.m_pData = m_pData + start;
 
         if (len == (size_t)-1)
-            result.length = length - start;
+            result.m_length = m_length - start;
         else
-            result.length = len;
+            result.m_length = len;
         return result;
     }
 };
 
-String CopyCString(const char* string, IAllocator* pAlloc = &gAllocator);
+String CopyCString(const char* string, IAllocator* pAlloc = &g_Allocator);
 
-String CopyCStringRange(char* start, char* end, IAllocator* pAlloc = &gAllocator);
+String CopyCStringRange(char* start, char* end, IAllocator* pAlloc = &g_Allocator);
 
-String CopyString(String& string, IAllocator* pAlloc = &gAllocator);
+String CopyString(String& string, IAllocator* pAlloc = &g_Allocator);
 
-String AllocString(size_t length, IAllocator* pAlloc = &gAllocator);
+String AllocString(size_t length, IAllocator* pAlloc = &g_Allocator);
 
-void FreeString(String& string, IAllocator* pAlloc = &gAllocator);
+void FreeString(String& string, IAllocator* pAlloc = &g_Allocator);

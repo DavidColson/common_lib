@@ -22,32 +22,32 @@ struct ForceNoTrackAllocator : public IAllocator {
 };
 
 struct Allocation {
-    void* pointer { nullptr };
-    void* pAllocator { nullptr };
-    size_t size { 0 };
-    bool isLive { false };
-    void* allocStackTrace[100];
-    size_t allocStackTraceFrames { 0 };
-    void* freeStackTrace[100];
-    size_t freeStackTraceFrames { 0 };
+    void* m_pointer { nullptr };
+    void* m_pAllocator { nullptr };
+    size_t m_size { 0 };
+    bool m_isLive { false };
+    void* m_allocStackTrace[100];
+    size_t m_allocStackTraceFrames { 0 };
+    void* m_freeStackTrace[100];
+    size_t m_freeStackTraceFrames { 0 };
 };
 
 struct MemoryTrackerState {
-    HashMap<void*, Allocation> allocationTable;
+    HashMap<void*, Allocation> m_allocationTable;
 };
 
 namespace {
-ForceNoTrackAllocator noTrackAllocator;
-MemoryTrackerState* pCtx { nullptr };
+ForceNoTrackAllocator g_noTrackAllocator;
+MemoryTrackerState* g_pCtx { nullptr };
 };
 
 // ***********************************************************************
 
 void InitContext() {
-    pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-    SYS_P_NEW(pCtx)
+    g_pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
+    SYS_P_NEW(g_pCtx)
     MemoryTrackerState();
-    pCtx->allocationTable.pAlloc = &noTrackAllocator;
+    g_pCtx->m_allocationTable.m_pAlloc = &g_noTrackAllocator;
 }
 
 // ***********************************************************************
@@ -76,67 +76,67 @@ void FreeWrap(void* ptr) {
 // ***********************************************************************
 
 void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
-    if (pCtx == nullptr)
+    if (g_pCtx == nullptr)
         InitContext();
 
     Allocation allocation;
-    allocation.pointer = pAllocated;
-    allocation.pAllocator = pAllocatorPtr;
-    allocation.size = size;
-    allocation.isLive = true;
-    allocation.allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.allocStackTrace, 100, 2);
-    pCtx->allocationTable[pAllocated] = allocation;
+    allocation.m_pointer = pAllocated;
+    allocation.m_pAllocator = pAllocatorPtr;
+    allocation.m_size = size;
+    allocation.m_isLive = true;
+    allocation.m_allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.m_allocStackTrace, 100, 2);
+    g_pCtx->m_allocationTable[pAllocated] = allocation;
 }
 
 // ***********************************************************************
 
 void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size, size_t oldSize) {
-    if (pCtx == nullptr)
+    if (g_pCtx == nullptr)
         InitContext();
 
-    if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) {  // pre-existing allocation
-        if (alloc->pAllocator != pAllocatorPtr)
+    if (Allocation* alloc = g_pCtx->m_allocationTable.Get(ptr)) {  // pre-existing allocation
+        if (alloc->m_pAllocator != pAllocatorPtr)
             __debugbreak();
 
-        if (alloc->pointer != pAllocated) {  // Memory has changed location, so we must change the key
+        if (alloc->m_pointer != pAllocated) {  // Memory has changed location, so we must change the key
             // old alloc is effectively freed
-            alloc->isLive = false;
-            alloc->freeStackTraceFrames = PlatformDebug::CollectStackTrace(alloc->freeStackTrace, 100, 2);
+            alloc->m_isLive = false;
+            alloc->m_freeStackTraceFrames = PlatformDebug::CollectStackTrace(alloc->m_freeStackTrace, 100, 2);
 
             Allocation newAlloc;
-            newAlloc.pointer = pAllocated;
-            newAlloc.pAllocator = pAllocatorPtr;
-            newAlloc.size = size;
-            newAlloc.isLive = true;
-            newAlloc.allocStackTraceFrames = PlatformDebug::CollectStackTrace(newAlloc.allocStackTrace, 100, 2);
-            pCtx->allocationTable[pAllocated] = newAlloc;
+            newAlloc.m_pointer = pAllocated;
+            newAlloc.m_pAllocator = pAllocatorPtr;
+            newAlloc.m_size = size;
+            newAlloc.m_isLive = true;
+            newAlloc.m_allocStackTraceFrames = PlatformDebug::CollectStackTrace(newAlloc.m_allocStackTrace, 100, 2);
+            g_pCtx->m_allocationTable[pAllocated] = newAlloc;
         } else {
-            alloc->size = size;
+            alloc->m_size = size;
         }
     } else {  // new allocation
         Allocation allocation;
-        allocation.pointer = pAllocated;
-        allocation.pAllocator = pAllocatorPtr;
-        allocation.size = size;
-        allocation.isLive = true;
-        allocation.allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.allocStackTrace, 100);
-        pCtx->allocationTable[pAllocated] = allocation;
+        allocation.m_pointer = pAllocated;
+        allocation.m_pAllocator = pAllocatorPtr;
+        allocation.m_size = size;
+        allocation.m_isLive = true;
+        allocation.m_allocStackTraceFrames = PlatformDebug::CollectStackTrace(allocation.m_allocStackTrace, 100);
+        g_pCtx->m_allocationTable[pAllocated] = allocation;
     }
 }
 
 // ***********************************************************************
 
 void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTraceFrames) {
-    String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
-    defer(FreeString(allocTrace, &noTrackAllocator));
+    String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.m_allocStackTrace, alloc.m_allocStackTraceFrames, &g_noTrackAllocator);
+    defer(FreeString(allocTrace, &g_noTrackAllocator));
 
-    String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, &noTrackAllocator);
-    defer(FreeString(trace, &noTrackAllocator));
+    String trace = PlatformDebug::PrintStackTraceToString(alloc.m_freeStackTrace, alloc.m_freeStackTraceFrames, &g_noTrackAllocator);
+    defer(FreeString(trace, &g_noTrackAllocator));
 
-    String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &noTrackAllocator);
-    defer(FreeString(trace2, &noTrackAllocator));
+    String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &g_noTrackAllocator);
+    defer(FreeString(trace2, &g_noTrackAllocator));
 
-    Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
+    Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.m_pointer, allocTrace.m_pData, trace.m_pData, trace2.m_pData);
     __debugbreak();
 }
 
@@ -150,21 +150,21 @@ void ReportUnknownFree(void* ptr) {
 // ***********************************************************************
 
 void CheckFree(void* pAllocatorPtr, void* ptr) {
-    if (pCtx == nullptr)
+    if (g_pCtx == nullptr)
         InitContext();
 
-    if (Allocation* alloc = pCtx->allocationTable.Get(ptr)) {
-        if (alloc->pAllocator != pAllocatorPtr)
+    if (Allocation* alloc = g_pCtx->m_allocationTable.Get(ptr)) {
+        if (alloc->m_pAllocator != pAllocatorPtr)
             __debugbreak();  // Alloc/Free allocator mismatch TODO: Report an error
 
-        if (!alloc->isLive) {
+        if (!alloc->m_isLive) {
             void* stackTrace[100];
             size_t stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
             ReportDoubleFree(*alloc, stackTrace, stackFrames);
         }
 
-        alloc->isLive = false;
-        alloc->freeStackTraceFrames = PlatformDebug::CollectStackTrace(alloc->freeStackTrace, 100);
+        alloc->m_isLive = false;
+        alloc->m_freeStackTraceFrames = PlatformDebug::CollectStackTrace(alloc->m_freeStackTrace, 100);
     } else {
         ReportUnknownFree(ptr);
     }
@@ -174,18 +174,18 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 
 int ReportMemoryLeaks() {
 #ifdef MEMORY_TRACKING
-    if (pCtx == nullptr)
+    if (g_pCtx == nullptr)
         return 0;
 
     int leakCounter = 0;
-    for (size_t i = 0; i < pCtx->allocationTable.tableSize; i++) {
-        if (pCtx->allocationTable.pTable[i].hash != UNUSED_HASH) {
-            Allocation& alloc = pCtx->allocationTable.pTable[i].value;
-            if (alloc.isLive) {
+    for (size_t i = 0; i < g_pCtx->m_allocationTable.m_tableSize; i++) {
+        if (g_pCtx->m_allocationTable.m_pTable[i].hash != UNUSED_HASH) {
+            Allocation& alloc = g_pCtx->m_allocationTable.m_pTable[i].value;
+            if (alloc.m_isLive) {
                 leakCounter++;
-                String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &noTrackAllocator);
-                defer(FreeString(trace, &noTrackAllocator));
-                Log::Warn(" ------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n%s", alloc.pointer, alloc.size, trace.pData);
+                String trace = PlatformDebug::PrintStackTraceToString(alloc.m_allocStackTrace, alloc.m_allocStackTraceFrames, &g_noTrackAllocator);
+                defer(FreeString(trace, &g_noTrackAllocator));
+                Log::Warn(" ------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n%s", alloc.m_pointer, alloc.m_size, trace.m_pData);
             }
         }
     }

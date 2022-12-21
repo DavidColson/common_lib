@@ -188,9 +188,9 @@ struct KeyFuncs<long double> {
 template<>
 struct KeyFuncs<String> {
     uint64_t Hash(const String& key) const {
-        size_t nChars = key.length;
+        size_t nChars = key.m_length;
         size_t hash = 0x811C9DC5;
-        const unsigned char* pData = (const unsigned char*)key.pData;
+        const unsigned char* pData = (const unsigned char*)key.m_pData;
         while (nChars--)
             hash = (*pData++ ^ hash) * 0x01000193;
         return hash;
@@ -249,96 +249,96 @@ struct HashNode {
 
 template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {
-    HashNode<K, V>* pTable { nullptr };
-    KF keyFuncs;
-    size_t tableSize { 0 };
-    size_t count { 0 };
-    IAllocator* pAlloc { nullptr };
+    HashNode<K, V>* m_pTable { nullptr };
+    KF m_keyFuncs;
+    size_t m_tableSize { 0 };
+    size_t m_count { 0 };
+    IAllocator* m_pAlloc { nullptr };
 
-    HashMap(IAllocator* _pAlloc = &gAllocator) {
-        pAlloc = _pAlloc;
+    HashMap(IAllocator* _pAlloc = &g_Allocator) {
+        m_pAlloc = _pAlloc;
     }
 
     void Free() {
-        if (pTable)
-            pAlloc->Free(pTable);
+        if (m_pTable)
+            m_pAlloc->Free(m_pTable);
     }
 
     template<typename F>
     void Free(F&& freeNode) {
-        for (size_t i = 0; i < tableSize; i++) {
-            if (pTable[i].hash != UNUSED_HASH) {
-                freeNode(pTable[i]);
+        for (size_t i = 0; i < m_tableSize; i++) {
+            if (m_pTable[i].hash != UNUSED_HASH) {
+                freeNode(m_pTable[i]);
             }
         }
-        pAlloc->Free(pTable);
+        m_pAlloc->Free(m_pTable);
     }
 
     V& Add(const K& key, const V& value) {
-        float loadFactor = tableSize == 0 ? INT_MAX : (float)(count) / (float)tableSize;
+        float loadFactor = m_tableSize == 0 ? INT_MAX : (float)(m_count) / (float)m_tableSize;
         if (loadFactor >= 0.9f)
-            Rehash(tableSize + 1);
+            Rehash(m_tableSize + 1);
 
-        uint64_t hash = keyFuncs.Hash(key);
+        uint64_t hash = m_keyFuncs.Hash(key);
         if (hash < FIRST_VALID_HASH)
             hash += FIRST_VALID_HASH;
-        uint64_t index = hash % tableSize;
+        uint64_t index = hash % m_tableSize;
         uint64_t probeCounter = 1;
 
-        while (pTable[index].hash != UNUSED_HASH) {
-            index = (index + probeCounter) % tableSize;
+        while (m_pTable[index].hash != UNUSED_HASH) {
+            index = (index + probeCounter) % m_tableSize;
             probeCounter++;
         }
 
-        HashNode<K, V>& node = pTable[index];
+        HashNode<K, V>& node = m_pTable[index];
         node.hash = hash;
         node.key = key;
         node.value = value;
-        count++;
+        m_count++;
         return node.value;
     }
 
     V* Get(const K& key) {
-        if (tableSize == 0)
+        if (m_tableSize == 0)
             return nullptr;
 
-        uint64_t hash = keyFuncs.Hash(key);
+        uint64_t hash = m_keyFuncs.Hash(key);
         if (hash < FIRST_VALID_HASH)
             hash += FIRST_VALID_HASH;
-        uint64_t index = hash % tableSize;
+        uint64_t index = hash % m_tableSize;
         uint64_t probeCounter = 1;
 
-        while (pTable[index].hash != UNUSED_HASH) {
-            if (keyFuncs.Cmp(pTable[index].key, key)) {
-                return &pTable[index].value;
+        while (m_pTable[index].hash != UNUSED_HASH) {
+            if (m_keyFuncs.Cmp(m_pTable[index].key, key)) {
+                return &m_pTable[index].value;
             }
-            index = (index + probeCounter) % tableSize;
+            index = (index + probeCounter) % m_tableSize;
             probeCounter++;
         }
         return nullptr;
     }
 
     V& GetOrAdd(const K& key) {
-        if (tableSize == 0) {
+        if (m_tableSize == 0) {
             V value = V();
             return Add(key, value);
         }
 
-        float loadFactor = tableSize == 0 ? INT_MAX : (float)(count) / (float)tableSize;
+        float loadFactor = m_tableSize == 0 ? INT_MAX : (float)(m_count) / (float)m_tableSize;
         if (loadFactor >= 0.9f)
-            Rehash(tableSize + 1);
+            Rehash(m_tableSize + 1);
 
-        uint64_t hash = keyFuncs.Hash(key);
+        uint64_t hash = m_keyFuncs.Hash(key);
         if (hash < FIRST_VALID_HASH)
             hash += FIRST_VALID_HASH;
-        uint64_t index = hash % tableSize;
+        uint64_t index = hash % m_tableSize;
         uint64_t probeCounter = 1;
 
-        while (pTable[index].hash != UNUSED_HASH) {
-            if (keyFuncs.Cmp(pTable[index].key, key)) {
-                return pTable[index].value;
+        while (m_pTable[index].hash != UNUSED_HASH) {
+            if (m_keyFuncs.Cmp(m_pTable[index].key, key)) {
+                return m_pTable[index].value;
             }
-            index = (index + probeCounter) % tableSize;
+            index = (index + probeCounter) % m_tableSize;
             probeCounter++;
         }
         V value = V();
@@ -355,51 +355,51 @@ struct HashMap {
 
     template<typename F>
     void Erase(const K& key, F&& freeNode) {
-        if (tableSize == 0)
+        if (m_tableSize == 0)
             return;
 
-        uint64_t hash = keyFuncs.Hash(key);
+        uint64_t hash = m_keyFuncs.Hash(key);
         if (hash < FIRST_VALID_HASH)
             hash += FIRST_VALID_HASH;
-        uint64_t index = hash % tableSize;
+        uint64_t index = hash % m_tableSize;
         uint64_t probeCounter = 1;
 
-        while (pTable[index].hash != UNUSED_HASH) {
-            if (keyFuncs.Cmp(pTable[index].key, key)) {
+        while (m_pTable[index].hash != UNUSED_HASH) {
+            if (m_keyFuncs.Cmp(m_pTable[index].key, key)) {
                 // Found the node
-                freeNode(pTable[index]);
-                memset(&pTable[index], 0, sizeof(HashNode<K, V>));
-                count--;
+                freeNode(m_pTable[index]);
+                memset(&m_pTable[index], 0, sizeof(HashNode<K, V>));
+                m_count--;
             }
-            index = (index + probeCounter) % tableSize;
+            index = (index + probeCounter) % m_tableSize;
             probeCounter++;
         }
     }
 
     void Rehash(size_t requiredTableSize) {
-        if (requiredTableSize < tableSize)
+        if (requiredTableSize < m_tableSize)
             return;
 
-        HashNode<K, V>* pTableOld = pTable;
+        HashNode<K, V>* pTableOld = m_pTable;
 
         // Double the table size until we can fit required table size
         constexpr size_t minTableSize = 32;
-        size_t newTableSize = tableSize == 0 ? minTableSize : tableSize * 2;
+        size_t newTableSize = m_tableSize == 0 ? minTableSize : m_tableSize * 2;
         while (newTableSize < (requiredTableSize > minTableSize ? requiredTableSize : minTableSize))
             newTableSize *= 2;
 
-        pTable = (HashNode<K, V>*)pAlloc->Allocate(newTableSize * sizeof(HashNode<K, V>));
-        memset(pTable, 0, newTableSize * sizeof(HashNode<K, V>));
+        m_pTable = (HashNode<K, V>*)m_pAlloc->Allocate(newTableSize * sizeof(HashNode<K, V>));
+        memset(m_pTable, 0, newTableSize * sizeof(HashNode<K, V>));
 
-        size_t oldTableSize = tableSize;
-        tableSize = newTableSize;
+        size_t oldTableSize = m_tableSize;
+        m_tableSize = newTableSize;
         for (int i = 0; i < oldTableSize; i++) {
             if (pTableOld[i].hash != UNUSED_HASH) {
                 Add(pTableOld[i].key, pTableOld[i].value);
-                count--;
+                m_count--;
             }
         }
         if (pTableOld)
-            pAlloc->Free(pTableOld);
+            m_pAlloc->Free(pTableOld);
     }
 };

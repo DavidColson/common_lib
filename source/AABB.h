@@ -2,13 +2,11 @@
 
 #pragma once
 
-#include "Matrix.h"
-#include "Vec3.h"
+#include "matrix.h"
+#include "vec3.h"
 
 template<typename T>
 struct AABB {
-    // REFLECT()
-
     Vec3<T> min;
     Vec3<T> max;
 

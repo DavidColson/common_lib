@@ -34,4 +34,4 @@ struct DefaultAllocator : public IAllocator {
     void Free(void* ptr) override;
 };
 
-static DefaultAllocator gAllocator;
+static DefaultAllocator g_Allocator;

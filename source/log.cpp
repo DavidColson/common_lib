@@ -9,53 +9,53 @@
 #include <Windows.h>
 
 namespace Log {
-LogLevel globalLogLevel { Log::EDebug };
-LogConfig config;
-FILE* pLogFile { nullptr };
+LogLevel g_logLevel { Log::EDebug };
+LogConfig g_config;
+FILE* g_pLogFile { nullptr };
 
 // ***********************************************************************
 
 void PushLogMessage(LogLevel level, String message) {
     defer(FreeString(message));
 
-    if (level > globalLogLevel)
+    if (level > g_logLevel)
         return;
 
-    if (config.fileOutput) {
-        if (pLogFile == nullptr)
-            fopen_s(&pLogFile, "application.log", "w");
-        fprintf(pLogFile, message.pData);
-        fflush(pLogFile);
+    if (g_config.fileOutput) {
+        if (g_pLogFile == nullptr)
+            fopen_s(&g_pLogFile, "application.log", "w");
+        fprintf(g_pLogFile, message.m_pData);
+        fflush(g_pLogFile);
     }
 
-    if (config.winOutput)
-        OutputDebugStringA(message.pData);
+    if (g_config.winOutput)
+        OutputDebugStringA(message.m_pData);
 
-    if (config.consoleOutput)
-        printf("%s", message.pData);
+    if (g_config.consoleOutput)
+        printf("%s", message.m_pData);
 
     if (level <= Log::ECrit) {
         void* trace[100];
         size_t frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
 
         String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames);
-        if (config.fileOutput) {
-            fprintf(pLogFile, stackTrace.pData);
-            fflush(pLogFile);
+        if (g_config.fileOutput) {
+            fprintf(g_pLogFile, stackTrace.m_pData);
+            fflush(g_pLogFile);
         }
-        if (config.winOutput)
-            OutputDebugStringA(stackTrace.pData);
-        if (config.consoleOutput)
-            printf("%s", stackTrace.pData);
+        if (g_config.winOutput)
+            OutputDebugStringA(stackTrace.m_pData);
+        if (g_config.consoleOutput)
+            printf("%s", stackTrace.m_pData);
     }
 
-    if (config.customHandler1)
-        config.customHandler1(level, message);
+    if (g_config.customHandler1)
+        g_config.customHandler1(level, message);
 
-    if (config.customHandler2)
-        config.customHandler2(level, message);
+    if (g_config.customHandler2)
+        g_config.customHandler2(level, message);
 
-    if (config.critCrashes && level <= Log::ECrit)
+    if (g_config.critCrashes && level <= Log::ECrit)
         __debugbreak();
 }
 }
@@ -63,13 +63,13 @@ void PushLogMessage(LogLevel level, String message) {
 // ***********************************************************************
 
 void Log::SetConfig(LogConfig _config) {
-    config = _config;
+    g_config = _config;
 }
 
 // ***********************************************************************
 
 void Log::SetLogLevel(LogLevel level) {
-    globalLogLevel = level;
+    g_logLevel = level;
 }
 
 // ***********************************************************************

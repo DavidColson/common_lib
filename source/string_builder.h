@@ -12,20 +12,20 @@
 
 
 struct StringBuilder {
-    char* pData = nullptr;
-    size_t length = 0;
-    size_t capacity = 0;
-    IAllocator* pAlloc { nullptr };
+    char* m_pData = nullptr;
+    size_t m_length = 0;
+    size_t m_capacity = 0;
+    IAllocator* m_pAlloc { nullptr };
 
-    StringBuilder(IAllocator* _pAlloc = &gAllocator) {
-        pAlloc = _pAlloc;
+    StringBuilder(IAllocator* _pAlloc = &g_Allocator) {
+        m_pAlloc = _pAlloc;
     }
 
     void AppendChars(const char* str, size_t len) {
-        Reserve(GrowCapacity(length + len + 1));
-        memcpy(pData + length, str, len);
-        length += len;
-        pData[length] = 0;
+        Reserve(GrowCapacity(m_length + len + 1));
+        memcpy(m_pData + m_length, str, len);
+        m_length += len;
+        m_pData[m_length] = 0;
     }
 
     void Append(const char* str) {
@@ -34,7 +34,7 @@ struct StringBuilder {
     }
 
     void Append(String str) {
-        AppendChars(str.pData, str.length);
+        AppendChars(str.m_pData, str.m_length);
     }
 
     void AppendFormatInternal(const char* format, va_list args) {
@@ -47,10 +47,10 @@ struct StringBuilder {
             return;
         }
 
-        Reserve(GrowCapacity(length + addedLength));
-        vsnprintf(pData + length, addedLength + 1, format, args);
+        Reserve(GrowCapacity(m_length + addedLength));
+        vsnprintf(m_pData + m_length, addedLength + 1, format, args);
         va_end(argsCopy);
-        length += addedLength;
+        m_length += addedLength;
     }
 
     void AppendFormat(const char* format, ...) {
@@ -60,11 +60,11 @@ struct StringBuilder {
         va_end(args);
     }
 
-    String CreateString(bool reset = true, IAllocator* _pAlloc = &gAllocator) {
-        String output = AllocString(length + 1, _pAlloc);
-        memcpy(output.pData, pData, length * sizeof(char));
-        output.pData[length] = 0;
-        output.length = length;
+    String CreateString(bool reset = true, IAllocator* _pAlloc = &g_Allocator) {
+        String output = AllocString(m_length + 1, _pAlloc);
+        memcpy(output.m_pData, m_pData, m_length * sizeof(char));
+        output.m_pData[m_length] = 0;
+        output.m_length = m_length;
 
         if (reset)
             Reset();
@@ -72,27 +72,27 @@ struct StringBuilder {
     }
 
     void Reset() {
-        if (pData) {
-            pAlloc->Free(pData);
-            pData = nullptr;
-            length = 0;
-            capacity = 0;
+        if (m_pData) {
+            m_pAlloc->Free(m_pData);
+            m_pData = nullptr;
+            m_length = 0;
+            m_capacity = 0;
         }
     }
 
     void Reserve(size_t desiredCapacity) {
-        if (capacity >= desiredCapacity)
+        if (m_capacity >= desiredCapacity)
             return;
-        pData = (char*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(char), capacity * sizeof(char));
-        capacity = desiredCapacity;
+        m_pData = (char*)m_pAlloc->Reallocate(m_pData, desiredCapacity * sizeof(char), m_capacity * sizeof(char));
+        m_capacity = desiredCapacity;
     }
 
     size_t GrowCapacity(size_t atLeastSize) const {
         // if we're big enough already, don't grow, otherwise double,
         // and if that's not enough just use atLeastSize
-        if (capacity > atLeastSize)
-            return capacity;
-        size_t newCapacity = capacity ? capacity * 2 : 8;
+        if (m_capacity > atLeastSize)
+            return m_capacity;
+        size_t newCapacity = m_capacity ? m_capacity * 2 : 8;
         return newCapacity > atLeastSize ? newCapacity : atLeastSize;
     }
 };
