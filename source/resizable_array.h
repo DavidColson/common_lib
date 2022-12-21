@@ -13,9 +13,9 @@
 // Must be freed manually
 // ... todo documentation, examples, reasoning etc
 
-template<typename type>
+template<typename Type>
 struct ResizableArray {
-    type* m_pData { nullptr };
+    Type* m_pData { nullptr };
     uint32_t m_count { 0 };
     uint32_t m_capacity { 0 };
     IAllocator* m_pAlloc { nullptr };
@@ -56,15 +56,15 @@ struct ResizableArray {
     void Reserve(uint32_t desiredCapacity) {
         if (m_capacity >= desiredCapacity)
             return;
-        m_pData = (type*)m_pAlloc->Reallocate(m_pData, desiredCapacity * sizeof(type), m_capacity * sizeof(type));
+        m_pData = (Type*)m_pAlloc->Reallocate(m_pData, desiredCapacity * sizeof(Type), m_capacity * sizeof(Type));
         m_capacity = desiredCapacity;
     }
 
-    void PushBack(const type& value) {
+    void PushBack(const Type& value) {
         if (m_count == m_capacity) {
             Reserve(GrowCapacity(m_count + 1));
         }
-        memcpy(&m_pData[m_count], &value, sizeof(type));
+        memcpy(&m_pData[m_count], &value, sizeof(Type));
         m_count++;
     }
 
@@ -73,12 +73,12 @@ struct ResizableArray {
         m_count--;
     }
 
-    type& operator[](size_t i) {
+    Type& operator[](size_t i) {
         Assert(i >= 0 && i < m_count);
         return m_pData[i];
     }
 
-    const type& operator[](size_t i) const {
+    const Type& operator[](size_t i) const {
         Assert(i >= 0 && i < m_count);
         return m_pData[i];
     }
@@ -90,7 +90,7 @@ struct ResizableArray {
             m_count--;
         }
         if (index < m_count - 1) {
-            memmove(m_pData + index, m_pData + (index + 1), (m_count - index - 1) * sizeof(type));
+            memmove(m_pData + index, m_pData + (index + 1), (m_count - index - 1) * sizeof(Type));
             m_count--;
         }
     }
@@ -102,23 +102,23 @@ struct ResizableArray {
             m_count--;
         }
         if (index < m_count - 1) {
-            memcpy(m_pData + index, m_pData + (m_count - 1), sizeof(type));
+            memcpy(m_pData + index, m_pData + (m_count - 1), sizeof(Type));
             m_count--;
         }
     }
 
-    void Insert(size_t index, const type& value) {
+    void Insert(size_t index, const Type& value) {
         Assert(index >= 0 && index < m_count);
         if (m_capacity == m_count)
             Reserve(GrowCapacity(m_count + 1));
-        memmove(m_pData + (index + 1), m_pData + index, (m_count - index) * sizeof(type));
-        memcpy(m_pData + index, &value, sizeof(type));
+        memmove(m_pData + (index + 1), m_pData + index, (m_count - index) * sizeof(Type));
+        memcpy(m_pData + index, &value, sizeof(Type));
         m_count++;
     }
 
-    type* Find(const type& value) {
-        type* pTest = m_pData;
-        const type* pDataEnd = m_pData + m_count;
+    Type* Find(const Type& value) {
+        Type* pTest = m_pData;
+        const Type* pDataEnd = m_pData + m_count;
         while (pTest < pDataEnd) {
             if (*pTest == value)
                 break;
@@ -127,23 +127,23 @@ struct ResizableArray {
         return pTest;
     }
 
-    type* begin() {
+    Type* begin() {
         return m_pData;
     }
 
-    type* end() {
+    Type* end() {
         return m_pData + m_count;
     }
 
-    const type* begin() const {
+    const Type* begin() const {
         return m_pData;
     }
 
-    const type* end() const {
+    const Type* end() const {
         return m_pData + m_count;
     }
 
-    uint32_t IndexFromPointer(const type* ptr) const {
+    uint32_t IndexFromPointer(const Type* ptr) const {
         Assert(ptr >= m_pData && ptr < m_pData + m_count);
         ptrdiff_t diff = ptr - m_pData;
         return (uint32_t)diff;
