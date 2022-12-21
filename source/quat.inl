@@ -145,8 +145,8 @@ inline T Quat<T>::GetAngle() {
 template<typename T>
 inline Vec3<T> Quat<T>::GetEulerAngles() {
     Vec3<T> res;
-    res.x = atan2(T(2.0) * (w * x + y * z), T(1.0) - T(2.0) * (x * x + y * y));
-    res.y = asin(T(2.0) * (w * y - z * x));
-    res.z = atan2(T(2.0) * (w * z + x * y), T(1.0) - T(2.0) * (y * y + z * z));
+    res.x = (T)atan2(T(2.0) * (w * x + y * z), T(1.0) - T(2.0) * (x * x + y * y));
+    res.y = (T)asin(T(2.0) * (w * y - z * x));
+    res.z = (T)atan2(T(2.0) * (w * z + x * y), T(1.0) - T(2.0) * (y * y + z * z));
     return res;
 }
