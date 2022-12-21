@@ -8,7 +8,8 @@ project "common_lib"
 	files 
 	{
 		"source/*.cpp",
-		"source/*.h"
+		"source/*.h",
+		"source/*.inl"
 	}
 	filter { "system:windows", "configurations:Debug*" }
 		links { "dbghelp" }
