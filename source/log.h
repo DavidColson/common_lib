@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include "light_string.h"
+struct String;
 
 namespace Log {
 enum LogLevel {

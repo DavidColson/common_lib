@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "light_string.h"
+#include "memory.h"
+
+struct String;
 
 namespace PlatformDebug {
 size_t CollectStackTrace(void** stackFramesArray, size_t arraySize, size_t framesToSkip = 0);

@@ -1,5 +1,7 @@
 #include "hashmap.h"
 
+#include "light_string.h"
+
 #include <string.h>
 
 // ***********************************************************************

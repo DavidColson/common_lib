@@ -5,6 +5,7 @@
 #include "memory.h"
 #include "resizable_array.h"
 #include "string_builder.h"
+#include "light_string.h"
 
 #include <Windows.h>
 #include <dbghelp.h>

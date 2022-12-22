@@ -2,10 +2,11 @@
 
 #pragma once
 
-#include "light_string.h"
 #include "memory.h"
 
 #include <stdint.h>
+
+struct String;
 
 // Key functions define all the needed operations
 // for each key. So the hashing function and the key comparison

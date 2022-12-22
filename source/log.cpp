@@ -5,6 +5,7 @@
 #include "defer.h"
 #include "platform_debug.h"
 #include "string_builder.h"
+#include "light_string.h"
 
 #include <Windows.h>
 #include <stdio.h>

@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include <math.h>
-
 template<typename T>
 struct Vec4;
 
@@ -253,9 +251,7 @@ struct Vec3 {
      *
      * @return The length
      **/
-    inline T GetLength() const {
-        return sqrtf(x * x + y * y + z * z);
-    }
+    inline T GetLength() const;
 
     /**
      * Get the length of this vector squared
