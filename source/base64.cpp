@@ -2,6 +2,8 @@
 
 #include "base64.h"
 
+#include "light_string.h"
+
 static const unsigned char encodingTable[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 

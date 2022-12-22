@@ -2,7 +2,9 @@
 
 #pragma once
 
-#include "light_string.h"
+#include "memory.h"
+
+struct String;
 
 String DecodeBase64(String const& encodedString, IAllocator* pAlloc = &g_Allocator);
 
