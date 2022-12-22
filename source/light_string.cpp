@@ -2,6 +2,72 @@
 
 #include "light_string.h"
 
+#include <string.h>
+
+// ***********************************************************************
+
+String::String(const char* str) {
+    m_pData = const_cast<char*>(str);
+    m_length = strlen(str);
+}
+
+// ***********************************************************************
+
+void String::operator=(const char* str) {
+    m_pData = const_cast<char*>(str);
+    m_length = strlen(str);
+}
+
+// ***********************************************************************
+
+bool String::operator==(const String& other) const {
+    if (m_length != other.m_length)
+        return false;
+    char* s1 = m_pData;
+    char* s2 = other.m_pData;
+    size_t count = 0;
+    while (count < m_length) {
+        count++;
+        if (*s1 != *s2)
+            return false;
+        s1++;
+        s2++;
+    }
+    return true;
+}
+
+// ***********************************************************************
+
+bool String::operator==(const char* other) const {
+    String str(other);
+    return operator==(str);
+}
+
+// ***********************************************************************
+
+bool String::operator!=(const String& other) const {
+    return !operator==(other);
+}
+
+// ***********************************************************************
+
+bool String::operator!=(const char* other) const {
+    return !operator==(other);
+}
+
+// ***********************************************************************
+
+String String::SubStr(size_t start, size_t len) {
+    String result;
+    result.m_pData = m_pData + start;
+
+    if (len == (size_t)-1)
+        result.m_length = m_length - start;
+    else
+        result.m_length = len;
+    return result;
+}
+
 // ***********************************************************************
 
 String CopyCString(const char* string, IAllocator* pAlloc) {

@@ -7,6 +7,7 @@
 #include "string_builder.h"
 
 #include <Windows.h>
+#include <stdio.h>
 
 namespace Log {
 LogLevel g_logLevel { Log::EDebug };

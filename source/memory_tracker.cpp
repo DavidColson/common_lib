@@ -3,11 +3,11 @@
 #include "memory_tracker.h"
 
 #include "defer.h"
-#include "hashmap.h"
 #include "light_string.h"
 #include "log.h"
 #include "platform_debug.h"
 #include "resizable_array.h"
+#include "hashmap.inl"
 
 struct ForceNoTrackAllocator : public IAllocator {
     void* Allocate(size_t size) {

@@ -6,7 +6,7 @@
 #include "linear_allocator.h"
 #include "light_string.h"
 #include "string_builder.h"
-#include "hashmap.h"
+#include "hashmap.inl"
 #include "resizable_array.h"
 #include "testing.h"
 
@@ -48,8 +48,8 @@ int HashMapTest() {
 		testMap.Add(875, 17);
 		testMap.Add(123, 16);
 		testMap.Add(9812, 15);
-		VERIFY(testMap.tableSize == 32);
-		VERIFY(testMap.count == 8);
+		VERIFY(testMap.m_tableSize == 32);
+    VERIFY(testMap.m_count == 8);
 
 		VERIFY(*testMap.Get(1337) == 22);
 		VERIFY(*testMap.Get(52) == 21);
@@ -63,7 +63,7 @@ int HashMapTest() {
 		testMap.Erase(123);
 		testMap.Erase(12);
 		testMap.Erase(87);
-		VERIFY(testMap.count == 5);
+    VERIFY(testMap.m_count == 5);
 		VERIFY(testMap.Get(123) == nullptr);
 		VERIFY(testMap.Get(12) == nullptr);
 		VERIFY(testMap.Get(87) == nullptr);
@@ -75,8 +75,8 @@ int HashMapTest() {
 		testMap2.GetOrAdd("Lucy") = 27;
 		testMap2["Jonny"] = 28;
 		testMap2["Mark"] = 30;
-		VERIFY(testMap2.tableSize == 32);
-		VERIFY(testMap2.count == 4);
+    VERIFY(testMap2.m_tableSize == 32);
+    VERIFY(testMap2.m_count == 4);
 
 		VERIFY(testMap2["Dave"] == 27);
 		VERIFY(testMap2["Lucy"] == 27);
@@ -95,8 +95,8 @@ int HashMapTest() {
 		VERIFY(testMap3[10780] == 4);
 		VERIFY(testMap3[9087] == 13);
 		VERIFY(testMap3[9185] == 79);
-		VERIFY(testMap3.tableSize == 128);
-		VERIFY(testMap3.count == 100);
+		VERIFY(testMap3.m_tableSize == 128);
+		VERIFY(testMap3.m_count == 100);
 
 		// Testing some other common key types		
 		HashMap<float, int> floatMap;
@@ -165,34 +165,34 @@ int StringTest() {
 	int errorCount = 0;
 	{
 		String emptyStr;
-		VERIFY(emptyStr.pData == nullptr);
-		VERIFY(emptyStr.length == 0);
+		VERIFY(emptyStr.m_pData == nullptr);
+		VERIFY(emptyStr.m_length == 0);
 
 		String str("Hello World");
 		VERIFY(str == "Hello World");
-		VERIFY(str.length == 11);
+		VERIFY(str.m_length == 11);
 
 		str = "Hi Dave";
 		VERIFY(str == "Hi Dave");
 		VERIFY(str != "Hello World");
-		VERIFY(str.length == 7);
+		VERIFY(str.m_length == 7);
 
 		String copy = CopyCString("Ducks are cool");
 		defer(FreeString(copy));
 		VERIFY(copy == "Ducks are cool");
-		VERIFY(copy.length == 14);
+		VERIFY(copy.m_length == 14);
 
 		String copy2 = CopyString(str);
 		defer(FreeString(copy2));
 		VERIFY(copy2 == "Hi Dave");
-		VERIFY(copy2.length == 7);
+		VERIFY(copy2.m_length == 7);
 
-		String allocated = AllocString(copy.length * sizeof(char));
+		String allocated = AllocString(copy.m_length * sizeof(char));
 		defer(FreeString(allocated));
-		memcpy(allocated.pData, copy.pData, copy.length * sizeof(char));
+		memcpy(allocated.m_pData, copy.m_pData, copy.m_length * sizeof(char));
 		VERIFY(allocated == copy);
 		VERIFY(allocated != str);
-		VERIFY(allocated.length == 14);
+		VERIFY(allocated.m_length == 14);
 
 		// String Builder, for dynamically constructing strings
 		StringBuilder builder;
@@ -204,7 +204,7 @@ int StringTest() {
 		defer(FreeString(builtString));
 		VERIFY(builtString == "Hello world my name is David and this is my code");
 		VERIFY(builtString != "Ducks");
-		VERIFY(builtString.length == 48);
+		VERIFY(builtString.m_length == 48);
 	}
 
 	errorCount += ReportMemoryLeaks();
@@ -220,7 +220,7 @@ int ResizableArrayTest() {
 
 		// Reserve memory
 		testArray.Reserve(2);
-		VERIFY(testArray.capacity == 2);
+		VERIFY(testArray.m_capacity == 2);
 	
 		// Appending values
 		testArray.PushBack(1337);
@@ -233,14 +233,14 @@ int ResizableArrayTest() {
 		VERIFY(testArray[2] == 1800);
 		VERIFY(testArray[3] == 77);
 		VERIFY(testArray[4] == 99);
-		VERIFY(testArray.count == 5);
-		VERIFY(testArray.capacity == 8);
+		VERIFY(testArray.m_count == 5);
+		VERIFY(testArray.m_capacity == 8);
 
 		// Reserve should memcpy the old data to the new Reserved location 
 		testArray.Reserve(50);
 		VERIFY(testArray[2] == 1800);
-		VERIFY(testArray.capacity == 50);
-		VERIFY(testArray.count == 5);
+		VERIFY(testArray.m_capacity == 50);
+		VERIFY(testArray.m_count == 5);
 	
 		// Iteration
 		int sum = 0;
@@ -255,11 +255,11 @@ int ResizableArrayTest() {
 		VERIFY(testArray[0] == 99);
 		VERIFY(testArray[1] == 420);
 		VERIFY(testArray[2] == 77);
-		VERIFY(testArray.count == 3);
+		VERIFY(testArray.m_count == 3);
 
 		// Remove element at back
 		testArray.PopBack();
-		VERIFY(testArray.count == 2);
+		VERIFY(testArray.m_count == 2);
 
 		// Inserting elements
 		testArray.Insert(0, 9999);
@@ -270,7 +270,7 @@ int ResizableArrayTest() {
 		VERIFY(testArray[2] == 1111);
 		VERIFY(testArray[3] == 99);
 		VERIFY(testArray[4] == 420);
-		VERIFY(testArray.count == 5);
+		VERIFY(testArray.m_count == 5);
 
 		// Finding elements
 		VERIFY(testArray.IndexFromPointer(testArray.Find(99)) == 3);
@@ -279,14 +279,14 @@ int ResizableArrayTest() {
 
 		// Resize an array (does not change capacity if lower, (memory can be reused)
 		testArray.Resize(3);
-		VERIFY(testArray.count == 3);
-		VERIFY(testArray.capacity == 50);
+		VERIFY(testArray.m_count == 3);
+		VERIFY(testArray.m_capacity == 50);
 
 		// Clear the array
 		testArray.Free();
-		VERIFY(testArray.pData == nullptr);
-		VERIFY(testArray.count == 0);
-		VERIFY(testArray.capacity == 0);
+		VERIFY(testArray.m_pData == nullptr);
+		VERIFY(testArray.m_count == 0);
+		VERIFY(testArray.m_capacity == 0);
 	}
 	errorCount += ReportMemoryLeaks();
 	EndTest(errorCount);
@@ -422,9 +422,9 @@ void SortTest() {
 		for (int i = 0; i < 1024; i++) {
 			randomArray.PushBack(rand());
 		}
-		VERIFY(!IsSorted(randomArray.pData, randomArray.count));
-		Sort(randomArray.pData, randomArray.count);
-		VERIFY(IsSorted(randomArray.pData, randomArray.count));
+		VERIFY(!IsSorted(randomArray.m_pData, randomArray.m_count));
+		Sort(randomArray.m_pData, randomArray.m_count);
+		VERIFY(IsSorted(randomArray.m_pData, randomArray.m_count));
 		
 		srand(21);
 		ResizableArray<float> randomFloats;
@@ -433,9 +433,9 @@ void SortTest() {
 			float x = (float)rand()/(float)(RAND_MAX/100.0f);
 			randomFloats.PushBack(x);
 		}
-		VERIFY(!IsSorted(randomFloats.pData, randomFloats.count));
-		Sort(randomFloats.pData, randomFloats.count);
-		VERIFY(IsSorted(randomFloats.pData, randomFloats.count));
+		VERIFY(!IsSorted(randomFloats.m_pData, randomFloats.m_count));
+		Sort(randomFloats.m_pData, randomFloats.m_count);
+		VERIFY(IsSorted(randomFloats.m_pData, randomFloats.m_count));
 	
 		// Custom ordering
 		int descending[] = { 4, 8, 9, 2, 1, 3, 7, 6 };
@@ -459,7 +459,7 @@ void SortTest() {
 }
 
 void CustomLogHandler(Log::LogLevel level, String message) {
-	printf("Custom Log Handler Test! %s", message.pData);
+	printf("Custom Log Handler Test! %s", message.m_pData);
 }
 
 void LogTest() {

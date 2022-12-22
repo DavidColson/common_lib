@@ -23,7 +23,7 @@ solution "CommonLib"
 		editandcontinue "Off"
 		links { "dbghelp" }
 	
-	dofile("commonlib.lua")
+	dofile("common_lib.lua")
 
     project "Tests"
         kind "ConsoleApp"
@@ -42,5 +42,5 @@ solution "CommonLib"
 		}
 		links
 		{
-			"CommonLib"
+			"common_lib"
 		}

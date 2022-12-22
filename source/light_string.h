@@ -4,11 +4,6 @@
 
 #include "memory.h"
 
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <string.h>
-
 // String Class
 // --------------------
 // Null terminated string
@@ -28,55 +23,19 @@ struct String {
 
     String() {}
 
-    String(const char* str) {
-        m_pData = const_cast<char*>(str);
-        m_length = strlen(str);
-    }
+    String(const char* str);
 
-    void operator=(const char* str) {
-        m_pData = const_cast<char*>(str);
-        m_length = strlen(str);
-    }
+    void operator=(const char* str);
 
-    bool operator==(const String& other) const {
-        if (m_length != other.m_length)
-            return false;
-        char* s1 = m_pData;
-        char* s2 = other.m_pData;
-        size_t count = 0;
-        while (count < m_length) {
-            count++;
-            if (*s1 != *s2)
-                return false;
-            s1++;
-            s2++;
-        }
-        return true;
-    }
+    bool operator==(const String& other) const;
 
-    bool operator==(const char* other) const {
-        String str(other);
-        return operator==(str);
-    }
+    bool operator==(const char* other) const;
 
-    bool operator!=(const String& other) const {
-        return !operator==(other);
-    }
+    bool operator!=(const String& other) const;
 
-    bool operator!=(const char* other) const {
-        return !operator==(other);
-    }
+    bool operator!=(const char* other) const;
 
-    String SubStr(size_t start, size_t len = -1) {
-        String result;
-        result.m_pData = m_pData + start;
-
-        if (len == (size_t)-1)
-            result.m_length = m_length - start;
-        else
-            result.m_length = len;
-        return result;
-    }
+    String SubStr(size_t start, size_t len = -1);
 };
 
 String CopyCString(const char* string, IAllocator* pAlloc = &g_Allocator);

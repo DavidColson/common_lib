@@ -4,6 +4,7 @@
 
 #include "scanning.h"
 #include "string_builder.h"
+#include "hashmap.inl"
 
 #include <math.h>
 

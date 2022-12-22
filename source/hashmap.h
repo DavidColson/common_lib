@@ -5,6 +5,8 @@
 #include "light_string.h"
 #include "memory.h"
 
+#include <stdint.h>
+
 // Key functions define all the needed operations
 // for each key. So the hashing function and the key comparison
 // -------------------------------
@@ -56,176 +58,99 @@ struct KeyFuncs : Internal::EnableHashIf<K, Internal::is_enum_v<K>> {
 
 template<typename T>
 struct KeyFuncs<T*> {
-    uint64_t Hash(T* key) const {
-        return uint64_t(uintptr_t(key));
-    }
-    bool Cmp(T* key1, T* key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(T* key) const;
+    bool Cmp(T* key1, T* key2) const;
 };
 
 // Numeric hashes
 template<>
 struct KeyFuncs<char> {
-    uint64_t Hash(char key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(int8_t key1, int8_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(char key) const;
+    bool Cmp(char key1, char key2) const;
 };
 
 template<>
 struct KeyFuncs<int8_t> {
-    uint64_t Hash(int8_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(int8_t key1, int8_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(int8_t key) const;
+    bool Cmp(int8_t key1, int8_t key2) const;
 };
 
 template<>
 struct KeyFuncs<int16_t> {
-    uint64_t Hash(int16_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(int16_t key1, int16_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(int16_t key) const;
+    bool Cmp(int16_t key1, int16_t key2) const;
 };
 
 template<>
 struct KeyFuncs<int32_t> {
-    uint64_t Hash(int32_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(int32_t key1, int32_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(int32_t key) const;
+    bool Cmp(int32_t key1, int32_t key2) const;
 };
 
 template<>
 struct KeyFuncs<int64_t> {
-    uint64_t Hash(int64_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(int64_t key1, int64_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(int64_t key) const;
+    bool Cmp(int64_t key1, int64_t key2) const;
 };
 
 template<>
 struct KeyFuncs<uint8_t> {
-    uint64_t Hash(uint8_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(uint8_t key1, uint8_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(uint8_t key) const;
+    bool Cmp(uint8_t key1, uint8_t key2) const;
 };
 
 template<>
 struct KeyFuncs<uint16_t> {
-    uint64_t Hash(uint16_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(uint16_t key1, uint16_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(uint16_t key) const;
+    bool Cmp(uint16_t key1, uint16_t key2) const;
 };
 
 template<>
 struct KeyFuncs<uint32_t> {
-    uint64_t Hash(uint32_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(uint32_t key1, uint32_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(uint32_t key) const;
+    bool Cmp(uint32_t key1, uint32_t key2) const;
 };
 
 template<>
 struct KeyFuncs<uint64_t> {
-    uint64_t Hash(uint64_t key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(uint64_t key1, uint64_t key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(uint64_t key) const;
+    bool Cmp(uint64_t key1, uint64_t key2) const;
 };
 
 template<>
 struct KeyFuncs<float> {
-    uint64_t Hash(float key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(float key1, float key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(float key) const;
+    bool Cmp(float key1, float key2) const;
 };
 
 template<>
 struct KeyFuncs<double> {
-    uint64_t Hash(double key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(double key1, double key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(double key) const;
+    bool Cmp(double key1, double key2) const;
 };
 
 template<>
 struct KeyFuncs<long double> {
-    uint64_t Hash(long double key) const {
-        return static_cast<uint64_t>(key);
-    }
-    bool Cmp(long double key1, long double key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(long double key) const;
+    bool Cmp(long double key1, long double key2) const;
 };
 
 template<>
 struct KeyFuncs<String> {
-    uint64_t Hash(const String& key) const {
-        size_t nChars = key.m_length;
-        size_t hash = 0x811C9DC5;
-        const unsigned char* pData = (const unsigned char*)key.m_pData;
-        while (nChars--)
-            hash = (*pData++ ^ hash) * 0x01000193;
-        return hash;
-    }
-    bool Cmp(const String& key1, const String& key2) const {
-        return key1 == key2;
-    }
+    uint64_t Hash(const String& key) const;
+    bool Cmp(const String& key1, const String& key2) const;
 };
 
 template<>
 struct KeyFuncs<char*> {
-    uint64_t Hash(const char* key) const {
-        uint32_t c;
-        uint32_t hash = 0x811C9DC5;
-        while ((c = (uint8_t)*key++) != 0)
-            hash = (c ^ hash) * 0x01000193;
-        return hash;
-    }
-    bool Cmp(const char* key1, const char* key2) const {
-        return strcmp(key1, key2) == 0;
-    }
+    uint64_t Hash(const char* key) const;
+    bool Cmp(const char* key1, const char* key2) const;
 };
 
 template<>
 struct KeyFuncs<const char*> {
-    uint64_t Hash(const char* key) const {
-        uint32_t c;
-        uint32_t hash = 0x811C9DC5;
-        while ((c = (uint8_t)*key++) != 0)
-            hash = (c ^ hash) * 0x01000193;
-        return hash;
-    }
-    bool Cmp(const char* key1, const char* key2) const {
-        return strcmp(key1, key2) == 0;
-    }
+    uint64_t Hash(const char* key) const;
+    bool Cmp(const char* key1, const char* key2) const;
 };
 
 
@@ -255,151 +180,25 @@ struct HashMap {
     size_t m_count { 0 };
     IAllocator* m_pAlloc { nullptr };
 
-    HashMap(IAllocator* _pAlloc = &g_Allocator) {
-        m_pAlloc = _pAlloc;
-    }
+    HashMap(IAllocator* _pAlloc = &g_Allocator);
 
-    void Free() {
-        if (m_pTable)
-            m_pAlloc->Free(m_pTable);
-    }
+    void Free();
 
     template<typename F>
-    void Free(F&& freeNode) {
-        for (size_t i = 0; i < m_tableSize; i++) {
-            if (m_pTable[i].hash != UNUSED_HASH) {
-                freeNode(m_pTable[i]);
-            }
-        }
-        m_pAlloc->Free(m_pTable);
-    }
+    void Free(F&& freeNode);
 
-    V& Add(const K& key, const V& value) {
-        float loadFactor = m_tableSize == 0 ? INT_MAX : (float)(m_count) / (float)m_tableSize;
-        if (loadFactor >= 0.9f)
-            Rehash(m_tableSize + 1);
+    V& Add(const K& key, const V& value);
 
-        uint64_t hash = m_keyFuncs.Hash(key);
-        if (hash < FIRST_VALID_HASH)
-            hash += FIRST_VALID_HASH;
-        uint64_t index = hash % m_tableSize;
-        uint64_t probeCounter = 1;
+    V* Get(const K& key);
 
-        while (m_pTable[index].hash != UNUSED_HASH) {
-            index = (index + probeCounter) % m_tableSize;
-            probeCounter++;
-        }
+    V& GetOrAdd(const K& key);
 
-        HashNode<K, V>& node = m_pTable[index];
-        node.hash = hash;
-        node.key = key;
-        node.value = value;
-        m_count++;
-        return node.value;
-    }
+    V& operator[](const K& key);
 
-    V* Get(const K& key) {
-        if (m_tableSize == 0)
-            return nullptr;
-
-        uint64_t hash = m_keyFuncs.Hash(key);
-        if (hash < FIRST_VALID_HASH)
-            hash += FIRST_VALID_HASH;
-        uint64_t index = hash % m_tableSize;
-        uint64_t probeCounter = 1;
-
-        while (m_pTable[index].hash != UNUSED_HASH) {
-            if (m_keyFuncs.Cmp(m_pTable[index].key, key)) {
-                return &m_pTable[index].value;
-            }
-            index = (index + probeCounter) % m_tableSize;
-            probeCounter++;
-        }
-        return nullptr;
-    }
-
-    V& GetOrAdd(const K& key) {
-        if (m_tableSize == 0) {
-            V value = V();
-            return Add(key, value);
-        }
-
-        float loadFactor = m_tableSize == 0 ? INT_MAX : (float)(m_count) / (float)m_tableSize;
-        if (loadFactor >= 0.9f)
-            Rehash(m_tableSize + 1);
-
-        uint64_t hash = m_keyFuncs.Hash(key);
-        if (hash < FIRST_VALID_HASH)
-            hash += FIRST_VALID_HASH;
-        uint64_t index = hash % m_tableSize;
-        uint64_t probeCounter = 1;
-
-        while (m_pTable[index].hash != UNUSED_HASH) {
-            if (m_keyFuncs.Cmp(m_pTable[index].key, key)) {
-                return m_pTable[index].value;
-            }
-            index = (index + probeCounter) % m_tableSize;
-            probeCounter++;
-        }
-        V value = V();
-        return Add(key, value);
-    }
-
-    V& operator[](const K& key) {
-        return GetOrAdd(key);
-    }
-
-    void Erase(const K& key) {
-        Erase(key, [](HashNode<K, V>) {});
-    }
+    void Erase(const K& key);
 
     template<typename F>
-    void Erase(const K& key, F&& freeNode) {
-        if (m_tableSize == 0)
-            return;
+    void Erase(const K& key, F&& freeNode);
 
-        uint64_t hash = m_keyFuncs.Hash(key);
-        if (hash < FIRST_VALID_HASH)
-            hash += FIRST_VALID_HASH;
-        uint64_t index = hash % m_tableSize;
-        uint64_t probeCounter = 1;
-
-        while (m_pTable[index].hash != UNUSED_HASH) {
-            if (m_keyFuncs.Cmp(m_pTable[index].key, key)) {
-                // Found the node
-                freeNode(m_pTable[index]);
-                memset(&m_pTable[index], 0, sizeof(HashNode<K, V>));
-                m_count--;
-            }
-            index = (index + probeCounter) % m_tableSize;
-            probeCounter++;
-        }
-    }
-
-    void Rehash(size_t requiredTableSize) {
-        if (requiredTableSize < m_tableSize)
-            return;
-
-        HashNode<K, V>* pTableOld = m_pTable;
-
-        // Double the table size until we can fit required table size
-        constexpr size_t minTableSize = 32;
-        size_t newTableSize = m_tableSize == 0 ? minTableSize : m_tableSize * 2;
-        while (newTableSize < (requiredTableSize > minTableSize ? requiredTableSize : minTableSize))
-            newTableSize *= 2;
-
-        m_pTable = (HashNode<K, V>*)m_pAlloc->Allocate(newTableSize * sizeof(HashNode<K, V>));
-        memset(m_pTable, 0, newTableSize * sizeof(HashNode<K, V>));
-
-        size_t oldTableSize = m_tableSize;
-        m_tableSize = newTableSize;
-        for (int i = 0; i < oldTableSize; i++) {
-            if (pTableOld[i].hash != UNUSED_HASH) {
-                Add(pTableOld[i].key, pTableOld[i].value);
-                m_count--;
-            }
-        }
-        if (pTableOld)
-            m_pAlloc->Free(pTableOld);
-    }
+    void Rehash(size_t requiredTableSize);
 };
