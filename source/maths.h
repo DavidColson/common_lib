@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <cmath>
+#include <math.h>
 
 #define PI 3.141592653589793238f
 #define PI2 6.283185307179586476f

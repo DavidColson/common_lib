@@ -1,6 +1,8 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "Maths.h"
+#include "maths.h"
+
+#include <stdlib.h>
 
 // ***********************************************************************
 

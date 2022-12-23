@@ -5,6 +5,7 @@
 #include "scanning.h"
 #include "string_builder.h"
 #include "hashmap.inl"
+#include "resizable_array.inl"
 
 #include <math.h>
 

@@ -296,9 +296,9 @@ template<typename T>
 inline Vec3<T> Matrix<T>::ExtractScaling() {
     // Completely removes scaling from this matrix and returns the scale vector
     Vec3<T> sca;
-    sca.x = sqrt(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]);
-    sca.y = sqrt(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]);
-    sca.z = sqrt(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
+    sca.x = sqrtf(m[0][0] * m[0][0] + m[1][0] * m[1][0] + m[2][0] * m[2][0]);
+    sca.y = sqrtf(m[0][1] * m[0][1] + m[1][1] * m[1][1] + m[2][1] * m[2][1]);
+    sca.z = sqrtf(m[0][2] * m[0][2] + m[1][2] * m[1][2] + m[2][2] * m[2][2]);
 
     T invScaX = T(1.0) / sca.x;
     m[0][0] *= invScaX;
@@ -329,25 +329,25 @@ inline Quat<T> Matrix<T>::ToQuat() const {
     Quat<T> q;
     T trace = m[0][0] + m[1][1] + m[2][2];
     if (trace > 0) {
-        T s = T(0.5) / sqrt(trace + T(1.0));  // 4 * q.w
+        T s = T(0.5) / sqrtf(trace + T(1.0));  // 4 * q.w
         q.w = T(0.25) / s;
         q.x = (m[1][2] - m[2][1]) * s;
         q.y = (m[2][0] - m[0][2]) * s;
         q.z = (m[0][1] - m[1][0]) * s;
     } else if (m[0][0] > m[1][1] && m[0][0] > m[2][2]) {
-        T s = T(2.0) * sqrt(T(1.0) + m[0][0] - m[1][1] - m[2][2]);
+        T s = T(2.0) * sqrtf(T(1.0) + m[0][0] - m[1][1] - m[2][2]);
         q.w = (m[1][2] - m[2][1]) / s;
         q.x = T(0.25) * s;
         q.y = (m[1][0] + m[0][1]) / s;
         q.z = (m[2][0] + m[0][2]) / s;
     } else if (m[1][1] > m[2][2]) {
-        T s = T(2.0) * sqrt(T(1.0) + m[1][1] - m[0][0] - m[2][2]);
+        T s = T(2.0) * sqrtf(T(1.0) + m[1][1] - m[0][0] - m[2][2]);
         q.w = (m[2][0] - m[0][2]) / s;
         q.x = (m[1][0] + m[0][1]) / s;
         q.y = T(0.25) * s;
         q.z = (m[2][1] + m[1][2]) / s;
     } else {
-        T s = T(2.0) * sqrt(T(1.0) + m[2][2] - m[0][0] - m[1][1]);
+        T s = T(2.0) * sqrtf(T(1.0) + m[2][2] - m[0][0] - m[1][1]);
         q.w = (m[0][1] - m[1][0]) / s;
         q.x = (m[2][0] + m[0][1]) / s;
         q.y = (m[2][1] + m[1][2]) / s;
@@ -454,12 +454,12 @@ template<typename T>
 inline void Matrix<T>::SetEulerRotation(Vec3<T> rotation) {
     Vec3<T> scale = ExtractScaling();
     // This is a body 3-2-1 (z, then y, then x) rotation
-    const T cx = cos(rotation.x);
-    const T sx = sin(rotation.x);
-    const T cy = cos(rotation.y);
-    const T sy = sin(rotation.y);
-    const T cz = cos(rotation.z);
-    const T sz = sin(rotation.z);
+    const T cx = cosf(rotation.x);
+    const T sx = sinf(rotation.x);
+    const T cy = cosf(rotation.y);
+    const T sy = sinf(rotation.y);
+    const T cz = cosf(rotation.z);
+    const T sz = sinf(rotation.z);
 
     // TODO: Does this work with negative scaling?
     m[0][0] = cy * cz * scale.x;
@@ -609,12 +609,12 @@ inline Matrix<T> Matrix<T>::MakeTranslation(Vec3<T> translate) {
 template<typename T>
 inline Matrix<T> Matrix<T>::MakeRotation(Vec3<T> rotation) {
     // This is a body 3-2-1 (z, then y, then x) rotation
-    const T cx = cos(rotation.x);
-    const T sx = sin(rotation.x);
-    const T cy = cos(rotation.y);
-    const T sy = sin(rotation.y);
-    const T cz = cos(rotation.z);
-    const T sz = sin(rotation.z);
+    const T cx = cosf(rotation.x);
+    const T sx = sinf(rotation.x);
+    const T cy = cosf(rotation.y);
+    const T sy = sinf(rotation.y);
+    const T cz = cosf(rotation.z);
+    const T sz = sinf(rotation.z);
 
     Matrix<T> res;
     res.m[0][0] = cy * cz;
@@ -673,7 +673,7 @@ inline Matrix<T> Matrix<T>::Perspective(T screenWidth, T screenHeight, T nearPla
     // @Improvement: Disallow nearplane 0
     T ar = screenWidth / screenHeight;
     T zRange = farPlane - nearPlane;
-    T tanHalfFOV = tan(ToRadian(fov * T(0.5)));
+    T tanHalfFOV = tanf(ToRadian(fov * T(0.5)));
 
     Matrix<T> mat;
     mat.m[0][0] = T(1.0) / (tanHalfFOV * ar);

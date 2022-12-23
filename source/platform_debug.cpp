@@ -3,7 +3,7 @@
 #include "platform_debug.h"
 
 #include "memory.h"
-#include "resizable_array.h"
+#include "resizable_array.inl"
 #include "string_builder.h"
 #include "light_string.h"
 
