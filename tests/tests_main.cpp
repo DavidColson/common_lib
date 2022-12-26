@@ -259,6 +259,9 @@ int ResizableArrayTest() {
 
 		// Remove element at back
 		testArray.PopBack();
+		// Remove element at back another way (this caused an infinite loop once so we now test for it
+        testArray.PushBack(7);
+		testArray.Erase(testArray.count - 1);
 		VERIFY(testArray.m_count == 2);
 
 		// Inserting elements
