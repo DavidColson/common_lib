@@ -81,7 +81,7 @@ void ResizableArray<Type>::Erase(size_t index) {
     Assert(index >= 0 && index < m_count);
     if (index == m_count - 1) {
         PopBack();
-        m_count--;
+        return;
     }
     if (index < m_count - 1) {
         memmove(m_pData + index, m_pData + (index + 1), (m_count - index - 1) * sizeof(Type));
