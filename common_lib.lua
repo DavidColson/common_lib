@@ -18,3 +18,23 @@ project "common_lib"
         flags { "NoIncrementalLink" }
         editandcontinue "Off"
 	end
+
+	project "common_lib_tests"
+        kind "ConsoleApp"
+        language "C++"
+        cppdialect "C++20"
+        exceptionhandling "Off"
+        rtti "Off"
+        debugdir ""
+        files 
+        {
+            "tests/tests_main.cpp",
+        }
+		includedirs
+		{
+			"source/"
+		}
+		links
+		{
+			"common_lib"
+		}

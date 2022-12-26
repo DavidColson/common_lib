@@ -24,23 +24,3 @@ solution "CommonLib"
 		links { "dbghelp" }
 	
 	dofile("common_lib.lua")
-
-    project "Tests"
-        kind "ConsoleApp"
-        language "C++"
-        cppdialect "C++20"
-        exceptionhandling "Off"
-        rtti "Off"
-        debugdir ""
-        files 
-        {
-            "tests/tests_main.cpp",
-        }
-		includedirs
-		{
-			"source/"
-		}
-		links
-		{
-			"common_lib"
-		}

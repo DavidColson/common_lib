@@ -7,7 +7,7 @@
 #include "light_string.h"
 #include "string_builder.h"
 #include "hashmap.inl"
-#include "resizable_array.h"
+#include "resizable_array.inl"
 #include "testing.h"
 
 // ---------------------
@@ -261,7 +261,7 @@ int ResizableArrayTest() {
 		testArray.PopBack();
 		// Remove element at back another way (this caused an infinite loop once so we now test for it
         testArray.PushBack(7);
-		testArray.Erase(testArray.count - 1);
+		testArray.Erase(testArray.m_count - 1);
 		VERIFY(testArray.m_count == 2);
 
 		// Inserting elements
