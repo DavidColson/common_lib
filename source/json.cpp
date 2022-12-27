@@ -203,20 +203,21 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
             // Whitespace
             case ' ':
             case '\r':
-            case '\n':
             case '\t': break;
+            case '\n':
+                scan.m_line++;
+                scan.m_pCurrentLineStart = scan.m_pCurrent;
+                break;
 
             // String literals
             case '\'': {
                 String string = ParseString(pAllocator, scan, '\'');
                 tokens.PushBack(Token { TokenType::String, string });
                 break;
-                break;
             }
             case '"': {
                 String string = ParseString(pAllocator, scan, '"');
                 tokens.PushBack(Token { TokenType::String, string });
-                break;
                 break;
             }
 

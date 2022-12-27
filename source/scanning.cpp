@@ -28,7 +28,7 @@ char Scan::PeekNext(ScanningState& scan) {
 // ***********************************************************************
 
 bool Scan::IsWhitespace(char c) {
-    if (c == ' ' || c == '\r' || c == '\t' || c == '\n')
+    if (c == ' ' || c == '\r' || c == '\t')
         return true;
     return false;
 }
@@ -39,23 +39,6 @@ void Scan::AdvanceOverWhitespace(ScanningState& scan) {
     char c = *(scan.m_pCurrent);
     while (IsWhitespace(c)) {
         Advance(scan);
-        c = Peek(scan);
-        if (c == '\n') {
-            scan.m_line++;
-            scan.m_pCurrentLineStart = scan.m_pCurrent + 1;
-        }
-    }
-}
-
-// ***********************************************************************
-
-void Scan::AdvanceOverWhitespaceNoNewline(ScanningState& scan) {
-    char c = *(scan.m_pCurrent);
-    while (IsWhitespace(c)) {
-        if (c == '\n')
-            break;
-        Advance(scan);
-        c = Peek(scan);
     }
 }
 

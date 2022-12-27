@@ -10,6 +10,7 @@ struct ScanningState {
     const char* m_pTextStart;
     const char* m_pTextEnd;
     char* m_pCurrent { nullptr };
+    char* m_pTokenStart { nullptr };
     char* m_pCurrentLineStart { nullptr };
     int m_line { 1 };
     bool m_encounteredError { false };
@@ -34,8 +35,6 @@ char PeekNext(ScanningState& scan);
 bool IsWhitespace(char c);
 
 void AdvanceOverWhitespace(ScanningState& scan);
-
-void AdvanceOverWhitespaceNoNewline(ScanningState& scan);
 
 bool IsPartOfNumber(char c);
 
