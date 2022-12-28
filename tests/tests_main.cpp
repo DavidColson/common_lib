@@ -1,4 +1,5 @@
 
+#include "stack.inl"
 #include "defer.h"
 #include "hashmap.inl"
 #include "json.h"
@@ -494,6 +495,42 @@ void LogTest() {
         Log::Debug("A Debug Message");
     }
 
+    errorCount += ReportMemoryLeaks();
+    EndTest(errorCount);
+}
+
+void StackTest() {
+    StartTest("Stack");
+    int errorCount = 0;
+    {
+        Stack<float> stack;
+        defer(stack.Free());
+
+        stack.Push(7);
+        stack.Push(8);
+        stack.Push(9);
+
+        VERIFY(stack.Pop() == 9);
+        VERIFY(stack.Pop() == 8);
+        VERIFY(stack.Pop() == 7);
+
+        stack.Push(12);
+        stack.Push(17);
+        stack.Push(19);
+
+        VERIFY(stack.Top() == 19);
+        VERIFY(stack.Top() == 19);
+
+        // Normal indices
+        VERIFY(stack[0] == 12);
+        VERIFY(stack[1] == 17);
+        VERIFY(stack[2] == 19);
+
+        // Negative indices
+        VERIFY(stack[-3] == 12);
+        VERIFY(stack[-2] == 17);
+        VERIFY(stack[-1] == 19);
+    }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);
 }
