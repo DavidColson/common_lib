@@ -19,7 +19,7 @@ struct LinearAllocator : public IAllocator {
     void ExpandCommitted(uint8_t* pDesiredEnd);
 
     const char* m_name;
-    size_t m_alignment { 8 };
+    size_t m_alignment { 16 };
     size_t m_pageSize { 0 };
     size_t m_reserveSize { 0 };
 
