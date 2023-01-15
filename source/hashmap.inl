@@ -353,6 +353,7 @@ void HashMap<K, V, KF>::Erase(const K& key, F&& freeNode) {
             freeNode(m_pTable[index]);
             memset(&m_pTable[index], 0, sizeof(HashNode<K, V>));
             m_count--;
+            return;
         }
         index = (index + probeCounter) % m_tableSize;
         probeCounter++;
