@@ -22,7 +22,7 @@ bool Scan::Match(ScanningState& scan, char expected) {
 // ***********************************************************************
 
 char Scan::PeekNext(ScanningState& scan) {
-    return *(scan.m_pCurrent++);
+    return *(scan.m_pCurrent+1);
 }
 
 // ***********************************************************************
