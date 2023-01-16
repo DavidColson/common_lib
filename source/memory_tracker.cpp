@@ -45,8 +45,7 @@ MemoryTrackerState* g_pCtx { nullptr };
 
 void InitContext() {
     g_pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-    SYS_P_NEW(g_pCtx)
-    MemoryTrackerState();
+    SYS_P_NEW(g_pCtx) MemoryTrackerState();
     g_pCtx->m_allocationTable.m_pAlloc = &g_noTrackAllocator;
 }
 

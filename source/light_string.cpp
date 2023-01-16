@@ -114,7 +114,9 @@ String AllocString(size_t length, IAllocator* pAlloc) {
 // ***********************************************************************
 
 void FreeString(String& string, IAllocator* pAlloc) {
-    pAlloc->Free(string.m_pData);
-    string.m_pData = nullptr;
-    string.m_length = 0;
+    if (string.m_pData) {
+        pAlloc->Free(string.m_pData);
+        string.m_pData = nullptr;
+        string.m_length = 0;
+    }
 }
