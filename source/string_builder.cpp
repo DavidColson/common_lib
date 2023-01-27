@@ -36,7 +36,7 @@ void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
         return;
     }
 
-    Reserve(GrowCapacity(m_length + addedLength));
+    Reserve(GrowCapacity(m_length + addedLength + 1));
     vsnprintf(m_pData + m_length, addedLength + 1, format, args);
     va_end(argsCopy);
     m_length += addedLength;
