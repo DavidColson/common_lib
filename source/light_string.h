@@ -12,8 +12,8 @@
 // TODO: Documentation
 
 struct String {
-    char* m_pData = nullptr;
-    size_t m_length = 0;
+    char* pData = nullptr;
+    size_t length = 0;
 
     // TODOs
     // [ ] contains/nocase

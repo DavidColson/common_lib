@@ -18,13 +18,13 @@ struct LinearAllocator : public IAllocator {
     void Finished();
     void ExpandCommitted(uint8_t* pDesiredEnd);
 
-    const char* m_name;
-    size_t m_alignment { 16 };
-    size_t m_pageSize { 0 };
-    size_t m_reserveSize { 0 };
+    const char* name;
+    size_t alignment { 16 };
+    size_t pageSize { 0 };
+    size_t reserveSize { 0 };
 
-    uint8_t* m_pMemoryBase { nullptr };
-    uint8_t* m_pCurrentHead { nullptr };
-    uint8_t* m_pFirstUncommittedPage { nullptr };
-    uint8_t* m_pAddressLimit { nullptr };
+    uint8_t* pMemoryBase { nullptr };
+    uint8_t* pCurrentHead { nullptr };
+    uint8_t* pFirstUncommittedPage { nullptr };
+    uint8_t* pAddressLimit { nullptr };
 };

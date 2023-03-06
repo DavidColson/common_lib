@@ -25,18 +25,18 @@ uint8_t* AlignPtr(uint8_t* toAlign, size_t alignment) {
 // ***********************************************************************
 
 void* LinearAllocator::Allocate(size_t size) {
-    if (m_pMemoryBase == nullptr)
+    if (pMemoryBase == nullptr)
         Init();
 
-    uint8_t* pOutput = AlignPtr(m_pCurrentHead, m_alignment);
+    uint8_t* pOutput = AlignPtr(pCurrentHead, alignment);
     uint8_t* pEnd = pOutput + size;
 
-    if (pEnd > m_pFirstUncommittedPage) {
-        Assert(pEnd < m_pAddressLimit);
+    if (pEnd > pFirstUncommittedPage) {
+        Assert(pEnd < pAddressLimit);
         ExpandCommitted(pEnd);
     }
 
-    m_pCurrentHead = pEnd;
+    pCurrentHead = pEnd;
     return (void*)pOutput;
 }
 
@@ -60,50 +60,50 @@ void LinearAllocator::Free(void* ptr) {
 void LinearAllocator::Init(size_t defaultReserve) {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
-    m_pageSize = sysInfo.dwPageSize;
+    pageSize = sysInfo.dwPageSize;
 
-    m_reserveSize = Align(defaultReserve, m_pageSize);
-    m_pMemoryBase = (uint8_t*)VirtualAlloc(nullptr, m_reserveSize, MEM_RESERVE, PAGE_READWRITE);
-    Assert(m_pMemoryBase != nullptr);
+    reserveSize = Align(defaultReserve, pageSize);
+    pMemoryBase = (uint8_t*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
+    Assert(pMemoryBase != nullptr);
 
-    m_pFirstUncommittedPage = m_pMemoryBase;
-    m_pAddressLimit = m_pMemoryBase + m_reserveSize;
-    m_pCurrentHead = m_pMemoryBase;
+    pFirstUncommittedPage = pMemoryBase;
+    pAddressLimit = pMemoryBase + reserveSize;
+    pCurrentHead = pMemoryBase;
 }
 
 // ***********************************************************************
 
 void LinearAllocator::Reset(bool stampMemory) {
-    if (m_pMemoryBase == nullptr)
+    if (pMemoryBase == nullptr)
         return;
 
     // To debug memory corruption, probably have on in debug builds
     if (stampMemory)
-        memset(m_pMemoryBase, 0xcc, m_pCurrentHead - m_pMemoryBase);
+        memset(pMemoryBase, 0xcc, pCurrentHead - pMemoryBase);
 
-    m_pCurrentHead = m_pMemoryBase;
+    pCurrentHead = pMemoryBase;
 }
 
 // ***********************************************************************
 
 void LinearAllocator::Finished() {
 #ifdef MEMORY_TRACKING
-    CheckFree(this, m_pMemoryBase);
+    CheckFree(this, pMemoryBase);
 #endif
-    VirtualFree(m_pMemoryBase, 0, MEM_RELEASE);
+    VirtualFree(pMemoryBase, 0, MEM_RELEASE);
 }
 
 // ***********************************************************************
 
 void LinearAllocator::ExpandCommitted(uint8_t* pDesiredEnd) {
-    size_t currentSpace = m_pFirstUncommittedPage - m_pMemoryBase;
-    size_t requiredSpace = pDesiredEnd - m_pFirstUncommittedPage;
+    size_t currentSpace = pFirstUncommittedPage - pMemoryBase;
+    size_t requiredSpace = pDesiredEnd - pFirstUncommittedPage;
     Assert(requiredSpace > 0);
 
-    size_t size = Align(requiredSpace, m_pageSize);
-    VirtualAlloc(m_pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
+    size_t size = Align(requiredSpace, pageSize);
+    VirtualAlloc(pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
 #ifdef MEMORY_TRACKING
-    CheckRealloc(this, m_pMemoryBase, m_pMemoryBase, currentSpace + size, currentSpace);
+    CheckRealloc(this, pMemoryBase, pMemoryBase, currentSpace + size, currentSpace);
 #endif
-    m_pFirstUncommittedPage += size;
+    pFirstUncommittedPage += size;
 }

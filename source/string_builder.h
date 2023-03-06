@@ -15,10 +15,10 @@ struct IAllocator;
 typedef char* va_list;
 
 struct StringBuilder {
-    char* m_pData = nullptr;
-    size_t m_length = 0;
-    size_t m_capacity = 0;
-    IAllocator* m_pAlloc { nullptr };
+    char* pData = nullptr;
+    size_t length = 0;
+    size_t capacity = 0;
+    IAllocator* pAlloc { nullptr };
 
     StringBuilder(IAllocator* _pAlloc = &g_Allocator);
 

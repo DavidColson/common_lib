@@ -16,8 +16,8 @@ String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
         decodingTable[encodingTable[i]] = (unsigned char)i;
     decodingTable['='] = 0;
 
-    const char* input = encodedString.m_pData;
-    size_t inputLength = encodedString.m_length;
+    const char* input = encodedString.pData;
+    size_t inputLength = encodedString.length;
 
     size_t count = 0;
     for (int i = 0; i < inputLength; i++) {
@@ -50,8 +50,8 @@ String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
     }
 
     String result;
-    result.m_pData = output;
-    result.m_length = outputlen;
+    result.pData = output;
+    result.length = outputlen;
     return result;
 }
 
@@ -78,7 +78,7 @@ String EncodeBase64(size_t length, const char* bytes, IAllocator* pAlloc) {
     }
 
     String result;
-    result.m_pData = output;
-    result.m_length = outputLength;
+    result.pData = output;
+    result.length = outputLength;
     return result;
 }

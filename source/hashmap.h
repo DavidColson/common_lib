@@ -31,7 +31,7 @@ template<typename T>
 struct is_enum : public integral_constant<bool, __is_enum(T)> {};
 
 template<typename T>
-constexpr bool is_enum_v = is_enum<T>::value;
+constexpr bool is_enuv = is_enum<T>::value;
 
 // utility to disable the generic template specialization that is
 // used for enum types only.
@@ -47,7 +47,7 @@ struct EnableHashIf<T, true> {
 }
 
 template<typename K>
-struct KeyFuncs : Internal::EnableHashIf<K, Internal::is_enum_v<K>> {
+struct KeyFuncs : Internal::EnableHashIf<K, Internal::is_enuv<K>> {
     uint64_t Hash(K key) const {
         return static_cast<uint64_t>(key);
     }
@@ -175,11 +175,11 @@ struct HashNode {
 
 template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {
-    HashNode<K, V>* m_pTable { nullptr };
-    KF m_keyFuncs;
-    size_t m_tableSize { 0 };
-    size_t m_count { 0 };
-    IAllocator* m_pAlloc { nullptr };
+    HashNode<K, V>* pTable { nullptr };
+    KF keyFuncs;
+    size_t tableSize { 0 };
+    size_t count { 0 };
+    IAllocator* pAlloc { nullptr };
 
     HashMap(IAllocator* _pAlloc = &g_Allocator);
 

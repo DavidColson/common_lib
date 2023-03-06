@@ -26,15 +26,15 @@ void PushLogMessage(LogLevel level, String message) {
     if (g_config.fileOutput) {
         if (g_pLogFile == nullptr)
             fopen_s(&g_pLogFile, "application.log", "w");
-        fprintf(g_pLogFile, message.m_pData);
+        fprintf(g_pLogFile, message.pData);
         fflush(g_pLogFile);
     }
 
     if (g_config.winOutput)
-        OutputDebugStringA(message.m_pData);
+        OutputDebugStringA(message.pData);
 
     if (g_config.consoleOutput)
-        printf("%s", message.m_pData);
+        printf("%s", message.pData);
 
     if (level <= Log::ECrit) {
         void* trace[100];
@@ -42,13 +42,13 @@ void PushLogMessage(LogLevel level, String message) {
 
         String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames);
         if (g_config.fileOutput) {
-            fprintf(g_pLogFile, stackTrace.m_pData);
+            fprintf(g_pLogFile, stackTrace.pData);
             fflush(g_pLogFile);
         }
         if (g_config.winOutput)
-            OutputDebugStringA(stackTrace.m_pData);
+            OutputDebugStringA(stackTrace.pData);
         if (g_config.consoleOutput)
-            printf("%s", stackTrace.m_pData);
+            printf("%s", stackTrace.pData);
     }
 
     if (g_config.customHandler1)

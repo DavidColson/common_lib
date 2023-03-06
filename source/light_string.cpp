@@ -7,26 +7,26 @@
 // ***********************************************************************
 
 String::String(const char* str) {
-    m_pData = const_cast<char*>(str);
-    m_length = strlen(str);
+    pData = const_cast<char*>(str);
+    length = strlen(str);
 }
 
 // ***********************************************************************
 
 void String::operator=(const char* str) {
-    m_pData = const_cast<char*>(str);
-    m_length = strlen(str);
+    pData = const_cast<char*>(str);
+    length = strlen(str);
 }
 
 // ***********************************************************************
 
 bool String::operator==(const String& other) const {
-    if (m_length != other.m_length)
+    if (length != other.length)
         return false;
-    char* s1 = m_pData;
-    char* s2 = other.m_pData;
+    char* s1 = pData;
+    char* s2 = other.pData;
     size_t count = 0;
-    while (count < m_length) {
+    while (count < length) {
         count++;
         if (*s1 != *s2)
             return false;
@@ -59,12 +59,12 @@ bool String::operator!=(const char* other) const {
 
 String String::SubStr(size_t start, size_t len) {
     String result;
-    result.m_pData = m_pData + start;
+    result.pData = pData + start;
 
     if (len == (size_t)-1)
-        result.m_length = m_length - start;
+        result.length = length - start;
     else
-        result.m_length = len;
+        result.length = len;
     return result;
 }
 
@@ -73,9 +73,9 @@ String String::SubStr(size_t start, size_t len) {
 String CopyCString(const char* string, IAllocator* pAlloc) {
     String s;
     size_t len = strlen(string);
-    s.m_pData = (char*)pAlloc->Allocate((len + 1) * sizeof(char));
-    s.m_length = len;
-    memcpy(s.m_pData, string, (len + 1) * sizeof(char));
+    s.pData = (char*)pAlloc->Allocate((len + 1) * sizeof(char));
+    s.length = len;
+    memcpy(s.pData, string, (len + 1) * sizeof(char));
     return s;
 }
 
@@ -84,10 +84,10 @@ String CopyCString(const char* string, IAllocator* pAlloc) {
 String CopyCStringRange(char* start, char* end, IAllocator* pAlloc) {
     String s;
     size_t len = end - start;
-    s.m_pData = (char*)pAlloc->Allocate((len + 1) * sizeof(char));
-    s.m_length = len;
-    memcpy(s.m_pData, start, len * sizeof(char));
-    s.m_pData[s.m_length] = 0;
+    s.pData = (char*)pAlloc->Allocate((len + 1) * sizeof(char));
+    s.length = len;
+    memcpy(s.pData, start, len * sizeof(char));
+    s.pData[s.length] = 0;
     return s;
 }
 
@@ -95,10 +95,10 @@ String CopyCStringRange(char* start, char* end, IAllocator* pAlloc) {
 
 String CopyString(String& string, IAllocator* pAlloc) {
     String s;
-    s.m_pData = (char*)pAlloc->Allocate((string.m_length + 1) * sizeof(char));
-    s.m_length = string.m_length;
-    memcpy(s.m_pData, string.m_pData, string.m_length * sizeof(char));
-    s.m_pData[string.m_length] = 0;
+    s.pData = (char*)pAlloc->Allocate((string.length + 1) * sizeof(char));
+    s.length = string.length;
+    memcpy(s.pData, string.pData, string.length * sizeof(char));
+    s.pData[string.length] = 0;
     return s;
 }
 
@@ -106,17 +106,17 @@ String CopyString(String& string, IAllocator* pAlloc) {
 
 String AllocString(size_t length, IAllocator* pAlloc) {
     String s;
-    s.m_pData = (char*)pAlloc->Allocate(length * sizeof(char));
-    s.m_length = length;
+    s.pData = (char*)pAlloc->Allocate(length * sizeof(char));
+    s.length = length;
     return s;
 }
 
 // ***********************************************************************
 
 void FreeString(String& string, IAllocator* pAlloc) {
-    if (string.m_pData) {
-        pAlloc->Free(string.m_pData);
-        string.m_pData = nullptr;
-        string.m_length = 0;
+    if (string.pData) {
+        pAlloc->Free(string.pData);
+        string.pData = nullptr;
+        string.length = 0;
     }
 }

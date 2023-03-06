@@ -34,25 +34,25 @@ enum class TokenType {
 };
 
 struct Token {
-    Token(TokenType type) : m_type(type) {}
+    Token(TokenType type) : type(type) {}
 
     Token(TokenType type, String _stringOrIdentifier)
-        : m_type(type), m_stringOrIdentifier(_stringOrIdentifier) {}
+        : type(type), stringOrIdentifier(_stringOrIdentifier) {}
 
-    Token(TokenType type, double _number) : m_type(type), m_number(_number) {}
+    Token(TokenType type, double _number) : type(type), number(_number) {}
 
-    Token(TokenType type, bool _boolean) : m_type(type), m_boolean(_boolean) {}
+    Token(TokenType type, bool _boolean) : type(type), boolean(_boolean) {}
 
-    TokenType m_type;
-    String m_stringOrIdentifier;
-    double m_number;
-    bool m_boolean;
+    TokenType type;
+    String stringOrIdentifier;
+    double number;
+    bool boolean;
 };
 
 // ***********************************************************************
 
 String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char bound) {
-    char* start = scan.m_pCurrent;
+    char* start = scan.pCurrent;
     char* pos = start;
     while (*pos != bound && !Scan::IsAtEnd(scan)) {
         pos++;
@@ -61,7 +61,7 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char b
     char* outputString = new char[count * 2];  // to allow for escape chars TODO: Convert to Mallloc
     pos = outputString;
 
-    char* cursor = scan.m_pCurrent;
+    char* cursor = scan.pCurrent;
 
     for (size_t i = 0; i < count; i++) {
         char c = *(cursor++);
@@ -111,7 +111,7 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char b
     }
     cursor++;
 
-    scan.m_pCurrent = cursor;
+    scan.pCurrent = cursor;
 
     String result = CopyCStringRange(outputString, pos, pAllocator);
     delete outputString;
@@ -121,23 +121,23 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char b
 // ***********************************************************************
 
 String ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, char bound) {
-    char* start = scan.m_pCurrent;
-    while (*(scan.m_pCurrent) != bound && !Scan::IsAtEnd(scan)) {
-        if (*(scan.m_pCurrent++) == '\\') {
-            scan.m_pCurrent = start;
+    char* start = scan.pCurrent;
+    while (*(scan.pCurrent) != bound && !Scan::IsAtEnd(scan)) {
+        if (*(scan.pCurrent++) == '\\') {
+            scan.pCurrent = start;
             return ParseStringSlow(pAllocator, scan, bound);
         }
     }
-    String result = CopyCStringRange(start, scan.m_pCurrent, pAllocator);
-    scan.m_pCurrent++;
+    String result = CopyCStringRange(start, scan.pCurrent, pAllocator);
+    scan.pCurrent++;
     return result;
 }
 
 // ***********************************************************************
 
 double ParseNumber(Scan::ScanningState& scan) {
-    scan.m_pCurrent -= 1;  // Go back to get the first digit or symbol
-    char* start = scan.m_pCurrent;
+    scan.pCurrent -= 1;  // Go back to get the first digit or symbol
+    char* start = scan.pCurrent;
 
     // Hex number
     if (Scan::Peek(scan) == '0' && (Scan::PeekNext(scan) == 'x' || Scan::PeekNext(scan) == 'X')) {
@@ -159,24 +159,24 @@ double ParseNumber(Scan::ScanningState& scan) {
     // TODO: error report. This returns 0.0 if no conversion possible. We can look at the literal
     // string and see If it's 0.0, ".0", "0." or 0. if not there's been an error in the parsing. I
     // know this is cheeky. I don't care.
-    return strtod(start, &scan.m_pCurrent);
+    return strtod(start, &scan.pCurrent);
 }
 
 // ***********************************************************************
 
 ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
     Scan::ScanningState scan;
-    scan.m_pTextStart = jsonText.m_pData;
-    scan.m_pTextEnd = jsonText.m_pData + jsonText.m_length;
-    scan.m_pCurrent = (char*)scan.m_pTextStart;
-    scan.m_line = 1;
+    scan.pTextStart = jsonText.pData;
+    scan.pTextEnd = jsonText.pData + jsonText.length;
+    scan.pCurrent = (char*)scan.pTextStart;
+    scan.line = 1;
 
     ResizableArray<Token> tokens(pAllocator);
 
     while (!Scan::IsAtEnd(scan)) {
         char c = Scan::Advance(scan);
-        int column = int(scan.m_pCurrent - scan.m_pCurrentLineStart);
-        char* loc = scan.m_pCurrent - 1;
+        int column = int(scan.pCurrent - scan.pCurrentLineStart);
+        char* loc = scan.pCurrent - 1;
         switch (c) {
             // Single character tokens
             case '[': tokens.PushBack(Token { TokenType::LeftBracket }); break;
@@ -205,8 +205,8 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
             case '\r':
             case '\t': break;
             case '\n':
-                scan.m_line++;
-                scan.m_pCurrentLineStart = scan.m_pCurrent;
+                scan.line++;
+                scan.pCurrentLineStart = scan.pCurrent;
                 break;
 
             // String literals
@@ -235,8 +235,8 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
                         Scan::Advance(scan);
 
                     String identifier;
-                    identifier.m_pData = loc;
-                    identifier.m_length = scan.m_pCurrent - loc;
+                    identifier.pData = loc;
+                    identifier.length = scan.pCurrent - loc;
 
                     // Check for keywords
                     if (identifier == "true")
@@ -246,7 +246,7 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
                     else if (identifier == "null")
                         tokens.PushBack(Token { TokenType::Null });
                     else {
-                        identifier = CopyCStringRange(loc, scan.m_pCurrent, pAllocator);
+                        identifier = CopyCStringRange(loc, scan.pCurrent, pAllocator);
                         tokens.PushBack(Token { TokenType::Identifier, identifier });
                     }
                 }
@@ -267,44 +267,44 @@ ResizableArray<JsonValue> ParseArray(
 JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken) {
     Token& token = tokens[currentToken];
 
-    switch (token.m_type) {
+    switch (token.type) {
         case TokenType::LeftBrace: {
             JsonValue v;
-            v.m_pAllocator = pAllocator;
-            v.m_object = ParseObject(pAllocator, tokens, currentToken);
-            v.m_type = JsonValue::Type::Object;
+            v.pAllocator = pAllocator;
+            v.object = ParseObject(pAllocator, tokens, currentToken);
+            v.type = JsonValue::Type::Object;
             return v;
             break;
         }
         case TokenType::LeftBracket: {
             JsonValue v;
-            v.m_pAllocator = pAllocator;
-            v.m_array = ParseArray(pAllocator, tokens, currentToken);
-            v.m_type = JsonValue::Type::Array;
+            v.pAllocator = pAllocator;
+            v.array = ParseArray(pAllocator, tokens, currentToken);
+            v.type = JsonValue::Type::Array;
             return v;
             break;
         }
         case TokenType::String: {
             currentToken++;
             JsonValue v;
-            v.m_pAllocator = pAllocator;
-            v.m_string =
-                token.m_stringOrIdentifier;  // TODO: Potential copy required if tokens are freed
-            v.m_type = JsonValue::Type::String;
+            v.pAllocator = pAllocator;
+            v.string =
+                token.stringOrIdentifier;  // TODO: Potential copy required if tokens are freed
+            v.type = JsonValue::Type::String;
             return v;
             break;
         }
         case TokenType::Number: {
             currentToken++;
             JsonValue v;
-            double n = token.m_number;
+            double n = token.number;
             double intPart;
             if (modf(n, &intPart) == 0.0) {
-                v.m_intNumber = (long)intPart;
-                v.m_type = JsonValue::Type::Integer;
+                v.intNumber = (long)intPart;
+                v.type = JsonValue::Type::Integer;
             } else {
-                v.m_floatNumber = n;
-                v.m_type = JsonValue::Type::Floating;
+                v.floatNumber = n;
+                v.type = JsonValue::Type::Floating;
             }
 
             return v;
@@ -313,8 +313,8 @@ JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int&
         case TokenType::Boolean: {
             currentToken++;
             JsonValue v;
-            v.m_boolean = token.m_boolean;
-            v.m_type = JsonValue::Type::Boolean;
+            v.boolean = token.boolean;
+            v.type = JsonValue::Type::Boolean;
             return v;
             break;
         }
@@ -333,19 +333,19 @@ HashMap<String, JsonValue> ParseObject(
     // TODO: This should construct an empty jsonValue as an object and fill the map in in place, so
     // there is no need to deep copy the map
     HashMap<String, JsonValue> map(pAllocator);
-    while (currentToken < (int)tokens.m_count
-           && tokens[currentToken].m_type != TokenType::RightBrace) {
+    while (currentToken < (int)tokens.count
+           && tokens[currentToken].type != TokenType::RightBrace) {
         // We expect,
         // identifier or string
-        if (tokens[currentToken].m_type != TokenType::Identifier
-            && tokens[currentToken].m_type != TokenType::String) {}
+        if (tokens[currentToken].type != TokenType::Identifier
+            && tokens[currentToken].type != TokenType::String) {}
         // Log::Crit("Expected identifier or string");
 
-        String key = tokens[currentToken].m_stringOrIdentifier;
+        String key = tokens[currentToken].stringOrIdentifier;
         currentToken += 1;
 
         // colon
-        if (tokens[currentToken].m_type != TokenType::Colon) {}
+        if (tokens[currentToken].type != TokenType::Colon) {}
         // Log::Crit("Expected colon");
         currentToken += 1;
 
@@ -354,9 +354,9 @@ HashMap<String, JsonValue> ParseObject(
         map[key] = ParseValue(pAllocator, tokens, currentToken);
 
         // Comma, or right brace
-        if (tokens[currentToken].m_type == TokenType::RightBrace)
+        if (tokens[currentToken].type == TokenType::RightBrace)
             break;
-        if (tokens[currentToken].m_type != TokenType::Comma) {}
+        if (tokens[currentToken].type != TokenType::Comma) {}
         // Log::Crit("Expected comma or Right Curly Brace");
         currentToken += 1;
     }
@@ -371,16 +371,16 @@ ResizableArray<JsonValue> ParseArray(
     currentToken++;  // Advance over opening bracket
 
     ResizableArray<JsonValue> array(pAllocator);
-    while (currentToken < (int)tokens.m_count
-           && tokens[currentToken].m_type != TokenType::RightBracket) {
+    while (currentToken < (int)tokens.count
+           && tokens[currentToken].type != TokenType::RightBracket) {
         // We expect,
         // String, Number, Boolean, Null
         array.PushBack(ParseValue(pAllocator, tokens, currentToken));
 
         // Comma, or right brace
-        if (tokens[currentToken].m_type == TokenType::RightBracket)
+        if (tokens[currentToken].type == TokenType::RightBracket)
             break;
-        if (tokens[currentToken].m_type != TokenType::Comma) {}
+        if (tokens[currentToken].type != TokenType::Comma) {}
         // Log::Crit("Expected comma or right bracket");
         currentToken += 1;
     }
@@ -395,143 +395,143 @@ ResizableArray<JsonValue> ParseArray(
 // ***********************************************************************
 
 JsonValue::JsonValue() {
-    m_type = Type::Null;
+    type = Type::Null;
 }
 
 // ***********************************************************************
 
 void JsonValue::Free() {
-    if (m_type == Type::Object) {
-        m_object.Free([this](HashNode<String, JsonValue>& node) {
-            FreeString(node.key, m_pAllocator);
+    if (type == Type::Object) {
+        object.Free([this](HashNode<String, JsonValue>& node) {
+            FreeString(node.key, pAllocator);
             node.value.Free();
         });
     }
-    if (m_type == Type::Array) {
-        m_array.Free([](JsonValue& value) { value.Free(); });
+    if (type == Type::Array) {
+        array.Free([](JsonValue& value) { value.Free(); });
     }
-    if (m_type == Type::String) {
-        FreeString(m_string, m_pAllocator);
+    if (type == Type::String) {
+        FreeString(string, pAllocator);
     }
 }
 
 // ***********************************************************************
 
 String JsonValue::ToString() const {
-    if (m_type == Type::String)
-        return m_string;
+    if (type == Type::String)
+        return string;
     return String();
 }
 
 // ***********************************************************************
 
 double JsonValue::ToFloat() const {
-    if (m_type == Type::Floating)
-        return m_floatNumber;
-    else if (m_type == Type::Integer)
-        return (double)m_intNumber;
+    if (type == Type::Floating)
+        return floatNumber;
+    else if (type == Type::Integer)
+        return (double)intNumber;
     return 0.0f;
 }
 
 // ***********************************************************************
 
 long JsonValue::ToInt() const {
-    if (m_type == Type::Integer)
-        return m_intNumber;
+    if (type == Type::Integer)
+        return intNumber;
     return 0;
 }
 
 // ***********************************************************************
 
 bool JsonValue::ToBool() const {
-    if (m_type == Type::Boolean)
-        return m_boolean;
+    if (type == Type::Boolean)
+        return boolean;
     return 0;
 }
 
 // ***********************************************************************
 
 bool JsonValue::IsNull() const {
-    return m_type == Type::Null;
+    return type == Type::Null;
 }
 
 // ***********************************************************************
 
 bool JsonValue::IsArray() const {
-    return m_type == Type::Array;
+    return type == Type::Array;
 }
 
 // ***********************************************************************
 
 bool JsonValue::IsObject() const {
-    return m_type == Type::Object;
+    return type == Type::Object;
 }
 
 // ***********************************************************************
 
 bool JsonValue::HasKey(String identifier) {
-    ASSERT(m_type == Type::Object, "Attempting to treat this value as an object when it is not.");
-    return m_object.Get(identifier) != nullptr;
+    ASSERT(type == Type::Object, "Attempting to treat this value as an object when it is not.");
+    return object.Get(identifier) != nullptr;
 }
 
 // ***********************************************************************
 
 int JsonValue::Count() const {
     ASSERT(
-        m_type == Type::Array || m_type == Type::Object,
+        type == Type::Array || type == Type::Object,
         "Attempting to treat this value as an array or object when it is not.");
-    if (m_type == Type::Array)
-        return (int)m_array.m_count;
+    if (type == Type::Array)
+        return (int)array.count;
     else
-        return (int)m_object.m_count;
+        return (int)object.count;
 }
 
 // ***********************************************************************
 
 JsonValue& JsonValue::operator[](String identifier) {
-    ASSERT(m_type == Type::Object, "Attempting to treat this value as an object when it is not.");
-    return m_object[identifier];
+    ASSERT(type == Type::Object, "Attempting to treat this value as an object when it is not.");
+    return object[identifier];
 }
 
 // ***********************************************************************
 
 JsonValue& JsonValue::operator[](size_t index) {
-    ASSERT(m_type == Type::Array, "Attempting to treat this value as an array when it is not.");
+    ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
     ASSERT(
-        m_array.count > index,
+        array.count > index,
         "Accessing an element that does not exist in this array, you probably need to append");
-    return m_array[index];
+    return array[index];
 }
 
 // ***********************************************************************
 
 JsonValue& JsonValue::Get(String identifier) {
-    ASSERT(m_type == Type::Object, "Attempting to treat this value as an object when it is not.");
-    return m_object[identifier];
+    ASSERT(type == Type::Object, "Attempting to treat this value as an object when it is not.");
+    return object[identifier];
 }
 
 // ***********************************************************************
 
 JsonValue& JsonValue::Get(size_t index) {
-    ASSERT(m_type == Type::Array, "Attempting to treat this value as an array when it is not.");
+    ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
     ASSERT(
-        m_array.count > index,
+        array.count > index,
         "Accessing an element that does not exist in this array, you probably need to append");
-    return m_array[index];
+    return array[index];
 }
 
 // ***********************************************************************
 
 void JsonValue::Append(JsonValue& value) {
-    ASSERT(m_type == Type::Array, "Attempting to treat this value as an array when it is not.");
-    m_array.PushBack(value);
+    ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
+    array.PushBack(value);
 }
 
 // ***********************************************************************
 
 JsonValue JsonValue::NewObject() {
     JsonValue v;
-    v.m_type = Type::Object;
+    v.type = Type::Object;
     return v;
 }
 
@@ -539,7 +539,7 @@ JsonValue JsonValue::NewObject() {
 
 JsonValue JsonValue::NewArray() {
     JsonValue v;
-    v.m_type = Type::Array;
+    v.type = Type::Array;
     return v;
 }
 
@@ -563,13 +563,13 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
         }
     };
 
-    switch (json.m_type) {
+    switch (json.type) {
         case JsonValue::Type::Array:
             builder.Append("[");
             if (json.Count() > 0)
                 builder.Append("\n");
 
-            for (const JsonValue& val : json.m_array) {
+            for (const JsonValue& val : json.array) {
                 printIndentation(indentCount + 1);
                 SerializeJsonInternal(val, builder, indentCount + 1);
                 builder.Append(", \n");
@@ -582,11 +582,11 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
             if (json.Count() > 0)
                 builder.Append("\n");
 
-            for (size_t i = 0; i < json.m_object.m_tableSize; i++) {
-                HashNode<String, JsonValue>& node = json.m_object.m_pTable[i];
+            for (size_t i = 0; i < json.object.tableSize; i++) {
+                HashNode<String, JsonValue>& node = json.object.pTable[i];
                 if (node.hash != UNUSED_HASH) {
                     printIndentation(indentCount + 1);
-                    builder.AppendFormat("\"%s\" : ", node.key.m_pData);
+                    builder.AppendFormat("\"%s\" : ", node.key.pData);
                     SerializeJsonInternal(node.value, builder, indentCount + 1);
                     builder.Append(", \n");
                 }
@@ -601,7 +601,7 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
         case JsonValue::Type::Boolean:
             builder.AppendFormat("%s", json.ToBool() ? "true" : "false");
             break;
-        case JsonValue::Type::String: builder.AppendFormat("\"%s\"", json.ToString().m_pData); break;
+        case JsonValue::Type::String: builder.AppendFormat("\"%s\"", json.ToString().pData); break;
         case JsonValue::Type::Null: builder.Append("null"); break;
         default: builder.Append("CANT SERIALIZE YET"); break;
     }

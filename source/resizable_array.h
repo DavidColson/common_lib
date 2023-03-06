@@ -13,10 +13,10 @@
 
 template<typename Type>
 struct ResizableArray {
-    Type* m_pData { nullptr };
-    uint32_t m_count { 0 };
-    uint32_t m_capacity { 0 };
-    IAllocator* m_pAlloc { nullptr };
+    Type* pData { nullptr };
+    uint32_t count { 0 };
+    uint32_t capacity { 0 };
+    IAllocator* pAlloc { nullptr };
 
     inline ResizableArray(IAllocator* _pAlloc = &g_Allocator);
 

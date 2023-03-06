@@ -12,7 +12,7 @@
 
 template<typename T>
 struct Stack {
-    ResizableArray<T> m_array;
+    ResizableArray<T> array;
 
     Stack(IAllocator* pAlloc = &g_Allocator);
 

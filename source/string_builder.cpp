@@ -7,14 +7,14 @@
 #include <stdio.h>
 
 StringBuilder::StringBuilder(IAllocator* _pAlloc) {
-    m_pAlloc = _pAlloc;
+    pAlloc = _pAlloc;
 }
 
 void StringBuilder::AppendChars(const char* str, size_t len) {
-    Reserve(GrowCapacity(m_length + len + 1));
-    memcpy(m_pData + m_length, str, len);
-    m_length += len;
-    m_pData[m_length] = 0;
+    Reserve(GrowCapacity(length + len + 1));
+    memcpy(pData + length, str, len);
+    length += len;
+    pData[length] = 0;
 }
 
 void StringBuilder::Append(const char* str) {
@@ -23,7 +23,7 @@ void StringBuilder::Append(const char* str) {
 }
 
 void StringBuilder::Append(String str) {
-    AppendChars(str.m_pData, str.m_length);
+    AppendChars(str.pData, str.length);
 }
 
 void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
@@ -36,10 +36,10 @@ void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
         return;
     }
 
-    Reserve(GrowCapacity(m_length + addedLength + 1));
-    vsnprintf(m_pData + m_length, addedLength + 1, format, args);
+    Reserve(GrowCapacity(length + addedLength + 1));
+    vsnprintf(pData + length, addedLength + 1, format, args);
     va_end(argsCopy);
-    m_length += addedLength;
+    length += addedLength;
 }
 
 void StringBuilder::AppendFormat(const char* format, ...) {
@@ -50,10 +50,10 @@ void StringBuilder::AppendFormat(const char* format, ...) {
 }
 
 String StringBuilder::CreateString(bool reset, IAllocator* _pAlloc) {
-    String output = AllocString(m_length + 1, _pAlloc);
-    memcpy(output.m_pData, m_pData, m_length * sizeof(char));
-    output.m_pData[m_length] = 0;
-    output.m_length = m_length;
+    String output = AllocString(length + 1, _pAlloc);
+    memcpy(output.pData, pData, length * sizeof(char));
+    output.pData[length] = 0;
+    output.length = length;
 
     if (reset)
         Reset();
@@ -61,26 +61,26 @@ String StringBuilder::CreateString(bool reset, IAllocator* _pAlloc) {
 }
 
 void StringBuilder::Reset() {
-    if (m_pData) {
-        m_pAlloc->Free(m_pData);
-        m_pData = nullptr;
-        m_length = 0;
-        m_capacity = 0;
+    if (pData) {
+        pAlloc->Free(pData);
+        pData = nullptr;
+        length = 0;
+        capacity = 0;
     }
 }
 
 void StringBuilder::Reserve(size_t desiredCapacity) {
-    if (m_capacity >= desiredCapacity)
+    if (capacity >= desiredCapacity)
         return;
-    m_pData = (char*)m_pAlloc->Reallocate(m_pData, desiredCapacity * sizeof(char), m_capacity * sizeof(char));
-    m_capacity = desiredCapacity;
+    pData = (char*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(char), capacity * sizeof(char));
+    capacity = desiredCapacity;
 }
 
 size_t StringBuilder::GrowCapacity(size_t atLeastSize) const {
     // if we're big enough already, don't grow, otherwise double,
     // and if that's not enough just use atLeastSize
-    if (m_capacity > atLeastSize)
-        return m_capacity;
-    size_t newCapacity = m_capacity ? m_capacity * 2 : 8;
+    if (capacity > atLeastSize)
+        return capacity;
+    size_t newCapacity = capacity ? capacity * 2 : 8;
     return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 }

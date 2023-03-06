@@ -7,25 +7,25 @@ namespace Scan {
 ///////////////////////
 
 struct ScanningState {
-    const char* m_pTextStart;
-    const char* m_pTextEnd;
-    char* m_pCurrent { nullptr };
-    char* m_pTokenStart { nullptr };
-    char* m_pCurrentLineStart { nullptr };
-    int m_line { 1 };
-    bool m_encounteredError { false };
+    const char* pTextStart;
+    const char* pTextEnd;
+    char* pCurrent { nullptr };
+    char* pTokenStart { nullptr };
+    char* pCurrentLineStart { nullptr };
+    int line { 1 };
+    bool encounteredError { false };
 };
 
 inline char Advance(ScanningState& scan) {
-    return *(scan.m_pCurrent++);
+    return *(scan.pCurrent++);
 }
 
 inline char Peek(ScanningState& scan) {
-    return *(scan.m_pCurrent);
+    return *(scan.pCurrent);
 }
 
 inline bool IsAtEnd(ScanningState& scan) {
-    return scan.m_pCurrent >= scan.m_pTextEnd;
+    return scan.pCurrent >= scan.pTextEnd;
 }
 
 bool Match(ScanningState& scan, char expected);

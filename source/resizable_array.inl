@@ -6,116 +6,116 @@
 
 template<typename Type>
 inline ResizableArray<Type>::ResizableArray(IAllocator* _pAlloc) {
-    m_pAlloc = _pAlloc;
+    pAlloc = _pAlloc;
 }
 
 template<typename Type>
 void ResizableArray<Type>::Free() {
-    if (m_pData) {
-        m_pAlloc->Free(m_pData);
-        m_count = 0;
-        m_capacity = 0;
-        m_pData = nullptr;
+    if (pData) {
+        pAlloc->Free(pData);
+        count = 0;
+        capacity = 0;
+        pData = nullptr;
     }
 }
 
 template<typename Type>
 template<typename F>
 void ResizableArray<Type>::Free(F&& freeElement) {
-    if (m_pData) {
-        for (uint32_t i = 0; i < m_count; i++) {
-            freeElement(m_pData[i]);
+    if (pData) {
+        for (uint32_t i = 0; i < count; i++) {
+            freeElement(pData[i]);
         }
-        m_pAlloc->Free(m_pData);
-        m_count = 0;
-        m_capacity = 0;
-        m_pData = nullptr;
+        pAlloc->Free(pData);
+        count = 0;
+        capacity = 0;
+        pData = nullptr;
     }
 }
 
 template<typename Type>
 void ResizableArray<Type>::Resize(uint32_t desiredCount) {
-    if (desiredCount > m_capacity) {
+    if (desiredCount > capacity) {
         Reserve(desiredCount);
     }
-    m_count = desiredCount;
+    count = desiredCount;
 }
 
 template<typename Type>
 void ResizableArray<Type>::Reserve(uint32_t desiredCapacity) {
-    if (m_capacity >= desiredCapacity)
+    if (capacity >= desiredCapacity)
         return;
-    m_pData = (Type*)m_pAlloc->Reallocate(m_pData, desiredCapacity * sizeof(Type), m_capacity * sizeof(Type));
-    m_capacity = desiredCapacity;
+    pData = (Type*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(Type), capacity * sizeof(Type));
+    capacity = desiredCapacity;
 }
 
 template<typename Type>
 void ResizableArray<Type>::PushBack(const Type& value) {
-    if (m_count == m_capacity) {
-        Reserve(GrowCapacity(m_count + 1));
+    if (count == capacity) {
+        Reserve(GrowCapacity(count + 1));
     }
-    memcpy(&m_pData[m_count], &value, sizeof(Type));
-    m_count++;
+    memcpy(&pData[count], &value, sizeof(Type));
+    count++;
 }
 
 template<typename Type>
 void ResizableArray<Type>::PopBack() {
-    Assert(m_count > 0);
-    m_count--;
+    Assert(count > 0);
+    count--;
 }
 
 template<typename Type>
 Type& ResizableArray<Type>::operator[](size_t i) {
-    Assert(i >= 0 && i < m_count);
-    return m_pData[i];
+    Assert(i >= 0 && i < count);
+    return pData[i];
 }
 
 template<typename Type>
 const Type& ResizableArray<Type>::operator[](size_t i) const {
-    Assert(i >= 0 && i < m_count);
-    return m_pData[i];
+    Assert(i >= 0 && i < count);
+    return pData[i];
 }
 
 template<typename Type>
 void ResizableArray<Type>::Erase(size_t index) {
-    Assert(index >= 0 && index < m_count);
-    if (index == m_count - 1) {
+    Assert(index >= 0 && index < count);
+    if (index == count - 1) {
         PopBack();
         return;
     }
-    if (index < m_count - 1) {
-        memmove(m_pData + index, m_pData + (index + 1), (m_count - index - 1) * sizeof(Type));
-        m_count--;
+    if (index < count - 1) {
+        memmove(pData + index, pData + (index + 1), (count - index - 1) * sizeof(Type));
+        count--;
     }
 }
 
 template<typename Type>
 void ResizableArray<Type>::EraseUnsorted(size_t index) {
-    Assert(index >= 0 && index < m_count);
-    if (index == m_count - 1) {
+    Assert(index >= 0 && index < count);
+    if (index == count - 1) {
         PopBack();
-        m_count--;
+        count--;
     }
-    if (index < m_count - 1) {
-        memcpy(m_pData + index, m_pData + (m_count - 1), sizeof(Type));
-        m_count--;
+    if (index < count - 1) {
+        memcpy(pData + index, pData + (count - 1), sizeof(Type));
+        count--;
     }
 }
 
 template<typename Type>
 void ResizableArray<Type>::Insert(size_t index, const Type& value) {
-    Assert(index >= 0 && index < m_count);
-    if (m_capacity == m_count)
-        Reserve(GrowCapacity(m_count + 1));
-    memmove(m_pData + (index + 1), m_pData + index, (m_count - index) * sizeof(Type));
-    memcpy(m_pData + index, &value, sizeof(Type));
-    m_count++;
+    Assert(index >= 0 && index < count);
+    if (capacity == count)
+        Reserve(GrowCapacity(count + 1));
+    memmove(pData + (index + 1), pData + index, (count - index) * sizeof(Type));
+    memcpy(pData + index, &value, sizeof(Type));
+    count++;
 }
 
 template<typename Type>
 Type* ResizableArray<Type>::Find(const Type& value) {
-    Type* pTest = m_pData;
-    const Type* pDataEnd = m_pData + m_count;
+    Type* pTest = pData;
+    const Type* pDataEnd = pData + count;
     while (pTest < pDataEnd) {
         if (*pTest == value)
             break;
@@ -126,42 +126,42 @@ Type* ResizableArray<Type>::Find(const Type& value) {
 
 template<typename Type>
 Type* ResizableArray<Type>::begin() {
-    return m_pData;
+    return pData;
 }
 
 template<typename Type>
 Type* ResizableArray<Type>::end() {
-    return m_pData + m_count;
+    return pData + count;
 }
 
 template<typename Type>
 const Type* ResizableArray<Type>::begin() const {
-    return m_pData;
+    return pData;
 }
 
 template<typename Type>
 const Type* ResizableArray<Type>::end() const {
-    return m_pData + m_count;
+    return pData + count;
 }
 
 template<typename Type>
 uint32_t ResizableArray<Type>::IndexFromPointer(const Type* ptr) const {
-    Assert(ptr >= m_pData && ptr < m_pData + m_count);
-    ptrdiff_t diff = ptr - m_pData;
+    Assert(ptr >= pData && ptr < pData + count);
+    ptrdiff_t diff = ptr - pData;
     return (uint32_t)diff;
 }
 
 template<typename Type>
 bool ResizableArray<Type>::Validate() const {
-    return m_capacity >= m_count;
+    return capacity >= count;
 }
 
 template<typename Type>
 uint32_t ResizableArray<Type>::GrowCapacity(uint32_t atLeastSize) const {
     // if we're big enough already, don't grow, otherwise double,
     // and if that's not enough just use atLeastSize
-    if (m_capacity > atLeastSize)
-        return m_capacity;
-    uint32_t newCapacity = m_capacity ? m_capacity * 2 : 8;
+    if (capacity > atLeastSize)
+        return capacity;
+    uint32_t newCapacity = capacity ? capacity * 2 : 8;
     return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 }

@@ -12,7 +12,7 @@
 // ***********************************************************************
 
 bool Scan::Match(ScanningState& scan, char expected) {
-    if (*(scan.m_pCurrent) == expected) {
+    if (*(scan.pCurrent) == expected) {
         Advance(scan);
         return true;
     }
@@ -22,7 +22,7 @@ bool Scan::Match(ScanningState& scan, char expected) {
 // ***********************************************************************
 
 char Scan::PeekNext(ScanningState& scan) {
-    return *(scan.m_pCurrent+1);
+    return *(scan.pCurrent+1);
 }
 
 // ***********************************************************************
@@ -36,7 +36,7 @@ bool Scan::IsWhitespace(char c) {
 // ***********************************************************************
 
 void Scan::AdvanceOverWhitespace(ScanningState& scan) {
-    char c = *(scan.m_pCurrent);
+    char c = *(scan.pCurrent);
     while (IsWhitespace(c)) {
         Advance(scan);
     }
