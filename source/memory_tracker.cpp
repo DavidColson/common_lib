@@ -26,6 +26,7 @@ struct Allocation {
     void* pAllocator { nullptr };
     size_t size { 0 };
     bool isLive { false };
+	bool notALeak { false };
     void* allocStackTrace[100];
     size_t allocStackTraceFrames { 0 };
     void* freeStackTrace[100];
@@ -171,6 +172,17 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 
 // ***********************************************************************
 
+void MarkNotALeak(void* ptr) {
+	if (g_pCtx == nullptr)
+		InitContext();
+
+	if (Allocation* alloc = g_pCtx->allocationTable.Get(ptr)) {
+		alloc->notALeak = true;
+	}
+}
+
+// ***********************************************************************
+
 int ReportMemoryLeaks() {
 #ifdef MEMORY_TRACKING
     if (g_pCtx == nullptr)
@@ -180,7 +192,7 @@ int ReportMemoryLeaks() {
     for (size_t i = 0; i < g_pCtx->allocationTable.tableSize; i++) {
         if (g_pCtx->allocationTable.pTable[i].hash != UNUSED_HASH) {
             Allocation& alloc = g_pCtx->allocationTable.pTable[i].value;
-            if (alloc.isLive) {
+            if (alloc.isLive && !alloc.notALeak) {
                 leakCounter++;
                 String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &g_noTrackAllocator);
                 defer(FreeString(trace, &g_noTrackAllocator));

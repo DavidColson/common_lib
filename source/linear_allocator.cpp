@@ -66,6 +66,10 @@ void LinearAllocator::Init(size_t defaultReserve) {
     pMemoryBase = (uint8_t*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
     Assert(pMemoryBase != nullptr);
 
+#ifdef MEMORY_TRACKING
+	CheckMalloc(this, pMemoryBase, reserveSize);
+#endif
+
     pFirstUncommittedPage = pMemoryBase;
     pAddressLimit = pMemoryBase + reserveSize;
     pCurrentHead = pMemoryBase;

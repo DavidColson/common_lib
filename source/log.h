@@ -18,6 +18,7 @@ struct LogConfig {
     bool consoleOutput { true };
     bool fileOutput { true };
     bool critCrashes { true };
+	bool silencePrefixes { false };
 
     void (*customHandler1)(LogLevel, String) = nullptr;
     void (*customHandler2)(LogLevel, String) = nullptr;

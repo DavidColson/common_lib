@@ -78,7 +78,7 @@ void Log::SetLogLevel(LogLevel level) {
 
 void Log::Crit(const char* text, ...) {
     StringBuilder builder;
-    builder.Append("[CRITICAL] ");
+    if (!g_config.silencePrefixes) builder.Append("[CRITICAL] ");
     va_list arguments;
     va_start(arguments, text);
     builder.AppendFormatInternal(text, arguments);
@@ -93,7 +93,7 @@ void Log::Crit(const char* text, ...) {
 
 void Log::Warn(const char* text, ...) {
     StringBuilder builder;
-    builder.Append("[WARNING] ");
+	if (!g_config.silencePrefixes) builder.Append("[WARNING] ");
     va_list arguments;
     va_start(arguments, text);
     builder.AppendFormatInternal(text, arguments);
@@ -108,7 +108,7 @@ void Log::Warn(const char* text, ...) {
 
 void Log::Info(const char* text, ...) {
     StringBuilder builder;
-    builder.Append("[INFO] ");
+	if (!g_config.silencePrefixes) builder.Append("[INFO] ");
     va_list arguments;
     va_start(arguments, text);
     builder.AppendFormatInternal(text, arguments);
@@ -123,7 +123,7 @@ void Log::Info(const char* text, ...) {
 
 void Log::Debug(const char* text, ...) {
     StringBuilder builder;
-    builder.Append("[DEBUG] ");
+	if (!g_config.silencePrefixes) builder.Append("[DEBUG] ");
     va_list arguments;
     va_start(arguments, text);
     builder.AppendFormatInternal(text, arguments);
@@ -139,7 +139,7 @@ void Log::Debug(const char* text, ...) {
 void Log::_Assertion(bool expression, const char* message) {
     if (!expression) {
         StringBuilder builder;
-        builder.Append("[ASSERT FAIL] ");
+		if (!g_config.silencePrefixes) builder.Append("[ASSERT FAIL] ");
         builder.Append(message);
         builder.Append("\n");
 
