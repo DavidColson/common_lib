@@ -60,6 +60,16 @@ String StringBuilder::CreateString(bool reset, IAllocator* _pAlloc) {
     return output;
 }
 
+String StringBuilder::ToExistingString(bool reset, String& destination) {
+    memcpy(destination.pData, pData, length * sizeof(char));
+    destination.pData[length] = 0;
+    destination.length = length;
+
+    if (reset)
+        Reset();
+    return destination;
+}
+
 void StringBuilder::Reset() {
     if (pData) {
         pAlloc->Free(pData);

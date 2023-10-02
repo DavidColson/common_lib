@@ -34,6 +34,8 @@ struct StringBuilder {
 
     String CreateString(bool reset = true, IAllocator* _pAlloc = &g_Allocator);
 
+    String ToExistingString(bool reset, String& destination);
+
     void Reset();
 
     void Reserve(size_t desiredCapacity);
