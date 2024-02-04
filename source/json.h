@@ -29,15 +29,15 @@ struct JsonValue {
     int Count() const;
 
     String ToString() const;
-    double ToFloat() const;
+    f64 ToFloat() const;
     long ToInt() const;
     bool ToBool() const;
 
     JsonValue& operator[](String identifier);
-    JsonValue& operator[](size_t index);
+    JsonValue& operator[](usize index);
 
     JsonValue& Get(String identifier);
-    JsonValue& Get(size_t index);
+    JsonValue& Get(usize index);
 
     void Append(JsonValue& value);
 
@@ -46,7 +46,7 @@ struct JsonValue {
     Type type;
     IAllocator* pAllocator { nullptr };
     union {
-        double floatNumber { 0.0f };
+        f64 floatNumber { 0.0f };
         HashMap<String, JsonValue> object;
         ResizableArray<JsonValue> array;
         String string;

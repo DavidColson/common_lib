@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "types.h"
+
 template<typename T>
 struct Vec4;
 
@@ -240,5 +242,5 @@ struct Vec3 {
     inline static Vec3 Embed2D(const Vec2<T>& vec, T _z = T());
 };
 
-typedef Vec3<float> Vec3f;
-typedef Vec3<double> Vec3d;
+typedef Vec3<f32> Vec3f;
+typedef Vec3<f64> Vec3d;

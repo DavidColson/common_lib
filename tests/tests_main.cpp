@@ -23,10 +23,10 @@ struct CustomKeyType {
 // Your custom type must define KeyFuncs to be able to used as a key
 template<>
 struct KeyFuncs<CustomKeyType> {
-    uint64_t Hash(const CustomKeyType& key) const {
+    u64 Hash(const CustomKeyType& key) const {
         // This is probably not a good hash method for this type
         // But it serves for demonstration
-        return static_cast<uint64_t>(key.thing + key.thing2);
+        return static_cast<u64>(key.thing + key.thing2);
     }
     bool Cmp(const CustomKeyType& key1, const CustomKeyType& key2) const {
         return key1.thing == key2.thing && key1.thing2 == key2.thing2;
@@ -99,7 +99,7 @@ void HashMapTest() {
         VERIFY(testMap3.count == 100);
 
         // Testing some other common key types
-        HashMap<float, int> floatMap;
+        HashMap<f32, int> floatMap;
         floatMap[28.31f] = 1337;
         floatMap[4.1231f] = 1338;
         floatMap[0.78f] = 1339;
@@ -371,7 +371,7 @@ void JsonTest() {
         // FreeString(s);
 
         // FILE* pFile = fopen("tank.gltf", "r");
-        // size_t fileSize = 0;
+        // usize fileSize = 0;
         // String fileContents;
         // defer(FreeString(&gAllocator, fileContents));
         // if (pFile != nullptr) {

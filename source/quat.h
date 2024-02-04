@@ -56,5 +56,5 @@ struct Quat {
     // TO STRING
 };
 
-typedef Quat<float> Quatf;
-typedef Quat<double> Quatd;
+typedef Quat<f32> Quatf;
+typedef Quat<f64> Quatd;

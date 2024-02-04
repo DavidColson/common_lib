@@ -16,13 +16,13 @@ typedef char* va_list;
 
 struct StringBuilder {
     char* pData = nullptr;
-    size_t length = 0;
-    size_t capacity = 0;
+    usize length = 0;
+    usize capacity = 0;
     IAllocator* pAlloc { nullptr };
 
     StringBuilder(IAllocator* _pAlloc = &g_Allocator);
 
-    void AppendChars(const char* str, size_t len);
+    void AppendChars(const char* str, usize len);
 
     void Append(const char* str);
 
@@ -38,7 +38,7 @@ struct StringBuilder {
 
     void Reset();
 
-    void Reserve(size_t desiredCapacity);
+    void Reserve(usize desiredCapacity);
 
-    size_t GrowCapacity(size_t atLeastSize) const;
+    usize GrowCapacity(usize atLeastSize) const;
 };

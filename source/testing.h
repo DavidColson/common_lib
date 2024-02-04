@@ -8,7 +8,7 @@
 // ------------------
 // .... todo documentation, examples etc
 
-void StartTest(const char* testName) {
+void StartTest(const byte* testName) {
     printf("Starting test: %s\n", testName);
 }
 
@@ -21,7 +21,7 @@ void EndTest(int errorCount) {
     return;
 }
 
-bool _verify(bool expression, int& errorCount, const char* file, int line, const char* msg) {
+bool _verify(bool expression, int& errorCount, const byte* file, int line, const byte* msg) {
     if (!expression) {
         errorCount++;
         printf("FAIL: %s(%i): %s\n", file, line, msg);

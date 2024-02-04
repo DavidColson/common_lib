@@ -2,9 +2,8 @@
 
 #pragma once
 
+#include "types.h"
 #include "memory.h"
-
-#include <stdint.h>
 
 // Resizable Array Structure
 // -----------------------
@@ -14,8 +13,8 @@
 template<typename Type>
 struct ResizableArray {
     Type* pData { nullptr };
-    uint32_t count { 0 };
-    uint32_t capacity { 0 };
+    u32 count { 0 };
+    u32 capacity { 0 };
     IAllocator* pAlloc { nullptr };
 
     inline ResizableArray(IAllocator* _pAlloc = &g_Allocator);
@@ -25,23 +24,23 @@ struct ResizableArray {
     template<typename F>
     void Free(F&& freeElement);
 
-    void Resize(uint32_t desiredCount);
+    void Resize(u32 desiredCount);
 
-    void Reserve(uint32_t desiredCapacity);
+    void Reserve(u32 desiredCapacity);
 
     void PushBack(const Type& value);
 
     void PopBack();
 
-    Type& operator[](size_t i);
+    Type& operator[](usize i);
 
-    const Type& operator[](size_t i) const;
+    const Type& operator[](usize i) const;
 
-    void Erase(size_t index);
+    void Erase(usize index);
 
-    void EraseUnsorted(size_t index);
+    void EraseUnsorted(usize index);
 
-    void Insert(size_t index, const Type& value);
+    void Insert(usize index, const Type& value);
 
     Type* Find(const Type& value);
 
@@ -53,9 +52,9 @@ struct ResizableArray {
 
     const Type* end() const;
 
-    uint32_t IndexFromPointer(const Type* ptr) const;
+    u32 IndexFromPointer(const Type* ptr) const;
 
     bool Validate() const;
 
-    uint32_t GrowCapacity(uint32_t atLeastSize) const;
+    u32 GrowCapacity(u32 atLeastSize) const;
 };

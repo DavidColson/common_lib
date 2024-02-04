@@ -73,7 +73,7 @@ inline T Vec2<T>::Dot(const Vec2& lhs, const Vec2& rhs) {
 // ***********************************************************************
 
 template<typename T>
-inline float Vec2<T>::Cross(const Vec2& lhs, const Vec2& rhs) {
+inline f32 Vec2<T>::Cross(const Vec2& lhs, const Vec2& rhs) {
     return lhs.x * rhs.y - lhs.y * rhs.x;
 }
 

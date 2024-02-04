@@ -10,10 +10,10 @@
 #include "hashmap.inl"
 
 struct ForceNoTrackAllocator : public IAllocator {
-    void* Allocate(size_t size) {
+    void* Allocate(usize size) {
         return malloc(size);
     }
-    void* Reallocate(void* ptr, size_t size, size_t oldSize) {
+    void* Reallocate(void* ptr, usize size, usize oldSize) {
         return realloc(ptr, size);
     }
     void Free(void* ptr) {
@@ -24,13 +24,13 @@ struct ForceNoTrackAllocator : public IAllocator {
 struct Allocation {
     void* pointer { nullptr };
     void* pAllocator { nullptr };
-    size_t size { 0 };
+    usize size { 0 };
     bool isLive { false };
 	bool notALeak { false };
     void* allocStackTrace[100];
-    size_t allocStackTraceFrames { 0 };
+    usize allocStackTraceFrames { 0 };
     void* freeStackTrace[100];
-    size_t freeStackTraceFrames { 0 };
+    usize freeStackTraceFrames { 0 };
 };
 
 struct MemoryTrackerState {
@@ -52,7 +52,7 @@ void InitContext() {
 
 // ***********************************************************************
 
-void* MallocWrap(size_t size) {
+void* MallocWrap(usize size) {
     void* pMemory = malloc(size);
     CheckMalloc(nullptr, pMemory, size);
     return pMemory;
@@ -60,7 +60,7 @@ void* MallocWrap(size_t size) {
 
 // ***********************************************************************
 
-void* ReallocWrap(void* ptr, size_t size, size_t oldSize) {
+void* ReallocWrap(void* ptr, usize size, usize oldSize) {
     void* pMemory = realloc(ptr, size);
     CheckRealloc(nullptr, pMemory, ptr, size, oldSize);
     return pMemory;
@@ -75,7 +75,7 @@ void FreeWrap(void* ptr) {
 
 // ***********************************************************************
 
-void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
+void CheckMalloc(void* pAllocatorPtr, void* pAllocated, usize size) {
     if (g_pCtx == nullptr)
         InitContext();
 
@@ -90,7 +90,7 @@ void CheckMalloc(void* pAllocatorPtr, void* pAllocated, size_t size) {
 
 // ***********************************************************************
 
-void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size, size_t oldSize) {
+void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, usize size, usize oldSize) {
     if (g_pCtx == nullptr)
         InitContext();
 
@@ -126,7 +126,7 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, size_t size,
 
 // ***********************************************************************
 
-void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTraceFrames) {
+void Reportf64Free(Allocation& alloc, void** newFreeTrace, usize newFreeTraceFrames) {
     String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &g_noTrackAllocator);
     defer(FreeString(allocTrace, &g_noTrackAllocator));
 
@@ -136,7 +136,7 @@ void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, size_t newFreeTrac
     String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &g_noTrackAllocator);
     defer(FreeString(trace2, &g_noTrackAllocator));
 
-    Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
+    Log::Warn("------ Hey idiot, detected f64 free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
     __debugbreak();
 }
 
@@ -159,8 +159,8 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 
         if (!alloc->isLive) {
             void* stackTrace[100];
-            size_t stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
-            ReportDoubleFree(*alloc, stackTrace, stackFrames);
+            usize stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
+            Reportf64Free(*alloc, stackTrace, stackFrames);
         }
 
         alloc->isLive = false;
@@ -189,7 +189,7 @@ int ReportMemoryLeaks() {
         return 0;
 
     int leakCounter = 0;
-    for (size_t i = 0; i < g_pCtx->allocationTable.tableSize; i++) {
+    for (usize i = 0; i < g_pCtx->allocationTable.tableSize; i++) {
         if (g_pCtx->allocationTable.pTable[i].hash != UNUSED_HASH) {
             Allocation& alloc = g_pCtx->allocationTable.pTable[i].value;
             if (alloc.isLive && !alloc.notALeak) {

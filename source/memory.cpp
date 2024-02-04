@@ -4,13 +4,13 @@
 
 // ***********************************************************************
 
-void* DefaultAllocator::Allocate(size_t size) {
+void* DefaultAllocator::Allocate(usize size) {
     return SYS_ALLOC(size);
 }
 
 // ***********************************************************************
 
-void* DefaultAllocator::Reallocate(void* ptr, size_t size, size_t oldSize) {
+void* DefaultAllocator::Reallocate(void* ptr, usize size, usize oldSize) {
     return SYS_REALLOC(ptr, size, oldSize);
 }
 

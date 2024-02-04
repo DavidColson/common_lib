@@ -179,7 +179,7 @@ inline T Matrix<T>::GetDeterminant() const {
 template<typename T>
 inline Matrix<T> Matrix<T>::GetInverse() const {
     Matrix<T> res;
-    float iDet = 1.0f / GetDeterminant();
+    f32 iDet = 1.0f / GetDeterminant();
 
     res.m[0][0] = iDet * (m[1][1] * m[2][2] * m[3][3] + m[2][1] * m[3][2] * m[1][3] + m[3][1] * m[1][2] * m[2][3] - m[3][1] * m[2][2] * m[1][3] - m[2][1] * m[1][2] * m[3][3] - m[1][1] * m[3][2] * m[2][3]);
     res.m[1][0] = iDet * (-m[1][0] * m[2][2] * m[3][3] - m[2][0] * m[3][2] * m[1][3] - m[3][0] * m[1][2] * m[2][3] + m[3][0] * m[2][2] * m[1][3] + m[2][0] * m[1][2] * m[3][3] + m[1][0] * m[3][2] * m[2][3]);
@@ -232,10 +232,10 @@ inline Vec4<T> Matrix<T>::InverseTransformVec(const Vec4<T>& rhs) const {
 
     LU.m[3][3] = m[3][3] - (LU.m[0][3] * LU.m[3][0] + LU.m[1][3] * LU.m[3][1] + LU.m[2][3] * LU.m[3][2]);
 
-    float d_0 = rhs.x / LU.m[0][0];
-    float d_1 = (rhs.y - LU.m[0][1] * d_0) / LU.m[1][1];
-    float d_2 = (rhs.z - LU.m[0][2] * d_0 - LU.m[1][2] * d_1) / LU.m[2][2];
-    float d_3 = (rhs.w - LU.m[0][3] * d_0 - LU.m[1][3] * d_1 - LU.m[2][3] * d_2) / LU.m[3][3];
+    f32 d_0 = rhs.x / LU.m[0][0];
+    f32 d_1 = (rhs.y - LU.m[0][1] * d_0) / LU.m[1][1];
+    f32 d_2 = (rhs.z - LU.m[0][2] * d_0 - LU.m[1][2] * d_1) / LU.m[2][2];
+    f32 d_3 = (rhs.w - LU.m[0][3] * d_0 - LU.m[1][3] * d_1 - LU.m[2][3] * d_2) / LU.m[3][3];
 
     Vec4<T> vec;
 
@@ -701,7 +701,7 @@ inline Matrix<T> Matrix<T>::Perspective(T screenWidth, T screenHeight, T nearPla
 // ***********************************************************************
 
 template<typename T>
-inline Matrix<T> Matrix<T>::Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane) {
+inline Matrix<T> Matrix<T>::Orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 nearPlane, f32 farPlane) {
     Matrix<T> mat;
     mat.m[0][0] = T(2.0) / (right - left);
     mat.m[1][0] = T(0.0);

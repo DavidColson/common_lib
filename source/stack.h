@@ -21,9 +21,9 @@ struct Stack {
     template<typename F>
     void Free(F&& freeElement);
 
-    void Resize(uint32_t desiredCount);
+    void Resize(u64 desiredCount);
 
-    void Reserve(uint32_t desiredCapacity);
+    void Reserve(u64 desiredCapacity);
 
     void Push(const T& value);
 
@@ -31,7 +31,7 @@ struct Stack {
 
     T& Top();
 
-    T& operator[](int32_t i);
+    T& operator[](i64 i);
 
-    const T& operator[](int32_t i) const;
+    const T& operator[](i64 i) const;
 };

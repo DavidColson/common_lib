@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "types.h"
+
 template<typename T>
 struct Quat;
 template<typename T>
@@ -108,10 +110,10 @@ struct Matrix {
 
     inline static Matrix Perspective(T screenWidth, T screenHeight, T nearPlane, T farPlane, T fov);
 
-    inline static Matrix Orthographic(float left, float right, float bottom, float top, float nearPlane, float farPlane);
+    inline static Matrix Orthographic(f32 left, f32 right, f32 bottom, f32 top, f32 nearPlane, f32 farPlane);
 
     inline static Matrix MakeLookAt(Vec3<T> Forward, Vec3<T> Up);
 };
 
-typedef Matrix<float> Matrixf;
-typedef Matrix<double> Matrixd;
+typedef Matrix<f32> Matrixf;
+typedef Matrix<f64> Matrixd;

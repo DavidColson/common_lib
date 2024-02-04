@@ -10,7 +10,7 @@ StringBuilder::StringBuilder(IAllocator* _pAlloc) {
     pAlloc = _pAlloc;
 }
 
-void StringBuilder::AppendChars(const char* str, size_t len) {
+void StringBuilder::AppendChars(const char* str, usize len) {
     Reserve(GrowCapacity(length + len + 1));
     memcpy(pData + length, str, len);
     length += len;
@@ -18,7 +18,7 @@ void StringBuilder::AppendChars(const char* str, size_t len) {
 }
 
 void StringBuilder::Append(const char* str) {
-    size_t addedLength = strlen(str);
+    usize addedLength = strlen(str);
     AppendChars(str, addedLength);
 }
 
@@ -79,18 +79,18 @@ void StringBuilder::Reset() {
     }
 }
 
-void StringBuilder::Reserve(size_t desiredCapacity) {
+void StringBuilder::Reserve(usize desiredCapacity) {
     if (capacity >= desiredCapacity)
         return;
-    pData = (char*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(char), capacity * sizeof(char));
+    pData = (char*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(byte), capacity * sizeof(byte));
     capacity = desiredCapacity;
 }
 
-size_t StringBuilder::GrowCapacity(size_t atLeastSize) const {
-    // if we're big enough already, don't grow, otherwise double,
+usize StringBuilder::GrowCapacity(usize atLeastSize) const {
+    // if we're big enough already, don't grow, otherwise f64,
     // and if that's not enough just use atLeastSize
     if (capacity > atLeastSize)
         return capacity;
-    size_t newCapacity = capacity ? capacity * 2 : 8;
+    usize newCapacity = capacity ? capacity * 2 : 8;
     return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 }

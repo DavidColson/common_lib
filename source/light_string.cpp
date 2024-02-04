@@ -6,15 +6,15 @@
 
 // ***********************************************************************
 
-String::String(const char* str) {
-    pData = const_cast<char*>(str);
+String::String(const byte* str) {
+    pData = const_cast<byte*>(str);
     length = strlen(str);
 }
 
 // ***********************************************************************
 
-void String::operator=(const char* str) {
-    pData = const_cast<char*>(str);
+void String::operator=(const byte* str) {
+    pData = const_cast<byte*>(str);
     length = strlen(str);
 }
 
@@ -23,9 +23,9 @@ void String::operator=(const char* str) {
 bool String::operator==(const String& other) const {
     if (length != other.length)
         return false;
-    char* s1 = pData;
-    char* s2 = other.pData;
-    size_t count = 0;
+    byte* s1 = pData;
+    byte* s2 = other.pData;
+    usize count = 0;
     while (count < length) {
         count++;
         if (*s1 != *s2)
@@ -38,7 +38,7 @@ bool String::operator==(const String& other) const {
 
 // ***********************************************************************
 
-bool String::operator==(const char* other) const {
+bool String::operator==(const byte* other) const {
     String str(other);
     return operator==(str);
 }
@@ -51,17 +51,17 @@ bool String::operator!=(const String& other) const {
 
 // ***********************************************************************
 
-bool String::operator!=(const char* other) const {
+bool String::operator!=(const byte* other) const {
     return !operator==(other);
 }
 
 // ***********************************************************************
 
-String String::SubStr(size_t start, size_t len) {
+String String::SubStr(usize start, usize len) {
     String result;
     result.pData = pData + start;
 
-    if (len == (size_t)-1)
+    if (len == (usize)-1)
         result.length = length - start;
     else
         result.length = len;
@@ -70,23 +70,23 @@ String String::SubStr(size_t start, size_t len) {
 
 // ***********************************************************************
 
-String CopyCString(const char* string, IAllocator* pAlloc) {
+String CopyCString(const byte* string, IAllocator* pAlloc) {
     String s;
-    size_t len = strlen(string);
-    s.pData = (char*)pAlloc->Allocate((len + 1) * sizeof(char));
+    usize len = strlen(string);
+    s.pData = (byte*)pAlloc->Allocate((len + 1) * sizeof(byte));
     s.length = len;
-    memcpy(s.pData, string, (len + 1) * sizeof(char));
+    memcpy(s.pData, string, (len + 1) * sizeof(byte));
     return s;
 }
 
 // ***********************************************************************
 
-String CopyCStringRange(char* start, char* end, IAllocator* pAlloc) {
+String CopyCStringRange(byte* start, byte* end, IAllocator* pAlloc) {
     String s;
-    size_t len = end - start;
-    s.pData = (char*)pAlloc->Allocate((len + 1) * sizeof(char));
+    usize len = end - start;
+    s.pData = (byte*)pAlloc->Allocate((len + 1) * sizeof(byte));
     s.length = len;
-    memcpy(s.pData, start, len * sizeof(char));
+    memcpy(s.pData, start, len * sizeof(byte));
     s.pData[s.length] = 0;
     return s;
 }
@@ -95,18 +95,18 @@ String CopyCStringRange(char* start, char* end, IAllocator* pAlloc) {
 
 String CopyString(String& string, IAllocator* pAlloc) {
     String s;
-    s.pData = (char*)pAlloc->Allocate((string.length + 1) * sizeof(char));
+    s.pData = (byte*)pAlloc->Allocate((string.length + 1) * sizeof(byte));
     s.length = string.length;
-    memcpy(s.pData, string.pData, string.length * sizeof(char));
+    memcpy(s.pData, string.pData, string.length * sizeof(byte));
     s.pData[string.length] = 0;
     return s;
 }
 
 // ***********************************************************************
 
-String AllocString(size_t length, IAllocator* pAlloc) {
+String AllocString(usize length, IAllocator* pAlloc) {
     String s;
-    s.pData = (char*)pAlloc->Allocate(length * sizeof(char));
+    s.pData = (byte*)pAlloc->Allocate(length * sizeof(byte));
     s.length = length;
     return s;
 }

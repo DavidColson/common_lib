@@ -6,7 +6,7 @@
 
 template<typename T>
 Quat<T>::Quat(Vec3<T> axis, T angle) {
-    float sa2 = sinf(angle * 0.5f);
+    f32 sa2 = sinf(angle * 0.5f);
     x = axis.x * sa2;
     y = axis.y * sa2;
     z = axis.z * sa2;
@@ -32,12 +32,12 @@ inline static Quat<T> Quat<T>::MakeFromEuler(Vec3<T> v) {
 template<typename T>
 inline static Quat<T> Quat<T>::MakeFromEuler(T x, T y, T z) {
     // This is a body 3-2-1 (z, then y, then x) rotation
-    const float cx = cosf(x * 0.5f);
-    const float sx = sinf(x * 0.5f);
-    const float cy = cosf(y * 0.5f);
-    const float sy = sinf(y * 0.5f);
-    const float cz = cosf(z * 0.5f);
-    const float sz = sinf(z * 0.5f);
+    const f32 cx = cosf(x * 0.5f);
+    const f32 sx = sinf(x * 0.5f);
+    const f32 cy = cosf(y * 0.5f);
+    const f32 sy = sinf(y * 0.5f);
+    const f32 cz = cosf(z * 0.5f);
+    const f32 sz = sinf(z * 0.5f);
 
     Quat<T> res;
     res.x = sx * cy * cz - cx * sy * sz;
@@ -88,7 +88,7 @@ inline Quat<T> Quat<T>::GetInverse() const {
 
 template<typename T>
 inline void Quat<T>::Normalize() {
-    float invNorm = 1.0f / sqrtf(x * x + y * y + z * z + w * w);
+    f32 invNorm = 1.0f / sqrtf(x * x + y * y + z * z + w * w);
     x *= invNorm;
     y *= invNorm;
     z *= invNorm;
@@ -125,8 +125,8 @@ inline Vec3<T> Quat<T>::operator*(const Vec3<T> v) const {
     // q = (u,s)
     // v' = 2(u.v)u + (s*s - u.u)v + 2s(u X v)
 
-    const float a = 2.0f * (x * v.x + y * v.y + z * v.z);
-    const float b = w * w - (x * x + y * y + z * z);
+    const f32 a = 2.0f * (x * v.x + y * v.y + z * v.z);
+    const f32 b = w * w - (x * x + y * y + z * z);
     Vec3<T> s2uCrossv;
     s2uCrossv.x = 2.0f * w * (y * v.z - z * v.y);
     s2uCrossv.y = 2.0f * w * (z * v.x - x * v.z);

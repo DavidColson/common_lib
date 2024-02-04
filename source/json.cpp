@@ -39,32 +39,32 @@ struct Token {
     Token(TokenType type, String _stringOrIdentifier)
         : type(type), stringOrIdentifier(_stringOrIdentifier) {}
 
-    Token(TokenType type, double _number) : type(type), number(_number) {}
+    Token(TokenType type, f64 _number) : type(type), number(_number) {}
 
     Token(TokenType type, bool _boolean) : type(type), boolean(_boolean) {}
 
     TokenType type;
     String stringOrIdentifier;
-    double number;
+    f64 number;
     bool boolean;
 };
 
 // ***********************************************************************
 
-String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char bound) {
-    char* start = scan.pCurrent;
-    char* pos = start;
+String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, byte bound) {
+    byte* start = scan.pCurrent;
+    byte* pos = start;
     while (*pos != bound && !Scan::IsAtEnd(scan)) {
         pos++;
     }
-    size_t count = pos - start;
-    char* outputString = new char[count * 2];  // to allow for escape chars TODO: Convert to Mallloc
+    usize count = pos - start;
+    byte* outputString = new byte[count * 2];  // to allow for escape chars TODO: Convert to Mallloc
     pos = outputString;
 
-    char* cursor = scan.pCurrent;
+    byte* cursor = scan.pCurrent;
 
-    for (size_t i = 0; i < count; i++) {
-        char c = *(cursor++);
+    for (usize i = 0; i < count; i++) {
+        byte c = *(cursor++);
 
         // Disallowed characters
         switch (c) {
@@ -78,7 +78,7 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char b
         }
 
         if (c == '\\') {
-            char next = *(cursor++);
+            byte next = *(cursor++);
             switch (next) {
                 // Convert basic escape sequences to their actual characters
                 case '\'': *pos++ = '\''; break;
@@ -120,8 +120,8 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, char b
 
 // ***********************************************************************
 
-String ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, char bound) {
-    char* start = scan.pCurrent;
+String ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, byte bound) {
+    byte* start = scan.pCurrent;
     while (*(scan.pCurrent) != bound && !Scan::IsAtEnd(scan)) {
         if (*(scan.pCurrent++) == '\\') {
             scan.pCurrent = start;
@@ -135,9 +135,9 @@ String ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, char bound
 
 // ***********************************************************************
 
-double ParseNumber(Scan::ScanningState& scan) {
+f64 ParseNumber(Scan::ScanningState& scan) {
     scan.pCurrent -= 1;  // Go back to get the first digit or symbol
-    char* start = scan.pCurrent;
+    byte* start = scan.pCurrent;
 
     // Hex number
     if (Scan::Peek(scan) == '0' && (Scan::PeekNext(scan) == 'x' || Scan::PeekNext(scan) == 'X')) {
@@ -149,7 +149,7 @@ double ParseNumber(Scan::ScanningState& scan) {
     }
     // Normal number
     else {
-        char c = Scan::Peek(scan);
+        byte c = Scan::Peek(scan);
         while (Scan::IsDigit(c) || c == '+' || c == '-' || c == '.' || c == 'E' || c == 'e') {
             Scan::Advance(scan);
             c = Scan::Peek(scan);
@@ -168,15 +168,15 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
     Scan::ScanningState scan;
     scan.pTextStart = jsonText.pData;
     scan.pTextEnd = jsonText.pData + jsonText.length;
-    scan.pCurrent = (char*)scan.pTextStart;
+    scan.pCurrent = (byte*)scan.pTextStart;
     scan.line = 1;
 
     ResizableArray<Token> tokens(pAllocator);
 
     while (!Scan::IsAtEnd(scan)) {
-        char c = Scan::Advance(scan);
+        byte c = Scan::Advance(scan);
         int column = int(scan.pCurrent - scan.pCurrentLineStart);
-        char* loc = scan.pCurrent - 1;
+        byte* loc = scan.pCurrent - 1;
         switch (c) {
             // Single character tokens
             case '[': tokens.PushBack(Token { TokenType::LeftBracket }); break;
@@ -224,7 +224,7 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
             default:
                 // Numbers
                 if (Scan::IsDigit(c) || c == '+' || c == '-' || c == '.') {
-                    double num = ParseNumber(scan);
+                    f64 num = ParseNumber(scan);
                     tokens.PushBack(Token { TokenType::Number, num });
                     break;
                 }
@@ -297,8 +297,8 @@ JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int&
         case TokenType::Number: {
             currentToken++;
             JsonValue v;
-            double n = token.number;
-            double intPart;
+            f64 n = token.number;
+            f64 intPart;
             if (modf(n, &intPart) == 0.0) {
                 v.intNumber = (long)intPart;
                 v.type = JsonValue::Type::Integer;
@@ -425,11 +425,11 @@ String JsonValue::ToString() const {
 
 // ***********************************************************************
 
-double JsonValue::ToFloat() const {
+f64 JsonValue::ToFloat() const {
     if (type == Type::Floating)
         return floatNumber;
     else if (type == Type::Integer)
-        return (double)intNumber;
+        return (f64)intNumber;
     return 0.0f;
 }
 
@@ -495,7 +495,7 @@ JsonValue& JsonValue::operator[](String identifier) {
 
 // ***********************************************************************
 
-JsonValue& JsonValue::operator[](size_t index) {
+JsonValue& JsonValue::operator[](usize index) {
     ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
     ASSERT(
         array.count > index,
@@ -512,7 +512,7 @@ JsonValue& JsonValue::Get(String identifier) {
 
 // ***********************************************************************
 
-JsonValue& JsonValue::Get(size_t index) {
+JsonValue& JsonValue::Get(usize index) {
     ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
     ASSERT(
         array.count > index,
@@ -582,7 +582,7 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
             if (json.Count() > 0)
                 builder.Append("\n");
 
-            for (size_t i = 0; i < json.object.tableSize; i++) {
+            for (usize i = 0; i < json.object.tableSize; i++) {
                 HashNode<String, JsonValue>& node = json.object.pTable[i];
                 if (node.hash != UNUSED_HASH) {
                     printIndentation(indentCount + 1);
@@ -596,7 +596,7 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
             builder.Append("}");
         } break;
         case JsonValue::Type::Floating: builder.AppendFormat("%.17g", json.ToFloat()); break;
-        // TODO: Serialize with exponentials like we do with floats
+        // TODO: Serialize with exponentials like we do with f32s
         case JsonValue::Type::Integer: builder.AppendFormat("%i", json.ToInt()); break;
         case JsonValue::Type::Boolean:
             builder.AppendFormat("%s", json.ToBool() ? "true" : "false");
@@ -613,13 +613,13 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
 
     // if (result.size() < 100)
     //{
-    //	size_t index = 0;
+    //	usize index = 0;
     //	while (true) {
     //		index = result.find("\n", index);
     //		int count = 1;
-    //		while((index+count) != size_t(-1) && result[index+count] == ' ')
+    //		while((index+count) != usize(-1) && result[index+count] == ' ')
     //			count++;
-    //		if (index == size_t(-1)) break;
+    //		if (index == usize(-1)) break;
     //		result.replace(index, count, "");
     //		index += 1;
     //	}

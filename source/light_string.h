@@ -2,6 +2,7 @@
 
 #pragma once
 
+#include "types.h"
 #include "memory.h"
 
 // String Class
@@ -12,38 +13,38 @@
 // TODO: Documentation
 
 struct String {
-    char* pData = nullptr;
-    size_t length = 0;
+    byte* pData = nullptr;
+    usize length = 0;
 
     // TODOs
     // [ ] contains/nocase
     // [ ] create substring
-    // [ ] Tofloat/ToInt
+    // [ ] Tof32/ToInt
     // [ ] trimRight/Left
 
     String() {}
 
-    String(const char* str);
+    String(const byte* str);
 
-    void operator=(const char* str);
+    void operator=(const byte* str);
 
     bool operator==(const String& other) const;
 
-    bool operator==(const char* other) const;
+    bool operator==(const byte* other) const;
 
     bool operator!=(const String& other) const;
 
-    bool operator!=(const char* other) const;
+    bool operator!=(const byte* other) const;
 
-    String SubStr(size_t start, size_t len = -1);
+    String SubStr(usize start, usize len = -1);
 };
 
-String CopyCString(const char* string, IAllocator* pAlloc = &g_Allocator);
+String CopyCString(const byte* string, IAllocator* pAlloc = &g_Allocator);
 
-String CopyCStringRange(char* start, char* end, IAllocator* pAlloc = &g_Allocator);
+String CopyCStringRange(byte* start, byte* end, IAllocator* pAlloc = &g_Allocator);
 
 String CopyString(String& string, IAllocator* pAlloc = &g_Allocator);
 
-String AllocString(size_t length, IAllocator* pAlloc = &g_Allocator);
+String AllocString(usize length, IAllocator* pAlloc = &g_Allocator);
 
 void FreeString(String& string, IAllocator* pAlloc = &g_Allocator);

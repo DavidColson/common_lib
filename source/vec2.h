@@ -2,6 +2,8 @@
 
 #pragma once
 
+#include "types.h"
+
 template<typename T>
 struct Vec3;
 
@@ -110,7 +112,7 @@ struct Vec2 {
      * @param  rhs The right vector
      * @return The cross product of the two vectors
      **/
-    inline static float Cross(const Vec2& lhs, const Vec2& rhs);
+    inline static f32 Cross(const Vec2& lhs, const Vec2& rhs);
 
     /**
      * Compare two vectors for exact equality
@@ -224,5 +226,5 @@ struct Vec2 {
 };
 
 typedef Vec2<int> Vec2i;
-typedef Vec2<float> Vec2f;
-typedef Vec2<double> Vec2d;
+typedef Vec2<f32> Vec2f;
+typedef Vec2<f64> Vec2d;

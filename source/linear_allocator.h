@@ -2,29 +2,28 @@
 
 #pragma once
 
+#include "types.h"
 #include "memory.h"
-
-#include <stdint.h>
 
 #define DEFAULT_RESERVE 268435456  // 256 megabytes
 
 struct LinearAllocator : public IAllocator {
-    virtual void* Allocate(size_t size) override;
-    virtual void* Reallocate(void* ptr, size_t size, size_t oldSize) override;
+    virtual void* Allocate(usize size) override;
+    virtual void* Reallocate(void* ptr, usize size, usize oldSize) override;
     virtual void Free(void* ptr) override;
 
-    void Init(size_t defaultReserve = DEFAULT_RESERVE);
+    void Init(usize defaultReserve = DEFAULT_RESERVE);
     void Reset(bool stampMemory = false);
     void Finished();
-    void ExpandCommitted(uint8_t* pDesiredEnd);
+    void ExpandCommitted(u8* pDesiredEnd);
 
-    const char* name;
-    size_t alignment { 16 };
-    size_t pageSize { 0 };
-    size_t reserveSize { 0 };
+    const byte* name;
+    usize alignment { 16 };
+    usize pageSize { 0 };
+    usize reserveSize { 0 };
 
-    uint8_t* pMemoryBase { nullptr };
-    uint8_t* pCurrentHead { nullptr };
-    uint8_t* pFirstUncommittedPage { nullptr };
-    uint8_t* pAddressLimit { nullptr };
+    u8* pMemoryBase { nullptr };
+    u8* pCurrentHead { nullptr };
+    u8* pFirstUncommittedPage { nullptr };
+    u8* pAddressLimit { nullptr };
 };

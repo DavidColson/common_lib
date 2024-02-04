@@ -7,8 +7,8 @@
 // ***********************************************************************
 
 template<typename T>
-inline uint64_t KeyFuncs<T*>::Hash(T* key) const {
-    return uint64_t(uintptr_t(key));
+inline u64 KeyFuncs<T*>::Hash(T* key) const {
+    return u64(uintptr_t(key));
 }
 
 // ***********************************************************************
@@ -20,32 +20,32 @@ inline bool KeyFuncs<T*>::Cmp(T* key1, T* key2) const {
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<char>::Hash(char key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<byte>::Hash(byte key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<char>::Cmp(char key1, char key2) const {
+inline bool KeyFuncs<byte>::Cmp(byte key1, byte key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<int8_t>::Hash(int8_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<i8>::Hash(i8 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<int8_t>::Cmp(int8_t key1, int8_t key2) const {
+inline bool KeyFuncs<i8>::Cmp(i8 key1, i8 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<int16_t>::Hash(int16_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<int16_t>::Hash(int16_t key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
@@ -56,44 +56,44 @@ inline bool KeyFuncs<int16_t>::Cmp(int16_t key1, int16_t key2) const {
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<int32_t>::Hash(int32_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<i32>::Hash(i32 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<int32_t>::Cmp(int32_t key1, int32_t key2) const {
+inline bool KeyFuncs<i32>::Cmp(i32 key1, i32 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<int64_t>::Hash(int64_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<i64>::Hash(i64 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<int64_t>::Cmp(int64_t key1, int64_t key2) const {
+inline bool KeyFuncs<i64>::Cmp(i64 key1, i64 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<uint8_t>::Hash(uint8_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<u8>::Hash(u8 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<uint8_t>::Cmp(uint8_t key1, uint8_t key2) const {
+inline bool KeyFuncs<u8>::Cmp(u8 key1, u8 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<uint16_t>::Hash(uint16_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<uint16_t>::Hash(uint16_t key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
@@ -104,71 +104,59 @@ inline bool KeyFuncs<uint16_t>::Cmp(uint16_t key1, uint16_t key2) const {
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<uint32_t>::Hash(uint32_t key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<u32>::Hash(u32 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<uint32_t>::Cmp(uint32_t key1, uint32_t key2) const {
+inline bool KeyFuncs<u32>::Cmp(u32 key1, u32 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<uint64_t>::Hash(uint64_t key) const {
+inline u64 KeyFuncs<u64>::Hash(u64 key) const {
     return key;
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<uint64_t>::Cmp(uint64_t key1, uint64_t key2) const {
+inline bool KeyFuncs<u64>::Cmp(u64 key1, u64 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<float>::Hash(float key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<f32>::Hash(f32 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<float>::Cmp(float key1, float key2) const {
+inline bool KeyFuncs<f32>::Cmp(f32 key1, f32 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<double>::Hash(double key) const {
-    return static_cast<uint64_t>(key);
+inline u64 KeyFuncs<f64>::Hash(f64 key) const {
+    return static_cast<u64>(key);
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<double>::Cmp(double key1, double key2) const {
+inline bool KeyFuncs<f64>::Cmp(f64 key1, f64 key2) const {
     return key1 == key2;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<long double>::Hash(long double key) const {
-    return static_cast<uint64_t>(key);
-}
-
-// ***********************************************************************
-
-inline bool KeyFuncs<long double>::Cmp(long double key1, long double key2) const {
-    return key1 == key2;
-}
-
-// ***********************************************************************
-
-inline uint64_t KeyFuncs<String>::Hash(const String& key) const {
-    size_t nChars = key.length;
-    size_t hash = 0x811C9DC5;
-    const unsigned char* pData = (const unsigned char*)key.pData;
-    while (nChars--)
+inline u64 KeyFuncs<String>::Hash(const String& key) const {
+    usize nbytes = key.length;
+    usize hash = 0x811C9DC5;
+    const ubyte* pData = (const ubyte*)key.pData;
+    while (nbytes--)
         hash = (*pData++ ^ hash) * 0x01000193;
     return hash;
 }
@@ -181,33 +169,33 @@ inline bool KeyFuncs<String>::Cmp(const String& key1, const String& key2) const 
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<char*>::Hash(const char* key) const {
-    uint32_t c;
-    uint32_t hash = 0x811C9DC5;
-    while ((c = (uint8_t)*key++) != 0)
+inline u64 KeyFuncs<byte*>::Hash(const byte* key) const {
+    u32 c;
+    u32 hash = 0x811C9DC5;
+    while ((c = (u8)*key++) != 0)
         hash = (c ^ hash) * 0x01000193;
     return hash;
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<char*>::Cmp(const char* key1, const char* key2) const {
+inline bool KeyFuncs<byte*>::Cmp(const byte* key1, const byte* key2) const {
     return strcmp(key1, key2) == 0;
 }
 
 // ***********************************************************************
 
-inline uint64_t KeyFuncs<const char*>::Hash(const char* key) const {
-    uint32_t c;
-    uint32_t hash = 0x811C9DC5;
-    while ((c = (uint8_t)*key++) != 0)
+inline u64 KeyFuncs<const byte*>::Hash(const byte* key) const {
+    u32 c;
+    u32 hash = 0x811C9DC5;
+    while ((c = (u8)*key++) != 0)
         hash = (c ^ hash) * 0x01000193;
     return hash;
 }
 
 // ***********************************************************************
 
-inline bool KeyFuncs<const char*>::Cmp(const char* key1, const char* key2) const {
+inline bool KeyFuncs<const byte*>::Cmp(const byte* key1, const byte* key2) const {
     return strcmp(key1, key2) == 0;
 }
 
@@ -231,7 +219,7 @@ inline void HashMap<K, V, KF>::Free() {
 template<typename K, typename V, typename KF>
 template<typename F> 
 inline void HashMap<K, V, KF>::Free(F&& freeNode) {
-    for (size_t i = 0; i < tableSize; i++) {
+    for (usize i = 0; i < tableSize; i++) {
         if (pTable[i].hash != UNUSED_HASH) {
             freeNode(pTable[i]);
         }
@@ -243,15 +231,15 @@ inline void HashMap<K, V, KF>::Free(F&& freeNode) {
 
 template<typename K, typename V, typename KF>
 V& HashMap<K, V, KF>::Add(const K& key, const V& value) {
-    float loadFactor = tableSize == 0 ? INT_MAX : (float)(count) / (float)tableSize;
+    f32 loadFactor = tableSize == 0 ? INT_MAX : (f32)(count) / (f32)tableSize;
     if (loadFactor >= 0.9f)
         Rehash(tableSize + 1);
 
-    uint64_t hash = keyFuncs.Hash(key);
+    u64 hash = keyFuncs.Hash(key);
     if (hash < FIRST_VALID_HASH)
         hash += FIRST_VALID_HASH;
-    uint64_t index = hash % tableSize;
-    uint64_t probeCounter = 1;
+    u64 index = hash % tableSize;
+    u64 probeCounter = 1;
 
     while (pTable[index].hash != UNUSED_HASH) {
         index = (index + probeCounter) % tableSize;
@@ -273,11 +261,11 @@ V* HashMap<K, V, KF>::Get(const K& key) {
     if (tableSize == 0)
         return nullptr;
 
-    uint64_t hash = keyFuncs.Hash(key);
+    u64 hash = keyFuncs.Hash(key);
     if (hash < FIRST_VALID_HASH)
         hash += FIRST_VALID_HASH;
-    uint64_t index = hash % tableSize;
-    uint64_t probeCounter = 1;
+    u64 index = hash % tableSize;
+    u64 probeCounter = 1;
 
     while (pTable[index].hash != UNUSED_HASH) {
         if (keyFuncs.Cmp(pTable[index].key, key)) {
@@ -298,15 +286,15 @@ V& HashMap<K, V, KF>::GetOrAdd(const K& key) {
         return Add(key, value);
     }
 
-    float loadFactor = tableSize == 0 ? INT_MAX : (float)(count) / (float)tableSize;
+    f32 loadFactor = tableSize == 0 ? INT_MAX : (f32)(count) / (f32)tableSize;
     if (loadFactor >= 0.9f)
         Rehash(tableSize + 1);
 
-    uint64_t hash = keyFuncs.Hash(key);
+    u64 hash = keyFuncs.Hash(key);
     if (hash < FIRST_VALID_HASH)
         hash += FIRST_VALID_HASH;
-    uint64_t index = hash % tableSize;
-    uint64_t probeCounter = 1;
+    u64 index = hash % tableSize;
+    u64 probeCounter = 1;
 
     while (pTable[index].hash != UNUSED_HASH) {
         if (keyFuncs.Cmp(pTable[index].key, key)) {
@@ -341,11 +329,11 @@ void HashMap<K, V, KF>::Erase(const K& key, F&& freeNode) {
     if (tableSize == 0)
         return;
 
-    uint64_t hash = keyFuncs.Hash(key);
+    u64 hash = keyFuncs.Hash(key);
     if (hash < FIRST_VALID_HASH)
         hash += FIRST_VALID_HASH;
-    uint64_t index = hash % tableSize;
-    uint64_t probeCounter = 1;
+    u64 index = hash % tableSize;
+    u64 probeCounter = 1;
 
     while (pTable[index].hash != UNUSED_HASH) {
         if (keyFuncs.Cmp(pTable[index].key, key)) {
@@ -363,22 +351,22 @@ void HashMap<K, V, KF>::Erase(const K& key, F&& freeNode) {
 // ***********************************************************************
 
 template<typename K, typename V, typename KF>
-void HashMap<K, V, KF>::Rehash(size_t requiredTableSize) {
+void HashMap<K, V, KF>::Rehash(usize requiredTableSize) {
     if (requiredTableSize < tableSize)
         return;
 
     HashNode<K, V>* pTableOld = pTable;
 
-    // Double the table size until we can fit required table size
-    constexpr size_t minTableSize = 32;
-    size_t newTableSize = tableSize == 0 ? minTableSize : tableSize * 2;
+    // f64 the table size until we can fit required table size
+    constexpr usize minTableSize = 32;
+    usize newTableSize = tableSize == 0 ? minTableSize : tableSize * 2;
     while (newTableSize < (requiredTableSize > minTableSize ? requiredTableSize : minTableSize))
         newTableSize *= 2;
 
     pTable = (HashNode<K, V>*)pAlloc->Allocate(newTableSize * sizeof(HashNode<K, V>));
     memset(pTable, 0, newTableSize * sizeof(HashNode<K, V>));
 
-    size_t oldTableSize = tableSize;
+    usize oldTableSize = tableSize;
     tableSize = newTableSize;
     for (int i = 0; i < oldTableSize; i++) {
         if (pTableOld[i].hash != UNUSED_HASH) {

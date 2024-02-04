@@ -7,8 +7,18 @@
 #include "string_builder.h"
 #include "light_string.h"
 
-#include <Windows.h>
 #include <stdio.h>
+#include <stdarg.h>
+
+// Windows defines
+// ***********************************************************************
+
+extern "C" {
+#define WIN(r) __declspec(dllimport) r __stdcall
+WIN(void) OutputDebugStringA(const char* lpOutputString);
+}
+
+// ***********************************************************************
 
 namespace Log {
 LogLevel g_logLevel { Log::EDebug };
@@ -38,7 +48,7 @@ void PushLogMessage(LogLevel level, String message) {
 
     if (level <= Log::ECrit) {
         void* trace[100];
-        size_t frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
+        usize frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
 
         String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames);
         if (g_config.fileOutput) {

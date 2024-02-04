@@ -2,7 +2,7 @@
 
 #pragma once
 
-#include <stdint.h>
+#include "types.h"
 
 template<typename Type>
 struct SortAscending {
@@ -26,11 +26,11 @@ void Swap(Type& one, Type& two) {
 }
 
 template<typename Type, typename Comparison = SortAscending<Type>>
-void QSortRecursive(Type* pData, int64_t low, int64_t high, Comparison cmp) {
+void QSortRecursive(Type* pData, i64 low, i64 high, Comparison cmp) {
     if (low < high) {
-        int64_t pivot = low;  // TODO: Different pivot picking heuristic?
-        int64_t i = low;
-        int64_t j = high;
+        i64 pivot = low;  // TODO: Different pivot picking heuristic?
+        i64 i = low;
+        i64 j = high;
 
         while (i < j) {
             while (!cmp(pData[i], pData[pivot]) && i < high)
@@ -50,12 +50,12 @@ void QSortRecursive(Type* pData, int64_t low, int64_t high, Comparison cmp) {
 }
 
 template<typename Type, typename Comparison = SortAscending<Type>>
-void Sort(Type* pData, size_t count, Comparison cmp = Comparison()) {
+void Sort(Type* pData, usize count, Comparison cmp = Comparison()) {
     QSortRecursive(pData, 0, count - 1, cmp);
 }
 
 template<typename Type, typename Comparison = SortAscending<Type>>
-bool IsSorted(Type* pData, size_t count, Comparison cmp = Comparison()) {
+bool IsSorted(Type* pData, usize count, Comparison cmp = Comparison()) {
     if (count > 0) {
         for (int i = 0; i < count - 1; i++) {
             if (cmp(pData[i], pData[i + 1])) {

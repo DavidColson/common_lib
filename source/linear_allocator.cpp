@@ -5,31 +5,66 @@
 #include "log.h"
 #include "memory.h"
 
-#include <windows.h>
-#include <Memoryapi.h>
 #include <stdio.h>
+#include <string.h>
+
+// Windows defines
+// ***********************************************************************
+
+extern "C" {
+#define WIN(r) __declspec(dllimport) r __stdcall
+
+typedef struct _SYSTEM_INFO {
+    union {
+        u32 dwOemId;          // Obsolete field...do not use
+        struct {
+            u16 wProcessorArchitecture;
+            u16 wReserved;
+        } DUMMYSTRUCTNAME;
+    } DUMMYUNIONNAME;
+    u32 dwPageSize;
+    void* lpMinimumApplicationAddress;
+    void* lpMaximumApplicationAddress;
+    u32* dwActiveProcessorMask;
+    u32 dwNumberOfProcessors;
+    u32 dwProcessorType;
+    u32 dwAllocationGranularity;
+    u16 wProcessorLevel;
+    u16 wProcessorRevision;
+} SYSTEM_INFO, *LPSYSTEM_INFO;
+
+WIN(void) GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
+
+#define MEM_COMMIT                      0x00001000  
+#define MEM_RESERVE                     0x00002000  
+#define MEM_RELEASE                     0x00008000  
+#define PAGE_READWRITE          0x04 
+
+WIN(void*) VirtualAlloc(void* lpAddress, usize dwSize, u32 flAllocationType, u32 flProtect);
+WIN(u32) VirtualFree(void* lpAddress,usize dwSize, u32 dwFreeType);
+}
 
 // ***********************************************************************
 
-size_t Align(size_t toAlign, size_t alignment) {
+usize Align(usize toAlign, usize alignment) {
     // Rounds up to nearest multiple of alignment (works if alignment is power of 2)
     return (toAlign + alignment - 1) & ~(alignment - 1);
 }
 
 // ***********************************************************************
 
-uint8_t* AlignPtr(uint8_t* toAlign, size_t alignment) {
-    return (uint8_t*)Align(size_t(toAlign), alignment);
+u8* AlignPtr(u8* toAlign, usize alignment) {
+    return (u8*)Align(usize(toAlign), alignment);
 }
 
 // ***********************************************************************
 
-void* LinearAllocator::Allocate(size_t size) {
+void* LinearAllocator::Allocate(usize size) {
     if (pMemoryBase == nullptr)
         Init();
 
-    uint8_t* pOutput = AlignPtr(pCurrentHead, alignment);
-    uint8_t* pEnd = pOutput + size;
+    u8* pOutput = AlignPtr(pCurrentHead, alignment);
+    u8* pEnd = pOutput + size;
 
     if (pEnd > pFirstUncommittedPage) {
         Assert(pEnd < pAddressLimit);
@@ -42,9 +77,9 @@ void* LinearAllocator::Allocate(size_t size) {
 
 // ***********************************************************************
 
-void* LinearAllocator::Reallocate(void* ptr, size_t size, size_t oldSize) {
-    uint8_t* pOutput = (uint8_t*)Allocate(size);
-    size_t sizeToCopy = size < oldSize ? size : oldSize;
+void* LinearAllocator::Reallocate(void* ptr, usize size, usize oldSize) {
+    u8* pOutput = (u8*)Allocate(size);
+    usize sizeToCopy = size < oldSize ? size : oldSize;
     memcpy(pOutput, ptr, sizeToCopy);
     return (void*)pOutput;
 }
@@ -57,13 +92,13 @@ void LinearAllocator::Free(void* ptr) {
 
 // ***********************************************************************
 
-void LinearAllocator::Init(size_t defaultReserve) {
+void LinearAllocator::Init(usize defaultReserve) {
     SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
     pageSize = sysInfo.dwPageSize;
 
     reserveSize = Align(defaultReserve, pageSize);
-    pMemoryBase = (uint8_t*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
+    pMemoryBase = (u8*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
     Assert(pMemoryBase != nullptr);
 
 #ifdef MEMORY_TRACKING
@@ -91,20 +126,22 @@ void LinearAllocator::Reset(bool stampMemory) {
 // ***********************************************************************
 
 void LinearAllocator::Finished() {
+    if (pMemoryBase != nullptr) {
 #ifdef MEMORY_TRACKING
-    CheckFree(this, pMemoryBase);
+        CheckFree(this, pMemoryBase);
 #endif
-    VirtualFree(pMemoryBase, 0, MEM_RELEASE);
+        VirtualFree(pMemoryBase, 0, MEM_RELEASE);
+    }
 }
 
 // ***********************************************************************
 
-void LinearAllocator::ExpandCommitted(uint8_t* pDesiredEnd) {
-    size_t currentSpace = pFirstUncommittedPage - pMemoryBase;
-    size_t requiredSpace = pDesiredEnd - pFirstUncommittedPage;
+void LinearAllocator::ExpandCommitted(u8* pDesiredEnd) {
+    usize currentSpace = pFirstUncommittedPage - pMemoryBase;
+    usize requiredSpace = pDesiredEnd - pFirstUncommittedPage;
     Assert(requiredSpace > 0);
 
-    size_t size = Align(requiredSpace, pageSize);
+    usize size = Align(requiredSpace, pageSize);
     VirtualAlloc(pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
 #ifdef MEMORY_TRACKING
     CheckRealloc(this, pMemoryBase, pMemoryBase, currentSpace + size, currentSpace);

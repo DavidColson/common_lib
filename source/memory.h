@@ -2,10 +2,12 @@
 
 #pragma once
 
+#include "types.h"
+
 #include <stdlib.h>
 
 struct NewWrapper {};
-inline void* operator new(size_t, NewWrapper, void* ptr) {
+inline void* operator new(usize, NewWrapper, void* ptr) {
     return ptr;
 }
 inline void operator delete(void*, NewWrapper, void*) {}
@@ -23,14 +25,14 @@ inline void operator delete(void*, NewWrapper, void*) {}
 #endif
 
 struct IAllocator {
-    virtual void* Allocate(size_t size) = 0;
-    virtual void* Reallocate(void* ptr, size_t size, size_t oldSize) = 0;
+    virtual void* Allocate(usize size) = 0;
+    virtual void* Reallocate(void* ptr, usize size, usize oldSize) = 0;
     virtual void Free(void* ptr) = 0;
 };
 
 struct DefaultAllocator : public IAllocator {
-    void* Allocate(size_t size) override;
-    void* Reallocate(void* ptr, size_t size, size_t oldSize) override;
+    void* Allocate(usize size) override;
+    void* Reallocate(void* ptr, usize size, usize oldSize) override;
     void Free(void* ptr) override;
 };
 
