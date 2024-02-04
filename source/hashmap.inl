@@ -219,7 +219,7 @@ inline void HashMap<K, V, KF>::Free() {
 template<typename K, typename V, typename KF>
 template<typename F> 
 inline void HashMap<K, V, KF>::Free(F&& freeNode) {
-    for (usize i = 0; i < tableSize; i++) {
+    for (size i = 0; i < tableSize; i++) {
         if (pTable[i].hash != UNUSED_HASH) {
             freeNode(pTable[i]);
         }
@@ -351,7 +351,7 @@ void HashMap<K, V, KF>::Erase(const K& key, F&& freeNode) {
 // ***********************************************************************
 
 template<typename K, typename V, typename KF>
-void HashMap<K, V, KF>::Rehash(usize requiredTableSize) {
+void HashMap<K, V, KF>::Rehash(size requiredTableSize) {
     if (requiredTableSize < tableSize)
         return;
 

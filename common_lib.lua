@@ -5,6 +5,7 @@ project "common_lib"
 	cppdialect "C++14"
 	exceptionhandling "Off"
 	rtti "Off"
+	flags { "FatalWarnings" }
 	files 
 	{
 		"source/*.cpp",
@@ -26,6 +27,7 @@ project "common_lib"
         exceptionhandling "Off"
         rtti "Off"
         debugdir ""
+		flags { "FatalWarnings" }
         files 
         {
             "tests/tests_main.cpp",
@@ -38,3 +40,8 @@ project "common_lib"
 		{
 			"common_lib"
 		}
+		if ASAN_Enabled then
+			buildoptions { "/fsanitize=address" }
+			flags { "NoIncrementalLink" }
+			editandcontinue "Off"
+		end

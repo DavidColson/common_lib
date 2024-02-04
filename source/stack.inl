@@ -28,15 +28,15 @@ void Stack<T>::Free(F&& freeElement) {
 // ***********************************************************************
 
 template<typename T>
-void Stack<T>::Resize(u64 desiredCount) {
-    array.Resize((u32)desiredCount);
+void Stack<T>::Resize(size desiredCount) {
+    array.Resize(desiredCount);
 }
 
 // ***********************************************************************
 
 template<typename T>
-void Stack<T>::Reserve(u64 desiredCapacity) {
-    array.Reserve((u32)desiredCapacity);
+void Stack<T>::Reserve(size desiredCapacity) {
+    array.Reserve(desiredCapacity);
 }
 
 // ***********************************************************************
@@ -65,11 +65,11 @@ T& Stack<T>::Top() {
 // ***********************************************************************
 
 template<typename T>
-T& Stack<T>::operator[](i64 i) {
+T& Stack<T>::operator[](size i) {
     if (i >= 0) {
         return array[i];
     } else {
-        Assert(i >= -i64(array.count));
+        Assert(i >= -size(array.count));
         return array[array.count + i];
     }
 }
@@ -77,11 +77,11 @@ T& Stack<T>::operator[](i64 i) {
 // ***********************************************************************
 
 template<typename T>
-const T& Stack<T>::operator[](i64 i) const {
+const T& Stack<T>::operator[](size i) const {
     if (i >= 0) {
         return array[i];
     } else {
-        Assert(i >= -i64(array.count));
+        Assert(i >= -size(array.count));
         return array[array.count + i];
     }
 }

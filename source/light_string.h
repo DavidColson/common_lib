@@ -14,7 +14,7 @@
 
 struct String {
     byte* pData = nullptr;
-    usize length = 0;
+    size length = 0;
 
     // TODOs
     // [ ] contains/nocase
@@ -36,7 +36,7 @@ struct String {
 
     bool operator!=(const byte* other) const;
 
-    String SubStr(usize start, usize len = -1);
+    String SubStr(size start, size len = -1);
 };
 
 String CopyCString(const byte* string, IAllocator* pAlloc = &g_Allocator);

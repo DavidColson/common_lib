@@ -582,7 +582,7 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
             if (json.Count() > 0)
                 builder.Append("\n");
 
-            for (usize i = 0; i < json.object.tableSize; i++) {
+            for (size i = 0; i < json.object.tableSize; i++) {
                 HashNode<String, JsonValue>& node = json.object.pTable[i];
                 if (node.hash != UNUSED_HASH) {
                     printIndentation(indentCount + 1);

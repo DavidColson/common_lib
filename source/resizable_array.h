@@ -13,8 +13,8 @@
 template<typename Type>
 struct ResizableArray {
     Type* pData { nullptr };
-    u32 count { 0 };
-    u32 capacity { 0 };
+    size count { 0 };
+    size capacity { 0 };
     IAllocator* pAlloc { nullptr };
 
     inline ResizableArray(IAllocator* _pAlloc = &g_Allocator);
@@ -24,23 +24,23 @@ struct ResizableArray {
     template<typename F>
     void Free(F&& freeElement);
 
-    void Resize(u32 desiredCount);
+    void Resize(size desiredCount);
 
-    void Reserve(u32 desiredCapacity);
+    void Reserve(size desiredCapacity);
 
     void PushBack(const Type& value);
 
     void PopBack();
 
-    Type& operator[](usize i);
+    Type& operator[](size i);
 
-    const Type& operator[](usize i) const;
+    const Type& operator[](size i) const;
 
-    void Erase(usize index);
+    void Erase(size index);
 
-    void EraseUnsorted(usize index);
+    void EraseUnsorted(size index);
 
-    void Insert(usize index, const Type& value);
+    void Insert(size index, const Type& value);
 
     Type* Find(const Type& value);
 
@@ -52,9 +52,9 @@ struct ResizableArray {
 
     const Type* end() const;
 
-    u32 IndexFromPointer(const Type* ptr) const;
+    size IndexFromPointer(const Type* ptr) const;
 
     bool Validate() const;
 
-    u32 GrowCapacity(u32 atLeastSize) const;
+    size GrowCapacity(size atLeastSize) const;
 };

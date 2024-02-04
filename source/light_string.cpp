@@ -25,7 +25,7 @@ bool String::operator==(const String& other) const {
         return false;
     byte* s1 = pData;
     byte* s2 = other.pData;
-    usize count = 0;
+    size count = 0;
     while (count < length) {
         count++;
         if (*s1 != *s2)
@@ -57,10 +57,11 @@ bool String::operator!=(const byte* other) const {
 
 // ***********************************************************************
 
-String String::SubStr(usize start, usize len) {
+String String::SubStr(size start, size len) {
     String result;
     result.pData = pData + start;
 
+	// What the fuck is this?
     if (len == (usize)-1)
         result.length = length - start;
     else

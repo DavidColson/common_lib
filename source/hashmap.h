@@ -170,8 +170,8 @@ template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {
     HashNode<K, V>* pTable { nullptr };
     KF keyFuncs;
-    usize tableSize { 0 };
-    usize count { 0 };
+    size tableSize { 0 };
+    size count { 0 };
     IAllocator* pAlloc { nullptr };
 
     HashMap(IAllocator* _pAlloc = &g_Allocator);
@@ -194,5 +194,5 @@ struct HashMap {
     template<typename F>
     void Erase(const K& key, F&& freeNode);
 
-    void Rehash(usize requiredTableSize);
+    void Rehash(size requiredTableSize);
 };

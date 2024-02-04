@@ -189,7 +189,7 @@ int ReportMemoryLeaks() {
         return 0;
 
     int leakCounter = 0;
-    for (usize i = 0; i < g_pCtx->allocationTable.tableSize; i++) {
+    for (size i = 0; i < g_pCtx->allocationTable.tableSize; i++) {
         if (g_pCtx->allocationTable.pTable[i].hash != UNUSED_HASH) {
             Allocation& alloc = g_pCtx->allocationTable.pTable[i].value;
             if (alloc.isLive && !alloc.notALeak) {
