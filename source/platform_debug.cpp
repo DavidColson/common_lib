@@ -42,7 +42,7 @@ typedef struct _SYMBOL_INFO {
 typedef struct _IMAGEHLP_LINE64 {
     u32      SizeOfStruct;           // set to sizeof(IMAGEHLP_LINE64)
     void*    Key;                    // internal
-    void*    LineNumber;             // line number in file
+    i32    LineNumber;             // line number in file
     char*    FileName;               // full filename
     u64      Address;                // first instruction of line
 } IMAGEHLP_LINE64, *PIMAGEHLP_LINE64;
@@ -96,12 +96,12 @@ String PrintStackTraceToString(void** stackFramesArray, usize nframes, IAllocato
 
         stackFuncs.PushBack(CopyCString(symbol->Name, pAlloc));
         stackFiles.PushBack(CopyCString(line.FileName, pAlloc));
-        stackLines.PushBack((usize)line.LineNumber);
+        stackLines.PushBack(line.LineNumber);
     }
 
     StringBuilder builder(pAlloc);
     for (u32 j = 0; j < nframes - 6; j++) {
-        builder.AppendFormat(" %-*s %s:%zi\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
+        builder.AppendFormat(" %-*s %s:%d\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
     }
     String output = builder.CreateString(true, pAlloc);
 
