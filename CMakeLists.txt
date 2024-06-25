@@ -30,6 +30,7 @@ set(SOURCES
 	"source/AABB.cpp"
 	"source/AABB.h"
 	"source/base64.h"
+	"source/base64.cpp"
 	"source/defer.h"
 	"source/hashmap.h"
 	"source/hashmap.inl"
