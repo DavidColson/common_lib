@@ -7,10 +7,9 @@
 
 // String Class
 // --------------------
-// Null terminated string
+// NOT null terminated string
 // The functions in this struct guarantee to do zero memory operations
 // and is fully POD, trivially copyable
-// TODO: Documentation
 
 struct String {
     byte* pData = nullptr;
@@ -18,7 +17,6 @@ struct String {
 
     // TODOs
     // [ ] contains/nocase
-    // [ ] create substring
     // [ ] Tof32/ToInt
     // [ ] trimRight/Left
 

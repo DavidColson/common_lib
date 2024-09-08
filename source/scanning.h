@@ -2,8 +2,14 @@
 
 #pragma once
 
+#include "types.h"
+
+struct IAllocator;
+struct String;
+
 namespace Scan {
-// Scanning utilities
+
+// Scanning/Parsing utilities
 ///////////////////////
 
 struct ScanningState {
@@ -45,4 +51,9 @@ bool IsHexDigit(char c);
 bool IsAlpha(char c);
 
 bool IsAlphaNumeric(char c);
+
+String ParseString(IAllocator* pAllocator, ScanningState& scan, byte bound);
+
+f64 ParseNumber(ScanningState& scan);
+
 }

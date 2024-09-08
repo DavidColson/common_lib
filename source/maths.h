@@ -25,6 +25,16 @@ inline i32 mod_floor(i32 a, usize n) {
 }
 
 template<typename T>
+inline T min(T a, T b) {
+	return a < b ? a : b;
+}
+
+template<typename T>
+inline T max(T a, T b) {
+	return a > b ? a : b;
+}
+
+template<typename T>
 inline T clamp(T val, T min, T max) {
     if (val < min)
         return min;
