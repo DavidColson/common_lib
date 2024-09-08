@@ -4,19 +4,21 @@
 
 #include "light_string.h"
 
-static const byte encodingTable[65] =
+static const ubyte encodingTable[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+
+static i32 modTable[] = { 0, 2, 1 };
 
 // ***********************************************************************
 
 String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
-    byte decodingTable[256];
+    ubyte decodingTable[256];
 
     for (usize i = 0; i < sizeof(encodingTable) - 1; i++)
-        decodingTable[encodingTable[i]] = (byte)i;
+        decodingTable[encodingTable[i]] = (ubyte)i;
     decodingTable['='] = 0;
 
-    const byte* input = encodedString.pData;
+    const ubyte* input = (ubyte*)encodedString.pData;
     usize inputLength = encodedString.length;
 
     usize count = 0;
@@ -32,15 +34,14 @@ String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
 
     usize outputlen = count / 4 * 3;
 
-
-    byte* output = (byte*)pAlloc->Allocate(outputlen * sizeof(byte));
-    byte* position = output;
+    ubyte* output = (ubyte*)pAlloc->Allocate(outputlen * sizeof(ubyte));
+    ubyte* position = output;
 
     for (int i = 0; i < inputLength; i += 4) {
-        byte a = decodingTable[input[i]] & 0xFF;
-        byte b = decodingTable[input[i + 1]] & 0xFF;
-        byte c = decodingTable[input[i + 2]] & 0xFF;
-        byte d = decodingTable[input[i + 3]] & 0xFF;
+        ubyte a = decodingTable[input[i]] & 0xFF;
+        ubyte b = decodingTable[input[i + 1]] & 0xFF;
+        ubyte c = decodingTable[input[i + 2]] & 0xFF;
+        ubyte d = decodingTable[input[i + 3]] & 0xFF;
 
         *position++ = a << 2 | (b & 0x30) >> 4;
         if (c != 0x40)
@@ -49,36 +50,42 @@ String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
             *position++ = (c << 6 | d);
     }
 
+	if (input[inputLength - 1] == '=') outputlen--;
+    if (input[inputLength - 2] == '=') outputlen--;
+
     String result;
-    result.pData = output;
+    result.pData = (byte*)output;
     result.length = outputlen;
     return result;
 }
 
 // ***********************************************************************
 
-String EncodeBase64(usize length, const byte* bytes, IAllocator* pAlloc) {
-    usize outputLength = length * 4 / 3 + 4;  // 3-byte blocks to 4-byte
-    outputLength++;                            // nul termination
+String EncodeBase64(usize length, const ubyte* bytes, IAllocator* pAlloc) {
+    usize outputLength = 4 * ((length + 2) / 3);  // 3-ubyte blocks to 4-ubyte
+
     if (outputLength < length)
         return String();  // integer overflow
-    byte* output = (byte*)pAlloc->Allocate(outputLength * sizeof(byte));
-    byte* position = output;
+    ubyte* output = (ubyte*)pAlloc->Allocate(outputLength * sizeof(ubyte));
 
-    for (int i = 0; i < length; i += 3) {
-        int nbytes = (int)length - i;
-        byte a = bytes[i];
-        byte b = nbytes == 1 ? 0xF : bytes[i + 1];
-        byte c = nbytes < 3 ? 0x3F : bytes[i + 2];
+    for (int i = 0, j = 0; i < length;) {
+        uint32_t octet_a = i < length ? (unsigned char)bytes[i++] : 0;
+        uint32_t octet_b = i < length ? (unsigned char)bytes[i++] : 0;
+        uint32_t octet_c = i < length ? (unsigned char)bytes[i++] : 0;
 
-        *position++ = encodingTable[a >> 2];
-        *position++ = encodingTable[(a & 0x3) << 4 | b >> 4];
-        *position++ = encodingTable[b == 0xF ? 0x40 : (b & 0xF) << 2 | c >> 6];
-        *position++ = encodingTable[c == 0x3F ? 0x40 : (c & 0x3F)];
+        uint32_t triple = (octet_a << 0x10) + (octet_b << 0x08) + octet_c;
+
+        output[j++] = encodingTable[(triple >> 3 * 6) & 0x3F];
+        output[j++] = encodingTable[(triple >> 2 * 6) & 0x3F];
+        output[j++] = encodingTable[(triple >> 1 * 6) & 0x3F];
+        output[j++] = encodingTable[(triple >> 0 * 6) & 0x3F];
     }
 
+    for (int i = 0; i < modTable[length % 3]; i++)
+        output[outputLength - 1 - i] = '=';
+
     String result;
-    result.pData = output;
+    result.pData = (byte*)output;
     result.length = outputLength;
     return result;
 }
