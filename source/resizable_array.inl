@@ -5,32 +5,8 @@
 #include <string.h>
 
 template<typename Type>
-inline ResizableArray<Type>::ResizableArray(IAllocator* _pAlloc) {
-    pAlloc = _pAlloc;
-}
-
-template<typename Type>
-void ResizableArray<Type>::Free() {
-    if (pData) {
-        pAlloc->Free(pData);
-        count = 0;
-        capacity = 0;
-        pData = nullptr;
-    }
-}
-
-template<typename Type>
-template<typename F>
-void ResizableArray<Type>::Free(F&& freeElement) {
-    if (pData) {
-        for (size i = 0; i < count; i++) {
-            freeElement(pData[i]);
-        }
-        pAlloc->Free(pData);
-        count = 0;
-        capacity = 0;
-        pData = nullptr;
-    }
+inline ResizableArray<Type>::ResizableArray(Arena* _pArena) {
+	pArena = _pArena;
 }
 
 template<typename Type>
@@ -45,7 +21,7 @@ template<typename Type>
 void ResizableArray<Type>::Reserve(size desiredCapacity) {
     if (capacity >= desiredCapacity)
         return;
-    pData = (Type*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(Type), capacity * sizeof(Type));
+	pData = (Type*)ArenaRealloc(pArena, pData, desiredCapacity * sizeof(Type), capacity * sizeof(Type), alignof(Type));
     capacity = desiredCapacity;
 }
 

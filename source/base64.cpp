@@ -11,7 +11,7 @@ static i32 modTable[] = { 0, 2, 1 };
 
 // ***********************************************************************
 
-String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
+String DecodeBase64(Arena* pArena, String const& encodedString) {
     ubyte decodingTable[256];
 
     for (usize i = 0; i < sizeof(encodingTable) - 1; i++)
@@ -34,7 +34,7 @@ String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
 
     usize outputlen = count / 4 * 3;
 
-    ubyte* output = (ubyte*)pAlloc->Allocate(outputlen * sizeof(ubyte));
+    ubyte* output = New(pArena, ubyte, outputlen);
     ubyte* position = output;
 
     for (int i = 0; i < inputLength; i += 4) {
@@ -61,12 +61,12 @@ String DecodeBase64(String const& encodedString, IAllocator* pAlloc) {
 
 // ***********************************************************************
 
-String EncodeBase64(usize length, const ubyte* bytes, IAllocator* pAlloc) {
+String EncodeBase64(Arena* pArena, usize length, const ubyte* bytes) {
     usize outputLength = 4 * ((length + 2) / 3);  // 3-ubyte blocks to 4-ubyte
 
     if (outputLength < length)
         return String();  // integer overflow
-    ubyte* output = (ubyte*)pAlloc->Allocate(outputLength * sizeof(ubyte));
+    ubyte* output = New(pArena, ubyte, outputLength);
 
     for (int i = 0, j = 0; i < length;) {
         uint32_t octet_a = i < length ? (unsigned char)bytes[i++] : 0;

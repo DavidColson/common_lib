@@ -9,18 +9,6 @@
 #include "resizable_array.h"
 #include "hashmap.inl"
 
-struct ForceNoTrackAllocator : public IAllocator {
-    void* Allocate(usize size) {
-        return malloc(size);
-    }
-    void* Reallocate(void* ptr, usize size, usize oldSize) {
-        return realloc(ptr, size);
-    }
-    void Free(void* ptr) {
-        free(ptr);
-    }
-};
-
 struct Allocation {
     void* pointer { nullptr };
     void* pAllocator { nullptr };
@@ -38,39 +26,15 @@ struct MemoryTrackerState {
 };
 
 namespace {
-ForceNoTrackAllocator g_noTrackAllocator;
+Arena* g_pTrackingMemory;
 MemoryTrackerState* g_pCtx { nullptr };
 };
 
 // ***********************************************************************
 
 void InitContext() {
-    g_pCtx = (MemoryTrackerState*)malloc(sizeof(MemoryTrackerState));
-    SYS_P_NEW(g_pCtx) MemoryTrackerState();
-    g_pCtx->allocationTable.pAlloc = &g_noTrackAllocator;
-}
-
-// ***********************************************************************
-
-void* MallocWrap(usize size) {
-    void* pMemory = malloc(size);
-    CheckMalloc(nullptr, pMemory, size);
-    return pMemory;
-}
-
-// ***********************************************************************
-
-void* ReallocWrap(void* ptr, usize size, usize oldSize) {
-    void* pMemory = realloc(ptr, size);
-    CheckRealloc(nullptr, pMemory, ptr, size, oldSize);
-    return pMemory;
-}
-
-// ***********************************************************************
-
-void FreeWrap(void* ptr) {
-    CheckFree(nullptr, ptr);
-    free(ptr);
+    g_pCtx = RawNew(g_pTrackingMemory, MemoryTrackerState);
+    g_pCtx->allocationTable.pArena = g_pTrackingMemory;
 }
 
 // ***********************************************************************
@@ -126,17 +90,12 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, usize size, 
 
 // ***********************************************************************
 
-void Reportf64Free(Allocation& alloc, void** newFreeTrace, usize newFreeTraceFrames) {
-    String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &g_noTrackAllocator);
-    defer(FreeString(allocTrace, &g_noTrackAllocator));
+void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, usize newFreeTraceFrames) {
+    String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pTrackingMemory);
+    String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, g_pTrackingMemory);
+    String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, g_pTrackingMemory);
 
-    String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, &g_noTrackAllocator);
-    defer(FreeString(trace, &g_noTrackAllocator));
-
-    String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, &g_noTrackAllocator);
-    defer(FreeString(trace2, &g_noTrackAllocator));
-
-    Log::Warn("------ Hey idiot, detected f64 free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
+    Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
     __debugbreak();
 }
 
@@ -160,7 +119,7 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
         if (!alloc->isLive) {
             void* stackTrace[100];
             usize stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
-            Reportf64Free(*alloc, stackTrace, stackFrames);
+            ReportDoubleFree(*alloc, stackTrace, stackFrames);
         }
 
         alloc->isLive = false;
@@ -194,8 +153,7 @@ int ReportMemoryLeaks() {
             Allocation& alloc = g_pCtx->allocationTable.pTable[i].value;
             if (alloc.isLive && !alloc.notALeak) {
                 leakCounter++;
-                String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, &g_noTrackAllocator);
-                defer(FreeString(trace, &g_noTrackAllocator));
+                String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pTrackingMemory);
                 Log::Warn(" ------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n%s", alloc.pointer, alloc.size, trace.pData);
             }
         }

@@ -2,6 +2,7 @@
 
 #include "light_string.h"
 
+#include <limits.h>
 #include <string.h>
 
 // ***********************************************************************
@@ -202,29 +203,8 @@ inline bool KeyFuncs<const byte*>::Cmp(const byte* key1, const byte* key2) const
 // ***********************************************************************
 
 template<typename K, typename V, typename KF>
-inline HashMap<K, V, KF>::HashMap(IAllocator* _pAlloc) {
-    pAlloc = _pAlloc;
-}
-
-// ***********************************************************************
-
-template<typename K, typename V, typename KF>
-inline void HashMap<K, V, KF>::Free() {
-    if (pTable)
-        pAlloc->Free(pTable);
-}
-
-// ***********************************************************************
-
-template<typename K, typename V, typename KF>
-template<typename F> 
-inline void HashMap<K, V, KF>::Free(F&& freeNode) {
-    for (size i = 0; i < tableSize; i++) {
-        if (pTable[i].hash != UNUSED_HASH) {
-            freeNode(pTable[i]);
-        }
-    }
-    pAlloc->Free(pTable);
+inline HashMap<K, V, KF>::HashMap(Arena* _pArena) {
+	pArena = _pArena;
 }
 
 // ***********************************************************************
@@ -363,7 +343,7 @@ void HashMap<K, V, KF>::Rehash(size requiredTableSize) {
     while (newTableSize < (requiredTableSize > minTableSize ? requiredTableSize : minTableSize))
         newTableSize *= 2;
 
-    pTable = (HashNode<K, V>*)pAlloc->Allocate(newTableSize * sizeof(HashNode<K, V>));
+	pTable = (HashNode<K, V>*)ArenaAlloc(pArena, sizeof(HashNode<K, V>)*newTableSize, alignof(HashNode<K, V>), false); 
     memset(pTable, 0, newTableSize * sizeof(HashNode<K, V>));
 
     usize oldTableSize = tableSize;
@@ -374,6 +354,4 @@ void HashMap<K, V, KF>::Rehash(size requiredTableSize) {
             count--;
         }
     }
-    if (pTableOld)
-        pAlloc->Free(pTableOld);
 }

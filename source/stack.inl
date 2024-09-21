@@ -7,23 +7,8 @@
 // ***********************************************************************
 
 template<typename T>
-Stack<T>::Stack(IAllocator* pAlloc)
-    : array(pAlloc) {}
-
-// ***********************************************************************
-
-template<typename T>
-void Stack<T>::Free() {
-    array.Free();
-}
-
-// ***********************************************************************
-
-template<typename T>
-template<typename F>
-void Stack<T>::Free(F&& freeElement) {
-    array.Free(freeElement);
-}
+Stack<T>::Stack(Arena* pArena)
+    : array(pArena) {}
 
 // ***********************************************************************
 

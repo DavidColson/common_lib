@@ -6,8 +6,8 @@
 #include <string.h>
 #include <stdio.h>
 
-StringBuilder::StringBuilder(IAllocator* _pAlloc) {
-    pAlloc = _pAlloc;
+StringBuilder::StringBuilder(Arena* _pArena) {
+    pArena = _pArena;
 }
 
 void StringBuilder::AppendChars(const char* str, usize len) {
@@ -49,8 +49,8 @@ void StringBuilder::AppendFormat(const char* format, ...) {
     va_end(args);
 }
 
-String StringBuilder::CreateString(bool reset, IAllocator* _pAlloc) {
-    String output = AllocString(length + 1, _pAlloc);
+String StringBuilder::CreateString(Arena* pArena, bool reset) {
+    String output = AllocString(length + 1, pArena);
     memcpy(output.pData, pData, length * sizeof(char));
     output.pData[length] = 0;
     output.length = length;
@@ -72,8 +72,7 @@ String StringBuilder::ToExistingString(bool reset, String& destination) {
 
 void StringBuilder::Reset() {
     if (pData) {
-        pAlloc->Free(pData);
-        pData = nullptr;
+		pData = nullptr;
         length = 0;
         capacity = 0;
     }
@@ -82,7 +81,7 @@ void StringBuilder::Reset() {
 void StringBuilder::Reserve(usize desiredCapacity) {
     if (capacity >= desiredCapacity)
         return;
-    pData = (char*)pAlloc->Reallocate(pData, desiredCapacity * sizeof(byte), capacity * sizeof(byte));
+    pData = (char*)ArenaRealloc(pArena, pData, desiredCapacity * sizeof(byte), capacity * sizeof(byte), alignof(byte));
     capacity = desiredCapacity;
 }
 

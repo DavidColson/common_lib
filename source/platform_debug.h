@@ -9,5 +9,5 @@ struct String;
 namespace PlatformDebug {
 usize CollectStackTrace(void** stackFramesArray, usize arraySize, usize framesToSkip = 0);
 
-String PrintStackTraceToString(void** stackFramesArray, usize nframes, IAllocator* pAlloc = &g_Allocator);
+String PrintStackTraceToString(void** stackFramesArray, usize nframes, Arena* pArena);
 }

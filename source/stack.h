@@ -14,12 +14,7 @@ template<typename T>
 struct Stack {
     ResizableArray<T> array;
 
-    Stack(IAllocator* pAlloc = &g_Allocator);
-
-    void Free();
-
-    template<typename F>
-    void Free(F&& freeElement);
+    Stack(Arena* pArena);
 
     void Resize(size desiredCount);
 

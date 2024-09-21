@@ -71,10 +71,10 @@ String String::SubStr(size start, size len) {
 
 // ***********************************************************************
 
-String CopyCString(const byte* string, IAllocator* pAlloc) {
+String CopyCString(const byte* string, Arena* pArena) {
     String s;
     usize len = strlen(string);
-    s.pData = (byte*)pAlloc->Allocate((len + 1) * sizeof(byte));
+	s.pData = New(pArena, byte, len + 1);
     s.length = len;
     memcpy(s.pData, string, (len + 1) * sizeof(byte));
     return s;
@@ -82,10 +82,10 @@ String CopyCString(const byte* string, IAllocator* pAlloc) {
 
 // ***********************************************************************
 
-String CopyCStringRange(byte* start, byte* end, IAllocator* pAlloc) {
+String CopyCStringRange(byte* start, byte* end, Arena* pArena) {
     String s;
     usize len = end - start;
-    s.pData = (byte*)pAlloc->Allocate((len + 1) * sizeof(byte));
+	s.pData = New(pArena, byte, len + 1);
     s.length = len;
     memcpy(s.pData, start, len * sizeof(byte));
     s.pData[s.length] = 0;
@@ -94,9 +94,9 @@ String CopyCStringRange(byte* start, byte* end, IAllocator* pAlloc) {
 
 // ***********************************************************************
 
-String CopyString(String& string, IAllocator* pAlloc) {
+String CopyString(String& string, Arena* pArena) {
     String s;
-    s.pData = (byte*)pAlloc->Allocate((string.length + 1) * sizeof(byte));
+	s.pData = New(pArena, byte, string.length + 1);
     s.length = string.length;
     memcpy(s.pData, string.pData, string.length * sizeof(byte));
     s.pData[string.length] = 0;
@@ -105,18 +105,18 @@ String CopyString(String& string, IAllocator* pAlloc) {
 
 // ***********************************************************************
 
-String AllocString(usize length, IAllocator* pAlloc) {
+String AllocString(usize length, Arena* pArena) {
     String s;
-    s.pData = (byte*)pAlloc->Allocate(length * sizeof(byte));
+	s.pData = New(pArena, byte, length + 1);
     s.length = length;
     return s;
 }
 
 // ***********************************************************************
 
-void FreeString(String& string, IAllocator* pAlloc) {
+void FreeString(String& string) {
     if (string.pData) {
-        pAlloc->Free(string.pData);
+		RawFree(string.pData);
         string.pData = nullptr;
         string.length = 0;
     }

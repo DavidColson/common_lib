@@ -11,7 +11,7 @@ if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_CXX_COMPILER_ID MATCHES "Clang")
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-rtti")
 elseif(MSVC)
 	string(REPLACE "/EHsc" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /GR-")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Zc:preprocessor /GR-")
 endif()
 
 set(CMAKE_COMPILE_WARNING_AS_ERROR ON)
@@ -38,8 +38,6 @@ set(SOURCES
 	"source/json.h"
 	"source/light_string.cpp"
 	"source/light_string.h"
-	"source/linear_allocator.cpp"
-	"source/linear_allocator.h"
 	"source/log.cpp"
 	"source/log.h"
 	"source/maths.cpp"

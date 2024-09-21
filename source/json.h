@@ -41,10 +41,8 @@ struct JsonValue {
 
     void Append(JsonValue& value);
 
-    void Free();
-
     Type type;
-    IAllocator* pAllocator { nullptr };
+    Arena* pArena { nullptr };
     union {
         f64 floatNumber { 0.0f };
         HashMap<String, JsonValue> object;
@@ -55,5 +53,5 @@ struct JsonValue {
     };
 };
 
-JsonValue ParseJsonFile(String file, IAllocator* pAllocator = &g_Allocator);
+JsonValue ParseJsonFile(Arena* pArena, String file);
 String SerializeJsonValue(JsonValue json);

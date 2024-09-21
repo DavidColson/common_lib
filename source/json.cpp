@@ -51,14 +51,14 @@ struct Token {
 
 // ***********************************************************************
 
-ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
+ResizableArray<Token> TokenizeJson(Arena* pArena, String jsonText) {
     Scan::ScanningState scan;
     scan.pTextStart = jsonText.pData;
     scan.pTextEnd = jsonText.pData + jsonText.length;
     scan.pCurrent = (byte*)scan.pTextStart;
     scan.line = 1;
 
-    ResizableArray<Token> tokens(pAllocator);
+    ResizableArray<Token> tokens(pArena);
 
     while (!Scan::IsAtEnd(scan)) {
         byte c = Scan::Advance(scan);
@@ -98,12 +98,12 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
 
             // String literals
             case '\'': {
-                String string = ParseString(pAllocator, scan, '\'');
+                String string = ParseString(pArena, scan, '\'');
                 tokens.PushBack(Token { TokenType::String, string });
                 break;
             }
             case '"': {
-                String string = ParseString(pAllocator, scan, '"');
+                String string = ParseString(pArena, scan, '"');
                 tokens.PushBack(Token { TokenType::String, string });
                 break;
             }
@@ -133,7 +133,7 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
                     else if (identifier == "null")
                         tokens.PushBack(Token { TokenType::Null });
                     else {
-                        identifier = CopyCStringRange(loc, scan.pCurrent, pAllocator);
+                        identifier = CopyCStringRange(loc, scan.pCurrent, pArena);
                         tokens.PushBack(Token { TokenType::Identifier, identifier });
                     }
                 }
@@ -147,26 +147,26 @@ ResizableArray<Token> TokenizeJson(IAllocator* pAllocator, String jsonText) {
 // ***********************************************************************
 
 HashMap<String, JsonValue> ParseObject(
-    IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken);
+    Arena* pArena, ResizableArray<Token>& tokens, int& currentToken);
 ResizableArray<JsonValue> ParseArray(
-    IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken);
+    Arena* pArena, ResizableArray<Token>& tokens, int& currentToken);
 
-JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken) {
+JsonValue ParseValue(Arena* pArena, ResizableArray<Token>& tokens, int& currentToken) {
     Token& token = tokens[currentToken];
 
     switch (token.type) {
         case TokenType::LeftBrace: {
             JsonValue v;
-            v.pAllocator = pAllocator;
-            v.object = ParseObject(pAllocator, tokens, currentToken);
+            v.pArena = pArena;
+            v.object = ParseObject(pArena, tokens, currentToken);
             v.type = JsonValue::Type::Object;
             return v;
             break;
         }
         case TokenType::LeftBracket: {
             JsonValue v;
-            v.pAllocator = pAllocator;
-            v.array = ParseArray(pAllocator, tokens, currentToken);
+            v.pArena = pArena;
+            v.array = ParseArray(pArena, tokens, currentToken);
             v.type = JsonValue::Type::Array;
             return v;
             break;
@@ -174,9 +174,8 @@ JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int&
         case TokenType::String: {
             currentToken++;
             JsonValue v;
-            v.pAllocator = pAllocator;
-            v.string =
-                token.stringOrIdentifier;  // TODO: Potential copy required if tokens are freed
+            v.pArena = pArena;
+            v.string = token.stringOrIdentifier;  // TODO: Potential copy required if tokens are freed
             v.type = JsonValue::Type::String;
             return v;
             break;
@@ -214,12 +213,12 @@ JsonValue ParseValue(IAllocator* pAllocator, ResizableArray<Token>& tokens, int&
 // ***********************************************************************
 
 HashMap<String, JsonValue> ParseObject(
-    IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken) {
+    Arena* pArena, ResizableArray<Token>& tokens, int& currentToken) {
     currentToken++;  // Advance over opening brace
 
     // TODO: This should construct an empty jsonValue as an object and fill the map in in place, so
     // there is no need to deep copy the map
-    HashMap<String, JsonValue> map(pAllocator);
+    HashMap<String, JsonValue> map(pArena);
     while (currentToken < (int)tokens.count
            && tokens[currentToken].type != TokenType::RightBrace) {
         // We expect,
@@ -238,7 +237,7 @@ HashMap<String, JsonValue> ParseObject(
 
         // String, Number, Boolean, Null
         // If left bracket or brace encountered, skip until closing
-        map[key] = ParseValue(pAllocator, tokens, currentToken);
+        map[key] = ParseValue(pArena, tokens, currentToken);
 
         // Comma, or right brace
         if (tokens[currentToken].type == TokenType::RightBrace)
@@ -254,15 +253,15 @@ HashMap<String, JsonValue> ParseObject(
 // ***********************************************************************
 
 ResizableArray<JsonValue> ParseArray(
-    IAllocator* pAllocator, ResizableArray<Token>& tokens, int& currentToken) {
+    Arena* pArena, ResizableArray<Token>& tokens, int& currentToken) {
     currentToken++;  // Advance over opening bracket
 
-    ResizableArray<JsonValue> array(pAllocator);
+    ResizableArray<JsonValue> array(pArena);
     while (currentToken < (int)tokens.count
            && tokens[currentToken].type != TokenType::RightBracket) {
         // We expect,
         // String, Number, Boolean, Null
-        array.PushBack(ParseValue(pAllocator, tokens, currentToken));
+        array.PushBack(ParseValue(pArena, tokens, currentToken));
 
         // Comma, or right brace
         if (tokens[currentToken].type == TokenType::RightBracket)
@@ -283,23 +282,6 @@ ResizableArray<JsonValue> ParseArray(
 
 JsonValue::JsonValue() {
     type = Type::Null;
-}
-
-// ***********************************************************************
-
-void JsonValue::Free() {
-    if (type == Type::Object) {
-        object.Free([this](HashNode<String, JsonValue>& node) {
-            FreeString(node.key, pAllocator);
-            node.value.Free();
-        });
-    }
-    if (type == Type::Array) {
-        array.Free([](JsonValue& value) { value.Free(); });
-    }
-    if (type == Type::String) {
-        FreeString(string, pAllocator);
-    }
 }
 
 // ***********************************************************************
@@ -432,12 +414,11 @@ JsonValue JsonValue::NewArray() {
 
 // ***********************************************************************
 
-JsonValue ParseJsonFile(String file, IAllocator* pAllocator) {
-    ResizableArray<Token> tokens = TokenizeJson(pAllocator, file);
+JsonValue ParseJsonFile(Arena* pArena, String file) {
+    ResizableArray<Token> tokens = TokenizeJson(pArena, file);
 
     int firstToken = 0;
-    JsonValue json5 = ParseValue(pAllocator, tokens, firstToken);
-    tokens.Free();
+    JsonValue json5 = ParseValue(pArena, tokens, firstToken);
     return json5;
 }
 
@@ -515,8 +496,8 @@ void SerializeJsonInternal(JsonValue json, StringBuilder& builder, int indentCou
 
 // ***********************************************************************
 
-String SerializeJsonValue(IAllocator* pAllocator, JsonValue json) {
-    StringBuilder builder(pAllocator);
+String SerializeJsonValue(Arena* pArena, JsonValue json) {
+    StringBuilder builder(pArena);
     SerializeJsonInternal(json, builder, 0);
-    return builder.CreateString(true, pAllocator);
+    return builder.CreateString(pArena, true);
 }

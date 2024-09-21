@@ -37,12 +37,11 @@ struct String {
     String SubStr(size start, size len = -1);
 };
 
-String CopyCString(const byte* string, IAllocator* pAlloc = &g_Allocator);
+String CopyCString(const byte* string, Arena* pArena);
 
-String CopyCStringRange(byte* start, byte* end, IAllocator* pAlloc = &g_Allocator);
+String CopyCStringRange(byte* start, byte* end, Arena* pArena);
 
-String CopyString(String& string, IAllocator* pAlloc = &g_Allocator);
+String CopyString(String& string, Arena* pArena);
 
-String AllocString(usize length, IAllocator* pAlloc = &g_Allocator);
+String AllocString(usize length, Arena* pArena);
 
-void FreeString(String& string, IAllocator* pAlloc = &g_Allocator);

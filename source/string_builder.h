@@ -15,12 +15,12 @@ struct IAllocator;
 typedef char* va_list;
 
 struct StringBuilder {
-    char* pData = nullptr;
-    usize length = 0;
-    usize capacity = 0;
-    IAllocator* pAlloc { nullptr };
+    char* pData { nullptr };
+    usize length { 0 };
+    usize capacity { 0 };
+    Arena* pArena { nullptr };
 
-    StringBuilder(IAllocator* _pAlloc = &g_Allocator);
+    StringBuilder(Arena* pArena);
 
     void AppendChars(const char* str, usize len);
 
@@ -32,7 +32,7 @@ struct StringBuilder {
 
     void AppendFormat(const char* format, ...);
 
-    String CreateString(bool reset = true, IAllocator* _pAlloc = &g_Allocator);
+    String CreateString(Arena* pArena, bool reset = true);
 
     String ToExistingString(bool reset, String& destination);
 

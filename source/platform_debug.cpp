@@ -65,21 +65,23 @@ usize CollectStackTrace(void** stackFramesArray, usize arraySize, usize framesTo
 
 // ***********************************************************************
 
-String PrintStackTraceToString(void** stackFramesArray, usize nframes, IAllocator* pAlloc) {
+String PrintStackTraceToString(void** stackFramesArray, usize nframes, Arena* pArena) {
+	Assert(pArena);
+
     WinHandle process = GetCurrentProcess();
     SymInitialize(process, nullptr, true);
 
     // We allocate space for the symbol info and space for the name string
     SYMBOL_INFO* symbol;
-    symbol = (SYMBOL_INFO*)pAlloc->Allocate(sizeof(SYMBOL_INFO) + 256 * sizeof(byte));
+    symbol = (SYMBOL_INFO*)ArenaAlloc(pArena, sizeof(SYMBOL_INFO) + 256 * sizeof(byte), alignof(byte), false);
     memset(symbol, 0, sizeof(SYMBOL_INFO) + 256 * sizeof(byte));
     symbol->MaxNameLen = 255;
     symbol->SizeOfStruct = sizeof(SYMBOL_INFO);
     u32 displacement;
 
-    ResizableArray<String> stackFuncs(pAlloc);
-    ResizableArray<String> stackFiles(pAlloc);
-    ResizableArray<usize> stackLines(pAlloc);
+    ResizableArray<String> stackFuncs(pArena);
+    ResizableArray<String> stackFiles(pArena);
+    ResizableArray<usize> stackLines(pArena);
 
     usize longestName = 0;
     for (u32 j = 0; j < nframes - 6; j++) {
@@ -94,25 +96,18 @@ String PrintStackTraceToString(void** stackFramesArray, usize nframes, IAllocato
         if (len > longestName)
             longestName = len;
 
-        stackFuncs.PushBack(CopyCString(symbol->Name, pAlloc));
-        stackFiles.PushBack(CopyCString(line.FileName, pAlloc));
+        stackFuncs.PushBack(CopyCString(symbol->Name, pArena));
+        stackFiles.PushBack(CopyCString(line.FileName, pArena));
         stackLines.PushBack(line.LineNumber);
     }
 
-    StringBuilder builder(pAlloc);
+    StringBuilder builder(pArena);
     for (u32 j = 0; j < nframes - 6; j++) {
         builder.AppendFormat(" %-*s %s:%d\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
     }
-    String output = builder.CreateString(true, pAlloc);
-
-    stackFuncs.Free([&pAlloc](String& str) {
-        FreeString(str, pAlloc);
-    });
-    stackFiles.Free([&pAlloc](String& str) {
-        FreeString(str, pAlloc);
-    });
-    stackLines.Free();
+    String output = builder.CreateString(pArena, true);
     return output;
 }
+
 }
 #endif

@@ -4,7 +4,7 @@
 
 #include "types.h"
 
-struct IAllocator;
+struct Arena;
 struct String;
 
 namespace Scan {
@@ -52,7 +52,7 @@ bool IsAlpha(char c);
 
 bool IsAlphaNumeric(char c);
 
-String ParseString(IAllocator* pAllocator, ScanningState& scan, byte bound);
+String ParseString(Arena* pArena, ScanningState& scan, byte bound);
 
 f64 ParseNumber(ScanningState& scan);
 

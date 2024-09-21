@@ -3,8 +3,10 @@
 #include "scanning.h"
 
 #include "light_string.h"
+#include "memory.h"
 
 #include <ctype.h>
+#include <stdlib.h>
 
 // Scanning utilities
 ///////////////////////
@@ -76,7 +78,7 @@ bool Scan::IsAlphaNumeric(char c) {
 
 // ***********************************************************************
 
-String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, byte bound) {
+String ParseStringSlow(Arena* pArena, Scan::ScanningState& scan, byte bound) {
     byte* start = scan.pCurrent;
     byte* pos = start;
     while (*pos != bound && !Scan::IsAtEnd(scan)) {
@@ -138,22 +140,22 @@ String ParseStringSlow(IAllocator* pAllocator, Scan::ScanningState& scan, byte b
 
     scan.pCurrent = cursor;
 
-    String result = CopyCStringRange(outputString, pos, pAllocator);
+    String result = CopyCStringRange(outputString, pos, pArena);
     delete outputString;
     return result;
 }
 
 // ***********************************************************************
 
-String Scan::ParseString(IAllocator* pAllocator, Scan::ScanningState& scan, byte bound) {
+String Scan::ParseString(Arena* pArena, Scan::ScanningState& scan, byte bound) {
     byte* start = scan.pCurrent;
     while (*(scan.pCurrent) != bound && !Scan::IsAtEnd(scan)) {
         if (*(scan.pCurrent++) == '\\') {
             scan.pCurrent = start;
-            return ParseStringSlow(pAllocator, scan, bound);
+            return ParseStringSlow(pArena, scan, bound);
         }
     }
-    String result = CopyCStringRange(start, scan.pCurrent, pAllocator);
+    String result = CopyCStringRange(start, scan.pCurrent, pArena);
     scan.pCurrent++;
     return result;
 }

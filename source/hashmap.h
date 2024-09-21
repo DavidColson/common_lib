@@ -163,23 +163,18 @@ struct HashNode {
 
 // Hashmap data structure
 // -----------------------
-// Open addressing to reduce memory allocs and improve cache coherency, requires manual freeing
+// Open addressing to reduce memory allocs and improve cache coherency
 // TODO Documentation etca
 
 template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {
-    HashNode<K, V>* pTable { nullptr };
+    HashNode<K, V>* pTable{nullptr};
     KF keyFuncs;
-    size tableSize { 0 };
-    size count { 0 };
-    IAllocator* pAlloc { nullptr };
+    size tableSize{0};
+    size count{0};
+	Arena* pArena{nullptr};
 
-    HashMap(IAllocator* _pAlloc = &g_Allocator);
-
-    void Free();
-
-    template<typename F>
-    void Free(F&& freeNode);
+    HashMap(Arena* pArena);
 
     V& Add(const K& key, const V& value);
 

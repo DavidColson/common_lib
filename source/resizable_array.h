@@ -7,22 +7,16 @@
 
 // Resizable Array Structure
 // -----------------------
-// Must be freed manually
 // ... todo documentation, examples, reasoning etc
 
 template<typename Type>
 struct ResizableArray {
-    Type* pData { nullptr };
-    size count { 0 };
-    size capacity { 0 };
-    IAllocator* pAlloc { nullptr };
+    Type* pData{nullptr};
+    size count{0};
+    size capacity{0};
+	Arena* pArena{nullptr};
 
-    inline ResizableArray(IAllocator* _pAlloc = &g_Allocator);
-
-    void Free();
-
-    template<typename F>
-    void Free(F&& freeElement);
+    inline ResizableArray(Arena* _pArena);
 
     void Resize(size desiredCount);
 
