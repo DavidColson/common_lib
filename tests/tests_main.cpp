@@ -38,8 +38,8 @@ void HashMapTest() {
     StartTest("HashMap Test");
     int errorCount = 0;
     {
-		Arena arena{};
-        HashMap<int, int> testMap(&arena);
+		Arena* pArena = ArenaCreate();
+        HashMap<int, int> testMap(pArena);
 
         testMap.Add(1337, 22);
         testMap.Add(52, 21);
@@ -69,7 +69,7 @@ void HashMapTest() {
         VERIFY(testMap.Get(12) == nullptr);
         VERIFY(testMap.Get(87) == nullptr);
 
-        HashMap<String, int> testMap2(&arena);
+        HashMap<String, int> testMap2(pArena);
 
         testMap2.GetOrAdd("Dave") = 27;
         testMap2.GetOrAdd("Lucy") = 27;
@@ -84,7 +84,7 @@ void HashMapTest() {
         VERIFY(testMap2["Mark"] == 30);
 
         // Test rehashing
-        HashMap<int, int> testMap3(&arena);
+        HashMap<int, int> testMap3(pArena);
 
         srand(7);
         for (int i = 100; i > 0; i--) {
@@ -98,7 +98,7 @@ void HashMapTest() {
         VERIFY(testMap3.count == 100);
 
         // Testing some other common key types
-        HashMap<f32, int> floatMap(&arena);
+        HashMap<f32, int> floatMap(pArena);
         floatMap[28.31f] = 1337;
         floatMap[4.1231f] = 1338;
         floatMap[0.78f] = 1339;
@@ -106,7 +106,7 @@ void HashMapTest() {
         VERIFY(floatMap[4.1231f] == 1338);
         VERIFY(floatMap[0.78f] == 1339);
 
-        HashMap<char, int> charMap(&arena);
+        HashMap<char, int> charMap(pArena);
         charMap['c'] = 1337;
         charMap['8'] = 1338;
         charMap['U'] = 1339;
@@ -114,7 +114,7 @@ void HashMapTest() {
         VERIFY(charMap['8'] == 1338);
         VERIFY(charMap['U'] == 1339);
 
-        HashMap<const char*, int> cStringMap(&arena);
+        HashMap<const char*, int> cStringMap(pArena);
         cStringMap["Ducks"] = 1337;
         cStringMap["Cars"] = 1338;
         cStringMap["Hats"] = 1339;
@@ -127,7 +127,7 @@ void HashMapTest() {
         arr[1] = 2;
         arr[2] = 1;
 
-        HashMap<int*, int> pointerMap(&arena);
+        HashMap<int*, int> pointerMap(pArena);
         pointerMap[arr] = 1337;
         pointerMap[arr + 1] = 1338;
         pointerMap[arr + 2] = 1339;
@@ -140,7 +140,7 @@ void HashMapTest() {
         CustomKeyType two { 4, 1 };
         CustomKeyType three { 3, 8 };
 
-        HashMap<CustomKeyType, int> customMap(&arena);
+        HashMap<CustomKeyType, int> customMap(pArena);
         customMap[one] = 1337;
         customMap[two] = 1338;
         customMap[three] = 1339;
@@ -148,7 +148,7 @@ void HashMapTest() {
         VERIFY(customMap[two] == 1338);
         VERIFY(customMap[three] == 1339);
 
-		ArenaFinished(&arena);
+		ArenaFinished(pArena);
     }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);
@@ -158,7 +158,7 @@ void StringTest() {
     StartTest("String Test");
     int errorCount = 0;
     {
-		Arena arena{};
+		Arena* pArena = ArenaCreate();
 
         String emptyStr;
         VERIFY(emptyStr.pData == nullptr);
@@ -173,32 +173,32 @@ void StringTest() {
         VERIFY(str != "Hello World");
         VERIFY(str.length == 7);
 
-        String copy = CopyCString("Ducks are cool", &arena);
+        String copy = CopyCString("Ducks are cool", pArena);
         VERIFY(copy == "Ducks are cool");
         VERIFY(copy.length == 14);
 
-        String copy2 = CopyString(str, &arena);
+        String copy2 = CopyString(str, pArena);
         VERIFY(copy2 == "Hi Dave");
         VERIFY(copy2.length == 7);
 
-        String allocated = AllocString(copy.length * sizeof(char), &arena);
+        String allocated = AllocString(copy.length * sizeof(char), pArena);
         memcpy(allocated.pData, copy.pData, copy.length * sizeof(char));
         VERIFY(allocated == copy);
         VERIFY(allocated != str);
         VERIFY(allocated.length == 14);
 
         // String Builder, for dynamically constructing strings
-        StringBuilder builder(&arena);
+        StringBuilder builder(pArena);
         builder.Append("Hello world");
         builder.AppendFormat(" my name is %s", "David");
         builder.AppendChars(" and this is my code bloop", 20);
 
-        String builtString = builder.CreateString(&arena);
+        String builtString = builder.CreateString(pArena);
         VERIFY(builtString == "Hello world my name is David and this is my code");
         VERIFY(builtString != "Ducks");
         VERIFY(builtString.length == 48);
 
-		ArenaFinished(&arena);
+		ArenaFinished(pArena);
     }
 
     errorCount += ReportMemoryLeaks();
@@ -209,8 +209,8 @@ void ResizableArrayTest() {
     StartTest("ResizableArray Test");
     int errorCount = 0;
     {
-		Arena arena{};
-        ResizableArray<int> testArray(&arena);
+		Arena* pArena = ArenaCreate();
+        ResizableArray<int> testArray(pArena);
 
         // Reserve memory
         testArray.Reserve(2);
@@ -279,7 +279,7 @@ void ResizableArrayTest() {
         VERIFY(testArray.count == 3);
         VERIFY(testArray.capacity == 50);
 
-		ArenaFinished(&arena);
+		ArenaFinished(pArena);
     }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);
@@ -289,29 +289,29 @@ void ArenaTest() {
     StartTest("Arena Test");
     int errorCount = 0;
     {
-        Arena davesArena{};
+        Arena* pArena = ArenaCreate();
 
         // No freeing required!
-        ResizableArray<int> myArray(&davesArena);
+        ResizableArray<int> myArray(pArena);
         for (int i = 0; i < 3000; i++) {
             myArray.PushBack(i);
         }
 
-        HashMap<int, int> testMap(&davesArena);
+        HashMap<int, int> testMap(pArena);
         srand(7);
         for (int i = 100; i > 0; i--) {
             testMap.Add(rand(), i);
         }
 
-        ResizableArray<String> myStringArray(&davesArena);
+        ResizableArray<String> myStringArray(pArena);
         for (int i = 0; i < 1000; i++) {
-            StringBuilder builder(&davesArena);
+            StringBuilder builder(pArena);
             builder.AppendFormat("Hello %i", i);
-            myStringArray.PushBack(builder.CreateString(&davesArena, true));
-            myStringArray.PushBack(CopyCString("world", &davesArena));
+            myStringArray.PushBack(builder.CreateString(pArena, true));
+            myStringArray.PushBack(CopyCString("world", pArena));
         }
 
-        ArenaFinished(&davesArena);
+        ArenaFinished(pArena);
     }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);
@@ -321,7 +321,7 @@ void JsonTest() {
     StartTest("Json Test");
     int errorCount = 0;
     {
-		Arena arena{};
+		Arena* pArena = ArenaCreate();
         const char* json =
             "{\"widget\": {"
             "\"debug\": \"on\","
@@ -352,7 +352,7 @@ void JsonTest() {
 
         String jsonString;
         jsonString = json;
-        JsonValue v = ParseJsonFile(&arena, jsonString);
+        JsonValue v = ParseJsonFile(pArena, jsonString);
 
         VERIFY(v["widget"]["debug"].ToString() == "on");
         VERIFY(v["widget"]["window"]["width"].ToInt() == 500);
@@ -378,7 +378,7 @@ void JsonTest() {
         // JsonValue tankFile = ParseJsonFile(&gAllocator, fileContents);
         // defer(tankFile.Free());
         // bool validGltf = tankFile["asset"]["version"].ToString() == "2.0";
-		ArenaFinished(&arena);
+		ArenaFinished(pArena);
     }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);
@@ -400,7 +400,7 @@ void SortTest() {
     int errorCount = 0;
 
     {
-		Arena arena{};
+		Arena* pArena = ArenaCreate();
 
         int sorted[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
         VERIFY(IsSorted(sorted, 9));
@@ -412,7 +412,7 @@ void SortTest() {
         VERIFY(IsSorted(unsorted, 8));
 
         srand(22);
-        ResizableArray<int> randomArray(&arena);
+        ResizableArray<int> randomArray(pArena);
         for (int i = 0; i < 1024; i++) {
             randomArray.PushBack(rand());
         }
@@ -421,7 +421,7 @@ void SortTest() {
         VERIFY(IsSorted(randomArray.pData, randomArray.count));
 
         srand(21);
-        ResizableArray<float> randomFloats(&arena);
+        ResizableArray<float> randomFloats(pArena);
         for (int i = 0; i < 1024; i++) {
             float x = (float)rand() / (float)(RAND_MAX / 100.0f);
             randomFloats.PushBack(x);
@@ -446,7 +446,7 @@ void SortTest() {
 
         Sort(custom, 5, SortByHeight());
         VERIFY(IsSorted(custom, 5, SortByHeight()));
-		ArenaFinished(&arena);
+		ArenaFinished(pArena);
     }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);
@@ -498,9 +498,9 @@ void StackTest() {
     StartTest("Stack");
     int errorCount = 0;
     {
-		Arena arena{};
+		Arena* pArena = ArenaCreate();
 
-        Stack<float> stack(&arena);
+        Stack<float> stack(pArena);
 
         stack.Push(7);
         stack.Push(8);
@@ -527,7 +527,7 @@ void StackTest() {
         VERIFY(stack[-2] == 17);
         VERIFY(stack[-1] == 19);
 
-		ArenaFinished(&arena);
+		ArenaFinished(pArena);
     }
     errorCount += ReportMemoryLeaks();
     EndTest(errorCount);

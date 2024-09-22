@@ -24,13 +24,14 @@ struct Arena {
 	u8* pAddressLimit;
 };
 
-// cleared once per frame
-static Arena gArenaTemp;
+// Global shared arena's. You must create and release these yourself
+// TODO: I think for safest usage, there should be no use of these inside commonlib itself, always take an arena param so the 
+// application can decide how to use these
+// In fact you might want to move these pointers outside commonlib entirely
+static Arena* g_pArenaFrame;
+static Arena* g_pArenaPermenant;
 
-// cleared on program shutdown
-static Arena gArenaPermenant;
-
-void ArenaInit(Arena* pArena, i64 defaultReserve = DEFAULT_RESERVE);
+Arena* ArenaCreate(i64 defaultReserve = DEFAULT_RESERVE);
 void ArenaReset(Arena* pArena);
 void ArenaFinished(Arena* pArena);
 void ArenaExpandCommitted(Arena* pArena, u8* pDesiredEnd);
@@ -64,9 +65,10 @@ void* RawAlloc(i64 size, bool uninitialized = false);
 void* RawRealloc(void* ptr, i64 size, i64 oldSize, bool uninitialized = false);
 void RawFree(void* ptr);
 
-#define RawNew2(pArena, type) (type*)RawAlloc(sizeof(type))
-#define RawNew3(pArena, type, count) (type*)RawAlloc(sizeof(type)*count)
-#define RawNew4(pArena, type, count, uninit) (type*)RawAlloc(pArena, sizeof(type)*count, uninit)
+#define RawNew1(type) (type*)RawAlloc(sizeof(type))
+#define RawNew2(type, count) (type*)RawAlloc(sizeof(type)*count)
+#define RawNew3(type, count, uninit) (type*)RawAlloc(sizeof(type)*count, uninit)
+#define Get4thArg(a,b,c,d,...) d
 
 // As with Arena's this macro should be used as much as possible for raw allocations
-#define RawNew(...) Get5thArg(__VA_ARGS__,New4,New3,New2)(__VA_ARGS__)
+#define RawNew(...) Get4thArg(__VA_ARGS__,RawNew3,RawNew2,RawNew1)(__VA_ARGS__)

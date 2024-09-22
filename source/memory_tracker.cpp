@@ -22,19 +22,21 @@ struct Allocation {
 };
 
 struct MemoryTrackerState {
+	Arena* pArena;
     HashMap<void*, Allocation> allocationTable;
 };
 
 namespace {
-Arena* g_pTrackingMemory;
 MemoryTrackerState* g_pCtx { nullptr };
 };
 
 // ***********************************************************************
 
 void InitContext() {
-    g_pCtx = RawNew(g_pTrackingMemory, MemoryTrackerState);
-    g_pCtx->allocationTable.pArena = g_pTrackingMemory;
+	Arena* pArena = ArenaCreate();
+    g_pCtx = New(pArena, MemoryTrackerState);
+	g_pCtx->pArena = pArena;
+    g_pCtx->allocationTable.pArena = pArena;
 }
 
 // ***********************************************************************
@@ -91,9 +93,9 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, usize size, 
 // ***********************************************************************
 
 void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, usize newFreeTraceFrames) {
-    String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pTrackingMemory);
-    String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, g_pTrackingMemory);
-    String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, g_pTrackingMemory);
+    String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pCtx->pArena);
+    String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, g_pCtx->pArena);
+    String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, g_pCtx->pArena);
 
     Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
     __debugbreak();
@@ -153,7 +155,7 @@ int ReportMemoryLeaks() {
             Allocation& alloc = g_pCtx->allocationTable.pTable[i].value;
             if (alloc.isLive && !alloc.notALeak) {
                 leakCounter++;
-                String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pTrackingMemory);
+                String trace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pCtx->pArena);
                 Log::Warn(" ------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n%s", alloc.pointer, alloc.size, trace.pData);
             }
         }

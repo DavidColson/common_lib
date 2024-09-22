@@ -61,27 +61,39 @@ u8* AlignPtr(u8* toAlign, usize alignment) {
 
 // ***********************************************************************
 
-void ArenaInit(Arena* pArena, i64 defaultReserve) {
+Arena* ArenaCreate(i64 defaultReserve) {
 	SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
-    pArena->pageSize = sysInfo.dwPageSize;
 
-    pArena->reserveSize = Align(defaultReserve, pArena->pageSize);
-    pArena->pMemoryBase = (u8*)VirtualAlloc(nullptr, pArena->reserveSize, MEM_RESERVE, PAGE_READWRITE);
-    Assert(pArena->pMemoryBase != nullptr);
+    i64 reserveSize = Align(defaultReserve, sysInfo.dwPageSize);
+    u8* pMemory = (u8*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
+
+	// commit the first page for the header
+    usize firstPageSize = Align(sizeof(Arena), sysInfo.dwPageSize);
+    VirtualAlloc(pMemory, firstPageSize, MEM_COMMIT, PAGE_READWRITE);
+
+    Assert(pMemory != nullptr);
 
 #ifdef MEMORY_TRACKING
-	CheckMalloc(this, pArena->pMemoryBase, pArena->reserveSize);
+	CheckMalloc(this, pMemory, reserveSize);
 #endif
 
-    pArena->pFirstUncommittedPage = pArena->pMemoryBase;
-    pArena->pAddressLimit = pArena->pMemoryBase + pArena->reserveSize;
+	Arena* pArena = (Arena*)pMemory; 
+
+	pArena->pageSize = sysInfo.dwPageSize;
+	pArena->reserveSize = reserveSize;
+	pArena->pMemoryBase = pMemory + sizeof(Arena);
+    pArena->pFirstUncommittedPage = pMemory + firstPageSize;
+    pArena->pAddressLimit = pMemory + pArena->reserveSize;
     pArena->pCurrentHead = pArena->pMemoryBase;
+	return pArena;
 }
 
 // ***********************************************************************
 
 void ArenaReset(Arena* pArena) {
+	Assert(pArena);
+
 	if (pArena->pMemoryBase == nullptr)
         return;
 
@@ -95,17 +107,21 @@ void ArenaReset(Arena* pArena) {
 // ***********************************************************************
 
 void ArenaFinished(Arena* pArena) {
+	Assert(pArena);
+
 	if (pArena->pMemoryBase != nullptr) {
 #ifdef MEMORY_TRACKING
-        CheckFree(this, pArena->pMemoryBase);
+        CheckFree(this, pArena);
 #endif
-        VirtualFree(pArena->pMemoryBase, 0, MEM_RELEASE);
+        VirtualFree(pArena, 0, MEM_RELEASE);
     }
 }
 
 // ***********************************************************************
 
 void ArenaExpandCommitted(Arena* pArena, u8* pDesiredEnd) {
+	Assert(pArena);
+
 	usize currentSpace = pArena->pFirstUncommittedPage - pArena->pMemoryBase;
     usize requiredSpace = pDesiredEnd - pArena->pFirstUncommittedPage;
     Assert(requiredSpace > 0);
@@ -127,9 +143,6 @@ void* ArenaAlloc(Arena* pArena, i64 size, i64 align, bool uninitialized) {
 
 	void* pMemory = nullptr;
 
-	if (pArena->pMemoryBase == nullptr)
-		ArenaInit(pArena);
-
 	pMemory = AlignPtr(pArena->pCurrentHead, align);
 	u8* pEnd = (u8*)pMemory + size;
 
@@ -149,9 +162,6 @@ void* ArenaAlloc(Arena* pArena, i64 size, i64 align, bool uninitialized) {
 
 void* ArenaRealloc(Arena* pArena, void* ptr, i64 size, i64 oldSize, i64 align, bool uninitialized) {
 	Assert(pArena);
-
-	if (pArena->pMemoryBase == nullptr)
-		ArenaInit(pArena);
 
 	// easiest case, reduction in size, just give it back what it asked for
 	// we memset the unused memory now to prevent use after frees

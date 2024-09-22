@@ -48,7 +48,7 @@ void PushLogMessage(LogLevel level, String message) {
         void* trace[100];
         usize frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
 
-        String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames, &gArenaTemp);
+        String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames, g_pArenaFrame);
         if (g_config.fileOutput) {
             fprintf(g_pLogFile, stackTrace.pData);
             fflush(g_pLogFile);
@@ -85,7 +85,7 @@ void Log::SetLogLevel(LogLevel level) {
 // ***********************************************************************
 
 void Log::Crit(const char* text, ...) {
-    StringBuilder builder(&gArenaTemp);
+    StringBuilder builder(g_pArenaFrame);
     if (!g_config.silencePrefixes) builder.Append("[CRITICAL] ");
     va_list arguments;
     va_start(arguments, text);
@@ -93,14 +93,14 @@ void Log::Crit(const char* text, ...) {
     va_end(arguments);
     builder.Append("\n");
 
-    String message = builder.CreateString(&gArenaTemp);
+    String message = builder.CreateString(g_pArenaFrame);
     PushLogMessage(LogLevel::ECrit, message);
 }
 
 // ***********************************************************************
 
 void Log::Warn(const char* text, ...) {
-    StringBuilder builder(&gArenaTemp);
+    StringBuilder builder(g_pArenaFrame);
 	if (!g_config.silencePrefixes) builder.Append("[WARNING] ");
     va_list arguments;
     va_start(arguments, text);
@@ -108,14 +108,14 @@ void Log::Warn(const char* text, ...) {
     va_end(arguments);
     builder.Append("\n");
 
-    String message = builder.CreateString(&gArenaTemp);
+    String message = builder.CreateString(g_pArenaFrame);
     PushLogMessage(LogLevel::EWarn, message);
 }
 
 // ***********************************************************************
 
 void Log::Info(const char* text, ...) {
-    StringBuilder builder(&gArenaTemp);
+    StringBuilder builder(g_pArenaFrame);
 	if (!g_config.silencePrefixes) builder.Append("[INFO] ");
     va_list arguments;
     va_start(arguments, text);
@@ -123,14 +123,14 @@ void Log::Info(const char* text, ...) {
     va_end(arguments);
     builder.Append("\n");
 
-    String message = builder.CreateString(&gArenaTemp);
+    String message = builder.CreateString(g_pArenaFrame);
     PushLogMessage(LogLevel::EInfo, message);
 }
 
 // ***********************************************************************
 
 void Log::Debug(const char* text, ...) {
-    StringBuilder builder(&gArenaTemp);
+    StringBuilder builder(g_pArenaFrame);
 	if (!g_config.silencePrefixes) builder.Append("[DEBUG] ");
     va_list arguments;
     va_start(arguments, text);
@@ -138,7 +138,7 @@ void Log::Debug(const char* text, ...) {
     va_end(arguments);
     builder.Append("\n");
 
-    String message = builder.CreateString(&gArenaTemp);
+    String message = builder.CreateString(g_pArenaFrame);
     PushLogMessage(LogLevel::EDebug, message);
 }
 
@@ -146,12 +146,12 @@ void Log::Debug(const char* text, ...) {
 
 void Log::_Assertion(bool expression, const char* message) {
     if (!expression) {
-		StringBuilder builder(&gArenaTemp);
+		StringBuilder builder(g_pArenaFrame);
 		if (!g_config.silencePrefixes) builder.Append("[ASSERT FAIL] ");
         builder.Append(message);
         builder.Append("\n");
 
-        String output = builder.CreateString(&gArenaTemp);
+        String output = builder.CreateString(g_pArenaFrame);
         PushLogMessage(LogLevel::EAssert, output);
     }
 }

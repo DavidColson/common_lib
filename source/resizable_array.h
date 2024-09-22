@@ -16,7 +16,7 @@ struct ResizableArray {
     size capacity{0};
 	Arena* pArena{nullptr};
 
-    inline ResizableArray(Arena* _pArena);
+    ResizableArray(Arena* _pArena = nullptr);
 
     void Resize(size desiredCount);
 
