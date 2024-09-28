@@ -46,6 +46,9 @@ WIN(void*) VirtualAlloc(void* lpAddress, usize dwSize, u32 flAllocationType, u32
 WIN(u32) VirtualFree(void* lpAddress,usize dwSize, u32 dwFreeType);
 }
 
+Arena* g_pArenaFrame = nullptr;
+Arena* g_pArenaPermenant = nullptr;
+
 // ***********************************************************************
 
 usize Align(usize toAlign, usize alignment) {

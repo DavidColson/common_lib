@@ -28,8 +28,8 @@ struct Arena {
 // TODO: I think for safest usage, there should be no use of these inside commonlib itself, always take an arena param so the 
 // application can decide how to use these
 // In fact you might want to move these pointers outside commonlib entirely
-static Arena* g_pArenaFrame;
-static Arena* g_pArenaPermenant;
+extern Arena* g_pArenaFrame;
+extern Arena* g_pArenaPermenant;
 
 Arena* ArenaCreate(i64 defaultReserve = DEFAULT_RESERVE);
 void ArenaReset(Arena* pArena);
