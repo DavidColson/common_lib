@@ -12,7 +12,7 @@
 // and is fully POD, trivially copyable
 
 struct String {
-    byte* pData = nullptr;
+	char* pData = nullptr;
     size length = 0;
 
     // TODOs
@@ -22,17 +22,17 @@ struct String {
 
     String() {}
 
-    String(const byte* str);
+    String(const char* str);
 
-    void operator=(const byte* str);
+    void operator=(const char* str);
 
     bool operator==(const String& other) const;
 
-    bool operator==(const byte* other) const;
+    bool operator==(const char* other) const;
 
     bool operator!=(const String& other) const;
 
-    bool operator!=(const byte* other) const;
+    bool operator!=(const char* other) const;
 
     String SubStr(size start, size len = -1);
 };
