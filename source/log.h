@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "types.h"
-
 struct String;
 
 namespace Log {

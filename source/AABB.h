@@ -2,9 +2,6 @@
 
 #pragma once
 
-#include "matrix.h"
-#include "vec3.h"
-
 template<typename T>
 struct AABB {
     Vec3<T> min;

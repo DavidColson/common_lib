@@ -1,13 +1,5 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "scanning.h"
-
-#include "light_string.h"
-#include "memory.h"
-
-#include <ctype.h>
-#include <stdlib.h>
-
 // Scanning utilities
 ///////////////////////
 
@@ -78,20 +70,20 @@ bool Scan::IsAlphaNumeric(char c) {
 
 // ***********************************************************************
 
-String ParseStringSlow(Arena* pArena, Scan::ScanningState& scan, byte bound) {
-    byte* start = scan.pCurrent;
-    byte* pos = start;
+String ParseStringSlow(Arena* pArena, Scan::ScanningState& scan, char bound) {
+    char* start = scan.pCurrent;
+    char* pos = start;
     while (*pos != bound && !Scan::IsAtEnd(scan)) {
         pos++;
     }
-    usize count = pos - start;
-    byte* outputString = new byte[count * 2];  // to allow for escape chars TODO: Convert to Mallloc
+    u64 count = pos - start;
+    char* outputString = new char[count * 2];  // to allow for escape chars TODO: Convert to Mallloc
     pos = outputString;
 
-    byte* cursor = scan.pCurrent;
+    char* cursor = scan.pCurrent;
 
-    for (usize i = 0; i < count; i++) {
-        byte c = *(cursor++);
+    for (u64 i = 0; i < count; i++) {
+        char c = *(cursor++);
 
         // Disallowed characters
         switch (c) {
@@ -105,7 +97,7 @@ String ParseStringSlow(Arena* pArena, Scan::ScanningState& scan, byte bound) {
         }
 
         if (c == '\\') {
-            byte next = *(cursor++);
+            char next = *(cursor++);
             switch (next) {
                 // Convert basic escape sequences to their actual characters
                 case '\'': *pos++ = '\''; break;
@@ -147,8 +139,8 @@ String ParseStringSlow(Arena* pArena, Scan::ScanningState& scan, byte bound) {
 
 // ***********************************************************************
 
-String Scan::ParseString(Arena* pArena, Scan::ScanningState& scan, byte bound) {
-    byte* start = scan.pCurrent;
+String Scan::ParseString(Arena* pArena, Scan::ScanningState& scan, char bound) {
+    char* start = scan.pCurrent;
     while (*(scan.pCurrent) != bound && !Scan::IsAtEnd(scan)) {
         if (*(scan.pCurrent++) == '\\') {
             scan.pCurrent = start;
@@ -164,7 +156,7 @@ String Scan::ParseString(Arena* pArena, Scan::ScanningState& scan, byte bound) {
 
 f64 Scan::ParseNumber(Scan::ScanningState& scan) {
     scan.pCurrent -= 1;  // Go back to get the first digit or symbol
-    byte* start = scan.pCurrent;
+    char* start = scan.pCurrent;
 
     // Hex number
     if (Scan::Peek(scan) == '0' && (Scan::PeekNext(scan) == 'x' || Scan::PeekNext(scan) == 'X')) {
@@ -176,7 +168,7 @@ f64 Scan::ParseNumber(Scan::ScanningState& scan) {
     }
     // Normal number
     else {
-        byte c = Scan::Peek(scan);
+        char c = Scan::Peek(scan);
         while (Scan::IsDigit(c) || c == '+' || c == '-' || c == '.' || c == 'E' || c == 'e') {
             Scan::Advance(scan);
             c = Scan::Peek(scan);

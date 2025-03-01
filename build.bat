@@ -1,10 +1,8 @@
 @echo off
 setlocal
 
-:: TODO: allow release builds with a param
-SET ScriptPath=%~dp0
-SET BuildPath=%ScriptPath%\intermediate\
+if not exist build mkdir build
 
-cmake -S %ScriptPath% -B %BuildPath%
-cmake --build %BuildPath%
-
+pushd build
+cl ..\tests\tests_main.cpp /I ..\source /Zc:preprocessor /Od /Zi /std:c++17 /link /out:common_lib_tests.exe
+popd

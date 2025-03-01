@@ -1,65 +1,19 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "memory.h"
-
-#include "log.h"
-#include "memory_tracker.h"
-
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <cstdlib>
-
-// Windows defines
-// ***********************************************************************
-
-extern "C" {
-#define WIN(r) __declspec(dllimport) r __stdcall
-
-typedef struct _SYSTEM_INFO {
-    union {
-        u32 dwOemId;          // Obsolete field...do not use
-        struct {
-            u16 wProcessorArchitecture;
-            u16 wReserved;
-        } DUMMYSTRUCTNAME;
-    } DUMMYUNIONNAME;
-    u32 dwPageSize;
-    void* lpMinimumApplicationAddress;
-    void* lpMaximumApplicationAddress;
-    u32* dwActiveProcessorMask;
-    u32 dwNumberOfProcessors;
-    u32 dwProcessorType;
-    u32 dwAllocationGranularity;
-    u16 wProcessorLevel;
-    u16 wProcessorRevision;
-} SYSTEM_INFO, *LPSYSTEM_INFO;
-
-WIN(void) GetSystemInfo(LPSYSTEM_INFO lpSystemInfo);
-
-#define MEM_COMMIT                      0x00001000  
-#define MEM_RESERVE                     0x00002000  
-#define MEM_RELEASE                     0x00008000  
-#define PAGE_READWRITE          0x04 
-
-WIN(void*) VirtualAlloc(void* lpAddress, usize dwSize, u32 flAllocationType, u32 flProtect);
-WIN(u32) VirtualFree(void* lpAddress,usize dwSize, u32 dwFreeType);
-}
-
 Arena* g_pArenaFrame = nullptr;
 Arena* g_pArenaPermenant = nullptr;
 
 // ***********************************************************************
 
-usize Align(usize toAlign, usize alignment) {
+u64 Align(u64 toAlign, u64 alignment) {
     // Rounds up to nearest multiple of alignment (works if alignment is power of 2)
     return (toAlign + alignment - 1) & ~(alignment - 1);
 }
 
 // ***********************************************************************
 
-u8* AlignPtr(u8* toAlign, usize alignment) {
-    return (u8*)Align(usize(toAlign), alignment);
+u8* AlignPtr(u8* toAlign, u64 alignment) {
+    return (u8*)Align(u64(toAlign), alignment);
 }
 
 // ***********************************************************************
@@ -72,7 +26,7 @@ Arena* ArenaCreate(i64 defaultReserve) {
     u8* pMemory = (u8*)VirtualAlloc(nullptr, reserveSize, MEM_RESERVE, PAGE_READWRITE);
 
 	// commit the first page for the header
-    usize firstPageSize = Align(sizeof(Arena), sysInfo.dwPageSize);
+    u64 firstPageSize = Align(sizeof(Arena), sysInfo.dwPageSize);
     VirtualAlloc(pMemory, firstPageSize, MEM_COMMIT, PAGE_READWRITE);
 
     Assert(pMemory != nullptr);
@@ -125,12 +79,12 @@ void ArenaFinished(Arena* pArena) {
 void ArenaExpandCommitted(Arena* pArena, u8* pDesiredEnd) {
 	Assert(pArena);
 
-	usize currentSpace = pArena->pFirstUncommittedPage - pArena->pMemoryBase;
-    usize requiredSpace = pDesiredEnd - pArena->pFirstUncommittedPage;
+	u64 currentSpace = pArena->pFirstUncommittedPage - pArena->pMemoryBase;
+    u64 requiredSpace = pDesiredEnd - pArena->pFirstUncommittedPage;
     Assert(requiredSpace > 0);
 	Assert(requiredSpace < pArena->reserveSize); // block runaway memory leaks
 
-    usize size = Align(requiredSpace, pArena->pageSize);
+    u64 size = Align(requiredSpace, pArena->pageSize);
     VirtualAlloc(pArena->pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
 #ifdef MEMORY_TRACKING
     CheckRealloc(this, pArena->pMemoryBase, pArena->pMemoryBase, currentSpace + size, currentSpace);

@@ -2,14 +2,12 @@
 
 #pragma once
 
-#include "types.h"
-
-void* MallocWrap(usize size);
-void* ReallocWrap(void* ptr, usize size, usize oldSize);
+void* MallocWrap(u64 size);
+void* ReallocWrap(void* ptr, u64 size, u64 oldSize);
 void FreeWrap(void* ptr);
 
-void CheckMalloc(void* pAllocatorPtr, void* pAllocated, usize size);
-void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, usize size, usize oldSize);
+void CheckMalloc(void* pAllocatorPtr, void* pAllocated, u64 size);
+void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, u64 size, u64 oldSize);
 void CheckFree(void* pAllocatorPtr, void* ptr);
 
 void MarkNotALeak(void* ptr);

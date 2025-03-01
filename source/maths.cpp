@@ -1,9 +1,5 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "maths.h"
-
-#include <stdlib.h>
-
 // ***********************************************************************
 
 f64 generateGaussian(f64 mean, f64 stdDev) {

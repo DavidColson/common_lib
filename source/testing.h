@@ -2,13 +2,11 @@
 
 #pragma once
 
-#include <stdio.h>
-
 // Testing helpers
 // ------------------
 // .... todo documentation, examples etc
 
-void StartTest(const byte* testName) {
+void StartTest(const char* testName) {
     printf("Starting test: %s\n", testName);
 }
 
@@ -21,7 +19,7 @@ void EndTest(int errorCount) {
     return;
 }
 
-bool _verify(bool expression, int& errorCount, const byte* file, int line, const byte* msg) {
+bool _verify(bool expression, int& errorCount, const char* file, int line, const char* msg) {
     if (!expression) {
         errorCount++;
         printf("FAIL: %s(%i): %s\n", file, line, msg);

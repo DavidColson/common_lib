@@ -1,17 +1,25 @@
 
-#include "stack.inl"
-#include "defer.h"
-#include "hashmap.inl"
-#include "json.h"
-#include "light_string.h"
-#include "log.h"
-#include "resizable_array.inl"
-#include "sort.h"
-#include "string_builder.h"
-#include "testing.h"
-#include "memory_tracker.h"
+#pragma warning (disable : 5105)
+#include "Windows.h"
+#include "dbghelp.h"
+#undef min
+#undef max
+#pragma comment(lib, "gdi32")
+#pragma comment(lib, "kernel32")
+#pragma comment(lib, "psapi")
+#pragma comment(lib, "dbghelp")
 
+#include <math.h>
+#include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
+#include <stdarg.h>
+#include <ctype.h>
+#include <stdint.h>
+
+#include "common_lib.h"
+#include "common_lib.cpp"
+
 // ---------------------
 // Tests
 // ---------------------

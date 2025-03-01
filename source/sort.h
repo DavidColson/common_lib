@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "types.h"
-
 template<typename Type>
 struct SortAscending {
     bool operator()(const Type& a, const Type& b) {
@@ -50,12 +48,12 @@ void QSortRecursive(Type* pData, i64 low, i64 high, Comparison cmp) {
 }
 
 template<typename Type, typename Comparison = SortAscending<Type>>
-void Sort(Type* pData, usize count, Comparison cmp = Comparison()) {
+void Sort(Type* pData, u64 count, Comparison cmp = Comparison()) {
     QSortRecursive(pData, 0, count - 1, cmp);
 }
 
 template<typename Type, typename Comparison = SortAscending<Type>>
-bool IsSorted(Type* pData, usize count, Comparison cmp = Comparison()) {
+bool IsSorted(Type* pData, u64 count, Comparison cmp = Comparison()) {
     if (count > 0) {
         for (int i = 0; i < count - 1; i++) {
             if (cmp(pData[i], pData[i + 1])) {

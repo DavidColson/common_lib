@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "types.h"
-
 struct Arena;
 struct String;
 
@@ -52,7 +50,7 @@ bool IsAlpha(char c);
 
 bool IsAlphaNumeric(char c);
 
-String ParseString(Arena* pArena, ScanningState& scan, byte bound);
+String ParseString(Arena* pArena, ScanningState& scan, char bound);
 
 f64 ParseNumber(ScanningState& scan);
 

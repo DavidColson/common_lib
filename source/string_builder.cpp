@@ -1,16 +1,9 @@
-#include "string_builder.h"
-
-#include "light_string.h"
-
-#include <stdarg.h>
-#include <string.h>
-#include <stdio.h>
 
 StringBuilder::StringBuilder(Arena* _pArena) {
     pArena = _pArena;
 }
 
-void StringBuilder::AppendChars(const char* str, usize len) {
+void StringBuilder::AppendChars(const char* str, u64 len) {
     Reserve(GrowCapacity(length + len + 1));
     memcpy(pData + length, str, len);
     length += len;
@@ -18,7 +11,7 @@ void StringBuilder::AppendChars(const char* str, usize len) {
 }
 
 void StringBuilder::Append(const char* str) {
-    usize addedLength = strlen(str);
+    u64 addedLength = strlen(str);
     AppendChars(str, addedLength);
 }
 
@@ -78,18 +71,18 @@ void StringBuilder::Reset() {
     }
 }
 
-void StringBuilder::Reserve(usize desiredCapacity) {
+void StringBuilder::Reserve(u64 desiredCapacity) {
     if (capacity >= desiredCapacity)
         return;
-    pData = (char*)ArenaRealloc(pArena, pData, desiredCapacity * sizeof(byte), capacity * sizeof(byte), alignof(byte));
+    pData = (char*)ArenaRealloc(pArena, pData, desiredCapacity * sizeof(char), capacity * sizeof(char), alignof(char));
     capacity = desiredCapacity;
 }
 
-usize StringBuilder::GrowCapacity(usize atLeastSize) const {
+u64 StringBuilder::GrowCapacity(u64 atLeastSize) const {
     // if we're big enough already, don't grow, otherwise f64,
     // and if that's not enough just use atLeastSize
     if (capacity > atLeastSize)
         return capacity;
-    usize newCapacity = capacity ? capacity * 2 : 8;
+    u64 newCapacity = capacity ? capacity * 2 : 8;
     return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 }

@@ -2,9 +2,6 @@
 
 #pragma once
 
-#include "types.h"
-#include "memory.h"
-
 // String Class
 // --------------------
 // NOT null terminated string
@@ -13,7 +10,7 @@
 
 struct String {
 	char* pData = nullptr;
-    size length = 0;
+    i64 length = 0;
 
     // TODOs
     // [ ] contains/nocase
@@ -34,14 +31,14 @@ struct String {
 
     bool operator!=(const char* other) const;
 
-    String SubStr(size start, size len = -1);
+    String SubStr(i64 start, i64 len = -1);
 };
 
-String CopyCString(const byte* string, Arena* pArena);
+String CopyCString(const char* string, Arena* pArena);
 
-String CopyCStringRange(byte* start, byte* end, Arena* pArena);
+String CopyCStringRange(char* start, char* end, Arena* pArena);
 
 String CopyString(String& string, Arena* pArena);
 
-String AllocString(usize length, Arena* pArena);
+String AllocString(u64 length, Arena* pArena);
 

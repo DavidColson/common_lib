@@ -2,12 +2,10 @@
 
 #pragma once
 
-#include "memory.h"
-
 struct String;
 
 namespace PlatformDebug {
-usize CollectStackTrace(void** stackFramesArray, usize arraySize, usize framesToSkip = 0);
+u64 CollectStackTrace(void** stackFramesArray, u64 arraySize, u64 framesToSkip = 0);
 
-String PrintStackTraceToString(void** stackFramesArray, usize nframes, Arena* pArena);
+String PrintStackTraceToString(void** stackFramesArray, u64 nframes, Arena* pArena);
 }

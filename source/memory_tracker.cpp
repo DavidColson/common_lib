@@ -1,24 +1,15 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "memory_tracker.h"
-
-#include "defer.h"
-#include "light_string.h"
-#include "log.h"
-#include "platform_debug.h"
-#include "resizable_array.h"
-#include "hashmap.inl"
-
 struct Allocation {
     void* pointer { nullptr };
     void* pAllocator { nullptr };
-    usize size { 0 };
+    u64 size { 0 };
     bool isLive { false };
 	bool notALeak { false };
     void* allocStackTrace[100];
-    usize allocStackTraceFrames { 0 };
+    u64 allocStackTraceFrames { 0 };
     void* freeStackTrace[100];
-    usize freeStackTraceFrames { 0 };
+    u64 freeStackTraceFrames { 0 };
 };
 
 struct MemoryTrackerState {
@@ -41,7 +32,7 @@ void InitContext() {
 
 // ***********************************************************************
 
-void CheckMalloc(void* pAllocatorPtr, void* pAllocated, usize size) {
+void CheckMalloc(void* pAllocatorPtr, void* pAllocated, u64 size) {
     if (g_pCtx == nullptr)
         InitContext();
 
@@ -56,7 +47,7 @@ void CheckMalloc(void* pAllocatorPtr, void* pAllocated, usize size) {
 
 // ***********************************************************************
 
-void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, usize size, usize oldSize) {
+void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, u64 size, u64 oldSize) {
     if (g_pCtx == nullptr)
         InitContext();
 
@@ -92,7 +83,7 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, usize size, 
 
 // ***********************************************************************
 
-void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, usize newFreeTraceFrames) {
+void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, u64 newFreeTraceFrames) {
     String allocTrace = PlatformDebug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pCtx->pArena);
     String trace = PlatformDebug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, g_pCtx->pArena);
     String trace2 = PlatformDebug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, g_pCtx->pArena);
@@ -120,7 +111,7 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 
         if (!alloc->isLive) {
             void* stackTrace[100];
-            usize stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
+            u64 stackFrames = PlatformDebug::CollectStackTrace(stackTrace, 100);
             ReportDoubleFree(*alloc, stackTrace, stackFrames);
         }
 

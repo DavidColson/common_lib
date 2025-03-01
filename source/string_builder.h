@@ -2,8 +2,6 @@
 
 #pragma once
 
-#include "memory.h"
-
 // String Builder
 // ---------------------
 // A dynamic char buffer used to construct strings
@@ -16,13 +14,13 @@ typedef char* va_list;
 
 struct StringBuilder {
     char* pData { nullptr };
-    usize length { 0 };
-    usize capacity { 0 };
+    u64 length { 0 };
+    u64 capacity { 0 };
     Arena* pArena { nullptr };
 
     StringBuilder(Arena* pArena);
 
-    void AppendChars(const char* str, usize len);
+    void AppendChars(const char* str, u64 len);
 
     void Append(const char* str);
 
@@ -38,7 +36,7 @@ struct StringBuilder {
 
     void Reset();
 
-    void Reserve(usize desiredCapacity);
+    void Reserve(u64 desiredCapacity);
 
-    usize GrowCapacity(usize atLeastSize) const;
+    u64 GrowCapacity(u64 atLeastSize) const;
 };

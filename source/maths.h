@@ -2,10 +2,6 @@
 
 #pragma once
 
-#include "types.h"
-
-#include <math.h>
-
 #define PI 3.141592653589793238f
 #define PI2 6.283185307179586476f
 
@@ -20,7 +16,7 @@ inline i32 mod_floor(i32 a, i32 n) {
     return ((a % n) + n) % n;
 }
 
-inline i32 mod_floor(i32 a, usize n) {
+inline i32 mod_floor(i32 a, u64 n) {
     return mod_floor(a, (i32)n);
 }
 

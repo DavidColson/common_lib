@@ -2,16 +2,14 @@
 
 #pragma once
 
-#include "types.h"
-
 // ************************************************
 // Arenas
 // ************************************************
 
-#define DEFAULT_RESERVE 268435456  // 256 megabytes
+#define DEFAULT_RESERVE 268435456  // 256 megas
 
-usize Align(usize toAlign, usize alignment);
-u8* AlignPtr(u8* toAlign, usize alignment);
+u64 Align(u64 toAlign, u64 alignment);
+u8* AlignPtr(u8* toAlign, u64 alignment);
 
 struct Arena {
 	const char* name;
@@ -55,7 +53,7 @@ void* ArenaRealloc(Arena* arena, void* ptr, i64 newSize, i64 oldSize, i64 align,
 // ************************************************
 
 struct NewWrapper {};
-inline void* operator new(usize, NewWrapper, void* ptr) {
+inline void* operator new(u64, NewWrapper, void* ptr) {
     return ptr;
 }
 inline void operator delete(void*, NewWrapper, void*) {}

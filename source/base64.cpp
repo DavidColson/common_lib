@@ -1,10 +1,6 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "base64.h"
-
-#include "light_string.h"
-
-static const ubyte encodingTable[65] =
+static const u8 encodingTable[65] =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
 
 static i32 modTable[] = { 0, 2, 1 };
@@ -12,16 +8,16 @@ static i32 modTable[] = { 0, 2, 1 };
 // ***********************************************************************
 
 String DecodeBase64(Arena* pArena, String const& encodedString) {
-    ubyte decodingTable[256];
+    u8 decodingTable[256];
 
-    for (usize i = 0; i < sizeof(encodingTable) - 1; i++)
-        decodingTable[encodingTable[i]] = (ubyte)i;
+    for (u64 i = 0; i < sizeof(encodingTable) - 1; i++)
+        decodingTable[encodingTable[i]] = (u8)i;
     decodingTable['='] = 0;
 
-    const ubyte* input = (ubyte*)encodedString.pData;
-    usize inputLength = encodedString.length;
+    const u8* input = (u8*)encodedString.pData;
+    u64 inputLength = encodedString.length;
 
-    usize count = 0;
+    u64 count = 0;
     for (int i = 0; i < inputLength; i++) {
         if (decodingTable[input[i]] != 0x80)
             count++;
@@ -32,16 +28,16 @@ String DecodeBase64(Arena* pArena, String const& encodedString) {
         return String();
     }
 
-    usize outputlen = count / 4 * 3;
+    u64 outputlen = count / 4 * 3;
 
-    ubyte* output = New(pArena, ubyte, outputlen);
-    ubyte* position = output;
+    u8* output = New(pArena, u8, outputlen);
+    u8* position = output;
 
     for (int i = 0; i < inputLength; i += 4) {
-        ubyte a = decodingTable[input[i]] & 0xFF;
-        ubyte b = decodingTable[input[i + 1]] & 0xFF;
-        ubyte c = decodingTable[input[i + 2]] & 0xFF;
-        ubyte d = decodingTable[input[i + 3]] & 0xFF;
+        u8 a = decodingTable[input[i]] & 0xFF;
+        u8 b = decodingTable[input[i + 1]] & 0xFF;
+        u8 c = decodingTable[input[i + 2]] & 0xFF;
+        u8 d = decodingTable[input[i + 3]] & 0xFF;
 
         *position++ = a << 2 | (b & 0x30) >> 4;
         if (c != 0x40)
@@ -54,19 +50,19 @@ String DecodeBase64(Arena* pArena, String const& encodedString) {
     if (input[inputLength - 2] == '=') outputlen--;
 
     String result;
-    result.pData = (byte*)output;
+    result.pData = (char*)output;
     result.length = outputlen;
     return result;
 }
 
 // ***********************************************************************
 
-String EncodeBase64(Arena* pArena, usize length, const ubyte* bytes) {
-    usize outputLength = 4 * ((length + 2) / 3);  // 3-ubyte blocks to 4-ubyte
+String EncodeBase64(Arena* pArena, u64 length, const u8* bytes) {
+    u64 outputLength = 4 * ((length + 2) / 3);  // 3-u8 blocks to 4-u8
 
     if (outputLength < length)
         return String();  // integer overflow
-    ubyte* output = New(pArena, ubyte, outputLength);
+    u8* output = New(pArena, u8, outputLength);
 
     for (int i = 0, j = 0; i < length;) {
         uint32_t octet_a = i < length ? (unsigned char)bytes[i++] : 0;
@@ -85,7 +81,7 @@ String EncodeBase64(Arena* pArena, usize length, const ubyte* bytes) {
         output[outputLength - 1 - i] = '=';
 
     String result;
-    result.pData = (byte*)output;
+    result.pData = (char*)output;
     result.length = outputLength;
     return result;
 }

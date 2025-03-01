@@ -1,10 +1,5 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
-
 #pragma once
-
-#include "hashmap.h"
-#include "light_string.h"
-#include "resizable_array.h"
 
 struct JsonValue {
     enum class Type {
@@ -34,10 +29,10 @@ struct JsonValue {
     bool ToBool() const;
 
     JsonValue& operator[](String identifier);
-    JsonValue& operator[](usize index);
+    JsonValue& operator[](u64 index);
 
     JsonValue& Get(String identifier);
-    JsonValue& Get(usize index);
+    JsonValue& Get(u64 index);
 
     void Append(JsonValue& value);
 

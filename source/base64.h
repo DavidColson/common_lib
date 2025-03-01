@@ -2,10 +2,8 @@
 
 #pragma once
 
-#include "memory.h"
-
 struct String;
 
 String DecodeBase64(Arena* pArena, String const& encodedString);
 
-String EncodeBase64(Arena* pArena, usize length, const ubyte* bytes);
+String EncodeBase64(Arena* pArena, u64 length, const u8* bytes);

@@ -1,23 +1,5 @@
 // Copyright 2020-2022 David Colson. All rights reserved.
 
-#include "log.h"
-
-#include "defer.h"
-#include "platform_debug.h"
-#include "string_builder.h"
-#include "light_string.h"
-
-#include <stdio.h>
-#include <stdarg.h>
-
-// Windows defines
-// ***********************************************************************
-
-extern "C" {
-#define WIN(r) __declspec(dllimport) r __stdcall
-WIN(void) OutputDebugStringA(const char* lpOutputString);
-}
-
 // ***********************************************************************
 
 namespace Log {
@@ -46,7 +28,7 @@ void PushLogMessage(LogLevel level, String message) {
 
     if (level <= Log::ECrit) {
         void* trace[100];
-        usize frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
+        u64 frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
 
         String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames, g_pArenaFrame);
         if (g_config.fileOutput) {
