@@ -337,9 +337,7 @@ bool JsonValue::HasKey(String identifier) {
 // ***********************************************************************
 
 int JsonValue::Count() const {
-    ASSERT(
-           type == Type::Array || type == Type::Object,
-           "Attempting to treat this value as an array or object when it is not.");
+    ASSERT( type == Type::Array || type == Type::Object, "Attempting to treat this value as an array or object when it is not.");
     if (type == Type::Array)
         return (int)array.count;
     else
@@ -357,9 +355,7 @@ JsonValue& JsonValue::operator[](String identifier) {
 
 JsonValue& JsonValue::operator[](u64 index) {
     ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
-    ASSERT(
-           array.count > index,
-           "Accessing an element that does not exist in this array, you probably need to append");
+    ASSERT( array.count > index, "Accessing an element that does not exist in this array, you probably need to append");
     return array[index];
 }
 
@@ -374,9 +370,7 @@ JsonValue& JsonValue::Get(String identifier) {
 
 JsonValue& JsonValue::Get(u64 index) {
     ASSERT(type == Type::Array, "Attempting to treat this value as an array when it is not.");
-    ASSERT(
-           array.count > index,
-           "Accessing an element that does not exist in this array, you probably need to append");
+    ASSERT( array.count > index, "Accessing an element that does not exist in this array, you probably need to append");
     return array[index];
 }
 

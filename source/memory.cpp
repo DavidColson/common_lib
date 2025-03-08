@@ -79,8 +79,8 @@ void ArenaFinished(Arena* pArena) {
 void ArenaExpandCommitted(Arena* pArena, u8* pDesiredEnd) {
 	Assert(pArena);
 
-	u64 currentSpace = pArena->pFirstUncommittedPage - pArena->pMemoryBase;
-    u64 requiredSpace = pDesiredEnd - pArena->pFirstUncommittedPage;
+	i64 currentSpace = pArena->pFirstUncommittedPage - pArena->pMemoryBase;
+    i64 requiredSpace = pDesiredEnd - pArena->pFirstUncommittedPage;
     Assert(requiredSpace > 0);
 	Assert(requiredSpace < pArena->reserveSize); // block runaway memory leaks
 
