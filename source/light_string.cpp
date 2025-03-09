@@ -87,7 +87,7 @@ i64 String::Find(String substr) {
 		// found
 		if (k==substr.length) return j;
 	}
-	return -1;
+	return length;
 }
 
 // ***********************************************************************

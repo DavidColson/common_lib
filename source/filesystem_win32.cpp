@@ -48,6 +48,52 @@ bool MakeDirectory(String path, bool makeAll) {
 
 // ***********************************************************************
 
+bool RemoveFileOrDirectory(String path) {
+	// remove file or directory
+	DWORD dwAttrib = GetFileAttributes(path.pData);
+	if (dwAttrib == INVALID_FILE_ATTRIBUTES)
+		return false;
+
+	if (dwAttrib & FILE_ATTRIBUTE_DIRECTORY) {
+		// recursively delete directory
+		WIN32_FIND_DATA findFileData;
+		HANDLE hFind;
+
+		StringBuilder builder(g_pArenaFrame);
+		builder.Append(path);
+		builder.Append("/");
+		builder.Append("*");
+		hFind = FindFirstFile(builder.CreateString(g_pArenaFrame).pData, &findFileData);
+		
+		// directory is empty
+		if (hFind == INVALID_HANDLE_VALUE) {
+			return RemoveDirectory(path.pData) != 0;
+		}
+
+		do {
+			String item = findFileData.cFileName;
+
+			if (item != "." && item != "..") {
+				StringBuilder fullPathBuilder(g_pArenaFrame);
+				fullPathBuilder.Append(path);
+				fullPathBuilder.Append("/");
+				fullPathBuilder.Append(item);
+				RemoveFileOrDirectory(fullPathBuilder.CreateString(g_pArenaFrame));
+			}
+		} while (FindNextFile(hFind, &findFileData));
+
+		FindClose(hFind);
+		return RemoveDirectory(path.pData) != 0;
+	}
+	else {
+		// delete file
+		return DeleteFile(path.pData) != 0;
+	}
+	return false;
+}
+
+// ***********************************************************************
+
 struct File {
 	HANDLE handle;
 };

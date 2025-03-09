@@ -4,6 +4,7 @@
 bool FileExists(String filePath);
 bool FolderExists(String folderPath);
 bool MakeDirectory(String path);
+bool RemoveFileOrDirectory(String path);
 
 
 // file IO

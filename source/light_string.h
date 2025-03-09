@@ -35,7 +35,7 @@ struct String {
 
     String SubStr(i64 start, i64 len = -1);
 	
-	// find substr in self, returns the index it was found, or -1
+	// find substr in self, returns the index it was found, or length
 	i64 Find(String substr);
 };
 
