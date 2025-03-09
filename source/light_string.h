@@ -34,6 +34,9 @@ struct String {
     char operator[](i64 index) const;
 
     String SubStr(i64 start, i64 len = -1);
+	
+	// find substr in self, returns the index it was found, or -1
+	i64 Find(String substr);
 };
 
 String CopyCString(const char* string, Arena* pArena);

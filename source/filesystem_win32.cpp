@@ -19,6 +19,35 @@ bool FolderExists(String folderPath) {
 
 // ***********************************************************************
 
+bool MakeDirectory(String path, bool makeAll) {
+	if (makeAll) {
+		char folderToTest[MAX_PATH]; 
+		memset(folderToTest, 0, MAX_PATH * sizeof(char));
+
+		String subPath = path;
+		i64 end = subPath.Find("/");
+		while(subPath.length > 0) {
+			strncpy(folderToTest, path.pData, end);
+			if (!CreateDirectory(folderToTest, nullptr)) {
+				DWORD err = GetLastError();
+				if (err != ERROR_ALREADY_EXISTS) {
+					return false;
+				}
+			}
+			subPath = path.SubStr(end, path.length-end);
+			end = end + subPath.Find("/");
+		}
+	}
+	else {
+		if (!CreateDirectory(path.pData, nullptr)) {
+			return false;
+		}
+	}
+	return true;
+}
+
+// ***********************************************************************
+
 struct File {
 	HANDLE handle;
 };

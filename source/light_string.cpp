@@ -73,6 +73,25 @@ String String::SubStr(i64 start, i64 len) {
 
 // ***********************************************************************
 
+i64 String::Find(String substr) {
+	if (substr.length == 0) return -1;
+
+	for(i64 i = 0; i < length; i++) {
+		i64 j = i; // index into self
+		i64 k = 0; // index into substr
+		while(j < length && k < substr.length && pData[j] == substr.pData[k]) {
+			j++;
+			k++;
+		}
+
+		// found
+		if (k==substr.length) return j;
+	}
+	return -1;
+}
+
+// ***********************************************************************
+
 String CopyCString(const char* string, Arena* pArena) {
     String s;
     u64 len = strlen(string);
