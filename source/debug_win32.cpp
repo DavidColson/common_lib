@@ -2,7 +2,7 @@
 
 #ifdef _WIN32
 
-namespace PlatformDebug {
+namespace Debug {
 
 // ***********************************************************************
 

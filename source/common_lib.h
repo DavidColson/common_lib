@@ -12,7 +12,7 @@
 #include "json.h"
 #include "matrix.h"
 #include "memory_tracker.h"
-#include "platform_debug.h"
+#include "debug.h"
 #include "quat.h"
 #include "scanning.h"
 #include "sort.h"
@@ -24,3 +24,4 @@
 #include "vec3.h"
 #include "vec4.h"
 #include "AABB.h"
+#include "filesystem.h"

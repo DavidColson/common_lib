@@ -7,7 +7,10 @@
 #include "maths.cpp"
 #include "memory.cpp"
 #include "memory_tracker.cpp"
-#include "platform_debug.cpp"
 #include "scanning.cpp"
 #include "string_builder.cpp"
 
+#ifdef _WIN32
+#include "filesystem_win32.cpp"
+#include "debug_win32.cpp"
+#endif

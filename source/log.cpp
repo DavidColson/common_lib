@@ -28,9 +28,9 @@ void PushLogMessage(LogLevel level, String message) {
 
     if (level <= Log::ECrit) {
         void* trace[100];
-        u64 frames = PlatformDebug::CollectStackTrace(trace, 100, 2);
+        u64 frames = Debug::CollectStackTrace(trace, 100, 2);
 
-        String stackTrace = PlatformDebug::PrintStackTraceToString(trace, frames, g_pArenaFrame);
+        String stackTrace = Debug::PrintStackTraceToString(trace, frames, g_pArenaFrame);
         if (g_config.fileOutput) {
             fprintf(g_pLogFile, stackTrace.pData);
             fflush(g_pLogFile);
