@@ -94,6 +94,18 @@ bool RemoveFileOrDirectory(String path) {
 
 // ***********************************************************************
 
+bool CopyFile(String from, String to) {
+	return CopyFileA(from.pData, to.pData, true);
+}
+
+// ***********************************************************************
+
+bool MoveFile(String from, String to) {
+	return MoveFileA(from.pData, to.pData);
+}
+
+// ***********************************************************************
+
 struct File {
 	HANDLE handle;
 };

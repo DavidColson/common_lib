@@ -5,6 +5,8 @@ bool FileExists(String filePath);
 bool FolderExists(String folderPath);
 bool MakeDirectory(String path);
 bool RemoveFileOrDirectory(String path);
+bool CopyFile(String from, String to);
+bool MoveFile(String from, String to);
 
 
 // file IO
@@ -20,11 +22,11 @@ enum FileMode {
 };
 
 File OpenFile(String filename, FileMode mode);
+bool IsValid(File file);
 bool WriteToFile(File file, void* pData, i64 size);
 bool ReadFromFile(File file, void* pOutData, i64 sizeToRead);
 i64 GetFileSize(File file);
 void CloseFile(File file);
-bool IsValid(File file);
 
 // convenience functions
 char* ReadWholeFile(String filename, i64* outSize, Arena* pArena);
