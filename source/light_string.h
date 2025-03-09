@@ -31,6 +31,8 @@ struct String {
 
     bool operator!=(const char* other) const;
 
+    char operator[](i64 index) const;
+
     String SubStr(i64 start, i64 len = -1);
 };
 

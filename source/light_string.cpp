@@ -53,6 +53,12 @@ bool String::operator!=(const char* other) const {
 
 // ***********************************************************************
 
+char String::operator[](i64 index) const {
+	return pData[index];
+}
+
+// ***********************************************************************
+
 String String::SubStr(i64 start, i64 len) {
     String result;
     result.pData = pData + start;
