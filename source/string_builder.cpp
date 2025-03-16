@@ -86,3 +86,27 @@ u64 StringBuilder::GrowCapacity(u64 atLeastSize) const {
     u64 newCapacity = capacity ? capacity * 2 : 8;
     return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 }
+
+String StringPrint(Arena* pArena, const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+	
+	StringBuilder builder(g_pArenaFrame);
+	builder.AppendFormatInternal(format, args);
+	String result = builder.CreateString(pArena);
+
+    va_end(args);
+	return result;
+}
+
+String TempPrint(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+	
+	StringBuilder builder(g_pArenaFrame);
+	builder.AppendFormatInternal(format, args);
+	String result = builder.CreateString(g_pArenaFrame);
+
+    va_end(args);
+	return result;
+}

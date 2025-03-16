@@ -59,6 +59,12 @@ char String::operator[](i64 index) const {
 
 // ***********************************************************************
 
+char& String::operator[](i64 index) {
+	return pData[index];
+}
+
+// ***********************************************************************
+
 String String::SubStr(i64 start, i64 len) {
     String result;
     result.pData = pData + start;

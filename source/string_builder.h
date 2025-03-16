@@ -40,3 +40,7 @@ struct StringBuilder {
 
     u64 GrowCapacity(u64 atLeastSize) const;
 };
+
+// nice convenience functions for making strings easily
+String StringPrint(Arena* pArena, const char* format, ...);
+String TempPrint(const char* format, ...);

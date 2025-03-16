@@ -33,6 +33,8 @@ struct String {
 
     char operator[](i64 index) const;
 
+    char& operator[](i64 index);
+
     String SubStr(i64 start, i64 len = -1);
 	
 	// find substr in self, returns the index it was found, or length
