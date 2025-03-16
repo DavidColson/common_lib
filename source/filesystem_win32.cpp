@@ -224,3 +224,126 @@ bool WriteWholeFile(String filename, const void* pData, i64 size) {
 	}
 	return false;
 }
+
+// ***********************************************************************
+
+struct DirectoryWatchInfo {
+	String name;
+	OVERLAPPED overlapped;
+	HANDLE handle;
+	void* notifyBuffer;
+};
+
+struct FileWatcher {
+	Arena* pArena;
+	bool isRecursive;
+	i32 eventsToWatch;
+	ResizableArray<DirectoryWatchInfo*> directories;
+	FileWatcherCallback callback;
+};
+
+#define WATCHER_BUFFER_SIZE 8000
+
+// ***********************************************************************
+
+FileWatcher* FileWatcherCreate(FileWatcherCallback callback, i32 eventsToWatch, bool isRecursive) {
+	FileWatcher* pWatcher;
+	Arena* pArena = ArenaCreate();
+	pWatcher = New(pArena, FileWatcher);
+	pWatcher->pArena = pArena;
+
+	pWatcher->isRecursive = isRecursive;
+	pWatcher->eventsToWatch = eventsToWatch;
+	pWatcher->directories.pArena = pWatcher->pArena;
+	pWatcher->callback = callback;
+	return pWatcher;
+}
+
+// ***********************************************************************
+
+bool FileWatcherIssueRead(FileWatcher* pWatcher, DirectoryWatchInfo* pInfo) {
+	i32 notifyFilter = 0;
+	if (pWatcher->eventsToWatch & (FC_ADDED | FC_MOVED | FC_REMOVED)) {
+		notifyFilter |= FILE_NOTIFY_CHANGE_FILE_NAME | FILE_NOTIFY_CHANGE_DIR_NAME | FILE_NOTIFY_CHANGE_CREATION;
+	}
+	if (pWatcher->eventsToWatch & (FC_MODIFIED)) {
+		notifyFilter |= FILE_NOTIFY_CHANGE_SIZE | FILE_NOTIFY_CHANGE_LAST_WRITE;
+	}
+
+	bool result = ReadDirectoryChangesW(pInfo->handle,
+									 pInfo->notifyBuffer,
+									 WATCHER_BUFFER_SIZE,
+									 pWatcher->isRecursive,
+									 notifyFilter,
+									 nullptr,
+									 &pInfo->overlapped,
+									 nullptr);
+
+	if (result == false) {
+		Log::Info("Failing to watch directory");
+	}
+	return result;
+}
+
+// ***********************************************************************
+
+bool FileWatcherAddDirectory(FileWatcher* pWatcher, String path) {
+	String localString = CopyString(path, pWatcher->pArena);
+	HANDLE handle = CreateFile(localString.pData, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
+							 nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, nullptr);
+
+	if (handle == INVALID_HANDLE_VALUE) {
+		Log::Info("Failed to open handle to directory");
+	}
+
+	DirectoryWatchInfo* pInfo = New(pWatcher->pArena, DirectoryWatchInfo);
+	pInfo->name = localString;
+	pInfo->notifyBuffer = ArenaAlloc(pWatcher->pArena, WATCHER_BUFFER_SIZE, sizeof(DWORD));
+	pInfo->overlapped.hEvent = CreateEventW(nullptr, false, false, nullptr);
+	pInfo->overlapped.Offset = 0;
+	pInfo->handle = handle;
+
+	bool success = FileWatcherIssueRead(pWatcher, pInfo);
+
+	pWatcher->directories.PushBack(pInfo);
+	return success;
+}
+
+// ***********************************************************************
+
+void FileWatcherProcessChanges(FileWatcher* pWatcher) {
+    for (DirectoryWatchInfo* pInfo : pWatcher->directories) {
+		if (!HasOverlappedIoCompleted(&pInfo->overlapped)) continue;
+
+	  	DWORD bytesTransferred = 0;
+		bool success = GetOverlappedResult(pInfo->handle, &pInfo->overlapped, &bytesTransferred, FALSE); 
+
+		defer(FileWatcherIssueRead(pWatcher, pInfo));
+
+		if (!success || bytesTransferred == 0) continue;
+
+		FILE_NOTIFY_INFORMATION* pResults = (FILE_NOTIFY_INFORMATION*)pInfo->notifyBuffer;
+		while (true) {
+			FileChange change;
+			switch (pResults->Action) {
+				case FILE_ACTION_ADDED: change.event = FC_ADDED; break;
+				case FILE_ACTION_MODIFIED: change.event = FC_MODIFIED; break;
+				case FILE_ACTION_RENAMED_OLD_NAME: change.event = FileChangeEvent(FC_MOVED | FC_MOVED_FROM); break;
+				case FILE_ACTION_RENAMED_NEW_NAME: change.event = FileChangeEvent(FC_MOVED | FC_MOVED_TO); break;
+				case FILE_ACTION_REMOVED: change.event = FC_REMOVED; break;
+				default: change.event = FC_NONE;
+			}
+
+			i32 len = WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, nullptr, 0, nullptr, nullptr);
+			change.path = AllocString(len, pWatcher->pArena);
+			WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, change.path.pData, len, nullptr, nullptr);
+
+			pWatcher->callback(change);
+
+			// this was the last record
+			if (pResults->NextEntryOffset == 0) break;
+
+			pResults = (FILE_NOTIFY_INFORMATION*)(((char*)pResults) + pResults->NextEntryOffset);
+		}
+	}
+}

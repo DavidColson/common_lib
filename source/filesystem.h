@@ -8,7 +8,6 @@ bool RemoveFileOrDirectory(String path);
 bool CopyFile(String from, String to);
 bool MoveFile(String from, String to);
 
-
 // file IO
 struct File;
 
@@ -32,3 +31,25 @@ void CloseFile(File file);
 char* ReadWholeFile(String filename, i64* outSize, Arena* pArena);
 bool WriteWholeFile(String filename, const void* pData, i64 size);
 
+// Directory watcher
+struct FileWatcher;
+
+enum FileChangeEvent : i32 {
+	FC_NONE = 0,
+	FC_ADDED = 1 << 1,
+	FC_MODIFIED = 1 << 2,
+	FC_MOVED = 1 << 3,
+	FC_MOVED_FROM = 1 << 4,
+	FC_MOVED_TO = 1 << 5,
+	FC_REMOVED = 1 << 6,
+};
+
+struct FileChange {
+	String path;
+	FileChangeEvent event;
+};
+typedef void (*FileWatcherCallback)(FileChange);
+
+FileWatcher* FileWatcherCreate(FileWatcherCallback callback, i32 eventsToWatch, bool isRecursive);
+bool FileWatcherAddDirectory(FileWatcher* pWatcher, String path);
+void FileWatcherProcessChanges(FileWatcher* pWatcher);
