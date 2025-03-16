@@ -240,18 +240,20 @@ struct FileWatcher {
 	i32 eventsToWatch;
 	ResizableArray<DirectoryWatchInfo*> directories;
 	FileWatcherCallback callback;
+	void* pUserData;
 };
 
 #define WATCHER_BUFFER_SIZE 8000
 
 // ***********************************************************************
 
-FileWatcher* FileWatcherCreate(FileWatcherCallback callback, i32 eventsToWatch, bool isRecursive) {
+FileWatcher* FileWatcherCreate(FileWatcherCallback callback, i32 eventsToWatch, void* pUserData, bool isRecursive) {
 	FileWatcher* pWatcher;
 	Arena* pArena = ArenaCreate();
 	pWatcher = New(pArena, FileWatcher);
 	pWatcher->pArena = pArena;
 
+	pWatcher->pUserData = pUserData;
 	pWatcher->isRecursive = isRecursive;
 	pWatcher->eventsToWatch = eventsToWatch;
 	pWatcher->directories.pArena = pWatcher->pArena;
@@ -289,6 +291,12 @@ bool FileWatcherIssueRead(FileWatcher* pWatcher, DirectoryWatchInfo* pInfo) {
 
 bool FileWatcherAddDirectory(FileWatcher* pWatcher, String path) {
 	String localString = CopyString(path, pWatcher->pArena);
+	if (localString[localString.length-1] == '/' || localString[localString.length-1] == '\\') {
+		localString.length -= 1;
+		localString[localString.length] = 0;
+
+	}
+
 	HANDLE handle = CreateFile(localString.pData, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
 							 nullptr, OPEN_EXISTING, FILE_FLAG_BACKUP_SEMANTICS|FILE_FLAG_OVERLAPPED, nullptr);
 
@@ -335,10 +343,12 @@ void FileWatcherProcessChanges(FileWatcher* pWatcher) {
 			}
 
 			i32 len = WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, nullptr, 0, nullptr, nullptr);
-			change.path = AllocString(len, pWatcher->pArena);
-			WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, change.path.pData, len, nullptr, nullptr);
+			String fileName = AllocString(len, g_pArenaFrame);
+			WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, fileName.pData, len, nullptr, nullptr);
 
-			pWatcher->callback(change);
+			change.path = StringPrint(pWatcher->pArena, "%s/%s", pInfo->name.pData, fileName.pData);
+
+			pWatcher->callback(change, pWatcher->pUserData);
 
 			// this was the last record
 			if (pResults->NextEntryOffset == 0) break;

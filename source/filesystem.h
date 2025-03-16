@@ -48,8 +48,8 @@ struct FileChange {
 	String path;
 	FileChangeEvent event;
 };
-typedef void (*FileWatcherCallback)(FileChange);
+typedef void (*FileWatcherCallback)(FileChange, void*);
 
-FileWatcher* FileWatcherCreate(FileWatcherCallback callback, i32 eventsToWatch, bool isRecursive);
+FileWatcher* FileWatcherCreate(FileWatcherCallback callback, i32 eventsToWatch, void* pUserData, bool isRecursive);
 bool FileWatcherAddDirectory(FileWatcher* pWatcher, String path);
 void FileWatcherProcessChanges(FileWatcher* pWatcher);
