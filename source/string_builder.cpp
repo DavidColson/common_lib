@@ -87,26 +87,88 @@ u64 StringBuilder::GrowCapacity(u64 atLeastSize) const {
     return newCapacity > atLeastSize ? newCapacity : atLeastSize;
 }
 
+bool IsFormatSpecifier(char c) {
+	switch (c) {
+		case 'd': return true;
+		case 'i': return true;
+		case 'u': return true;
+		case 'o': return true;
+		case 'x': return true;
+		case 'X': return true;
+		case 'f': return true;
+		case 'F': return true;
+		case 'e': return true;
+		case 'E': return true;
+		case 'g': return true;
+		case 'G': return true;
+		case 'a': return true;
+		case 'A': return true;
+		case 'c': return true;
+		case 's': return true; 
+		case 'S': return true; 
+		case 'p': return true; 
+		case 'n': return true; 
+		case '%': return true;
+		default: return false;
+	}
+}
+
+// @todo: move this into appendFormatInternal
+// such that it can be used everywhere, including logs
+String StringPrintArgs(Arena* pArena, const char* format, va_list args) {
+	StringBuilder outputBuilder(g_pArenaFrame);
+	StringBuilder formatBuilder(g_pArenaFrame);
+    while(*format!='\0')
+    {
+		// non formatting character, just add it
+        if(*format!='%')
+        {
+			outputBuilder.AppendChars(format, 1);
+            format++;
+            continue;
+        }
+
+		const char* formatStart = format;
+		format++;
+		while (!IsFormatSpecifier(*format)) {
+			format++;
+		}
+		if (*format == 'S') {
+			// special handling for our non-null terminated string
+			String str = va_arg(args, String);
+			outputBuilder.AppendFormat("%.*s", str.length, str.pData);
+			format++;
+		}
+		else {
+			// default handling for everything else
+			format++;
+			formatBuilder.AppendChars(formatStart, format-formatStart);
+
+			// formatBuilder now contains the format we want to process
+			// So we need to append it to outputBuilder
+			outputBuilder.AppendFormatInternal(formatBuilder.pData, args);
+			va_arg(args, int); // skip element since the above copied the arg list
+
+			// reset format for next time
+			formatBuilder.length = 0;
+			memset(formatBuilder.pData, 0, formatBuilder.capacity);
+		}
+    }
+	return outputBuilder.CreateString(pArena);
+}
+
 String StringPrint(Arena* pArena, const char* format, ...) {
     va_list args;
     va_start(args, format);
-	
-	StringBuilder builder(g_pArenaFrame);
-	builder.AppendFormatInternal(format, args);
-	String result = builder.CreateString(pArena);
-
-    va_end(args);
-	return result;
+	String res = StringPrintArgs(pArena, format, args);
+	va_end(args);
+	return res;
 }
 
 String TempPrint(const char* format, ...) {
     va_list args;
     va_start(args, format);
-	
-	StringBuilder builder(g_pArenaFrame);
-	builder.AppendFormatInternal(format, args);
-	String result = builder.CreateString(g_pArenaFrame);
-
-    va_end(args);
-	return result;
+	String res = StringPrintArgs(g_pArenaFrame, format, args);
+	va_end(args);
+	return res;
 }
