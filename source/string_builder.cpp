@@ -1,7 +1,11 @@
 
+// ***********************************************************************
+
 StringBuilder::StringBuilder(Arena* _pArena) {
     pArena = _pArena;
 }
+
+// ***********************************************************************
 
 void StringBuilder::AppendChars(const char* str, u64 len) {
     Reserve(GrowCapacity(length + len + 1));
@@ -10,82 +14,20 @@ void StringBuilder::AppendChars(const char* str, u64 len) {
     pData[length] = 0;
 }
 
+// ***********************************************************************
+
 void StringBuilder::Append(const char* str) {
     u64 addedLength = strlen(str);
     AppendChars(str, addedLength);
 }
 
+// ***********************************************************************
+
 void StringBuilder::Append(String str) {
     AppendChars(str.pData, str.length);
 }
 
-void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
-    va_list argsCopy;
-    va_copy(argsCopy, args);
-
-    int addedLength = vsnprintf(nullptr, 0, format, args);
-    if (addedLength <= 0) {
-        va_end(argsCopy);
-        return;
-    }
-
-    Reserve(GrowCapacity(length + addedLength + 1));
-    vsnprintf(pData + length, addedLength + 1, format, args);
-    va_end(argsCopy);
-    length += addedLength;
-}
-
-void StringBuilder::AppendFormat(const char* format, ...) {
-    va_list args;
-    va_start(args, format);
-    AppendFormatInternal(format, args);
-    va_end(args);
-}
-
-String StringBuilder::CreateString(Arena* pArena, bool reset) {
-    String output = AllocString(length + 1, pArena);
-    memcpy(output.pData, pData, length * sizeof(char));
-    output.pData[length] = 0;
-    output.length = length;
-
-    if (reset)
-        Reset();
-    return output;
-}
-
-String StringBuilder::ToExistingString(bool reset, String& destination) {
-    memcpy(destination.pData, pData, length * sizeof(char));
-    destination.pData[length] = 0;
-    destination.length = length;
-
-    if (reset)
-        Reset();
-    return destination;
-}
-
-void StringBuilder::Reset() {
-    if (pData) {
-		pData = nullptr;
-        length = 0;
-        capacity = 0;
-    }
-}
-
-void StringBuilder::Reserve(u64 desiredCapacity) {
-    if (capacity >= desiredCapacity)
-        return;
-    pData = (char*)ArenaRealloc(pArena, pData, desiredCapacity * sizeof(char), capacity * sizeof(char), alignof(char));
-    capacity = desiredCapacity;
-}
-
-u64 StringBuilder::GrowCapacity(u64 atLeastSize) const {
-    // if we're big enough already, don't grow, otherwise f64,
-    // and if that's not enough just use atLeastSize
-    if (capacity > atLeastSize)
-        return capacity;
-    u64 newCapacity = capacity ? capacity * 2 : 8;
-    return newCapacity > atLeastSize ? newCapacity : atLeastSize;
-}
+// ***********************************************************************
 
 bool IsFormatSpecifier(char c) {
 	switch (c) {
@@ -113,17 +55,18 @@ bool IsFormatSpecifier(char c) {
 	}
 }
 
-// @todo: move this into appendFormatInternal
-// such that it can be used everywhere, including logs
-String StringPrintArgs(Arena* pArena, const char* format, va_list args) {
-	StringBuilder outputBuilder(g_pArenaFrame);
-	StringBuilder formatBuilder(g_pArenaFrame);
+// ***********************************************************************
+
+void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
+	char formatHelper[256];
+	memset(formatHelper, 0, 256);
+
     while(*format!='\0')
     {
 		// non formatting character, just add it
         if(*format!='%')
         {
-			outputBuilder.AppendChars(format, 1);
+			AppendChars(format, 1);
             format++;
             continue;
         }
@@ -136,39 +79,120 @@ String StringPrintArgs(Arena* pArena, const char* format, va_list args) {
 		if (*format == 'S') {
 			// special handling for our non-null terminated string
 			String str = va_arg(args, String);
-			outputBuilder.AppendFormat("%.*s", str.length, str.pData);
+			i32 addedLength = snprintf(nullptr, 0, "%.*s", (i32)str.length, str.pData);
+			Reserve(GrowCapacity(length + addedLength + 1));
+			snprintf(pData + length, addedLength + 1, "%.*s", (i32)str.length, str.pData);
+			length += addedLength;
 			format++;
 		}
 		else {
 			// default handling for everything else
 			format++;
-			formatBuilder.AppendChars(formatStart, format-formatStart);
+			memcpy(formatHelper, formatStart, format-formatStart);
 
 			// formatBuilder now contains the format we want to process
 			// So we need to append it to outputBuilder
-			outputBuilder.AppendFormatInternal(formatBuilder.pData, args);
+			i32 addedLength = vsnprintf(nullptr, 0, formatHelper, args);
+			Reserve(GrowCapacity(length + addedLength + 1));
+			vsnprintf(pData + length, addedLength + 1, formatHelper, args);
+			length += addedLength;
+
 			va_arg(args, int); // skip element since the above copied the arg list
 
 			// reset format for next time
-			formatBuilder.length = 0;
-			memset(formatBuilder.pData, 0, formatBuilder.capacity);
+			memset(formatHelper, 0, 256);
 		}
     }
-	return outputBuilder.CreateString(pArena);
 }
+
+// ***********************************************************************
+
+void StringBuilder::AppendFormat(const char* format, ...) {
+    va_list args;
+    va_start(args, format);
+    AppendFormatInternal(format, args);
+    va_end(args);
+}
+
+// ***********************************************************************
+
+String StringBuilder::CreateString(Arena* pArena, bool reset) {
+    String output = AllocString(length + 1, pArena);
+    memcpy(output.pData, pData, length * sizeof(char));
+    output.pData[length] = 0;
+    output.length = length;
+
+    if (reset)
+        Reset();
+    return output;
+}
+
+// ***********************************************************************
+
+String StringBuilder::ToExistingString(bool reset, String& destination) {
+    memcpy(destination.pData, pData, length * sizeof(char));
+    destination.pData[length] = 0;
+    destination.length = length;
+
+    if (reset)
+        Reset();
+    return destination;
+}
+
+// ***********************************************************************
+
+void StringBuilder::Reset() {
+    if (pData) {
+		pData = nullptr;
+        length = 0;
+        capacity = 0;
+    }
+}
+
+// ***********************************************************************
+
+void StringBuilder::Reserve(u64 desiredCapacity) {
+    if (capacity >= desiredCapacity)
+        return;
+    pData = (char*)ArenaRealloc(pArena, pData, desiredCapacity * sizeof(char), capacity * sizeof(char), alignof(char));
+    capacity = desiredCapacity;
+}
+
+// ***********************************************************************
+
+u64 StringBuilder::GrowCapacity(u64 atLeastSize) const {
+    // if we're big enough already, don't grow, otherwise f64,
+    // and if that's not enough just use atLeastSize
+    if (capacity > atLeastSize)
+        return capacity;
+    u64 newCapacity = capacity ? capacity * 2 : 8;
+    return newCapacity > atLeastSize ? newCapacity : atLeastSize;
+}
+
+// ***********************************************************************
 
 String StringPrint(Arena* pArena, const char* format, ...) {
     va_list args;
     va_start(args, format);
-	String res = StringPrintArgs(pArena, format, args);
-	va_end(args);
-	return res;
+	
+	StringBuilder builder(g_pArenaFrame);
+	builder.AppendFormatInternal(format, args);
+	String result = builder.CreateString(pArena);
+
+    va_end(args);
+	return result;
 }
+
+// ***********************************************************************
 
 String TempPrint(const char* format, ...) {
     va_list args;
     va_start(args, format);
-	String res = StringPrintArgs(g_pArenaFrame, format, args);
-	va_end(args);
-	return res;
+	
+	StringBuilder builder(g_pArenaFrame);
+	builder.AppendFormatInternal(format, args);
+	String result = builder.CreateString(g_pArenaFrame);
+
+    va_end(args);
+	return result;
 }

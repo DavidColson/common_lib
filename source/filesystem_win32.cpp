@@ -151,6 +151,7 @@ File OpenFile(String filename, FileMode mode) {
             break;
     }
 	
+	// @todo: can't guarantee filename is null terminated here, need to fix that
 	file.handle = CreateFile(filename.pData, access, shareMode, nullptr, creationDisposition, FILE_ATTRIBUTE_NORMAL, nullptr);
 	return file;
 }
@@ -342,12 +343,13 @@ void FileWatcherProcessChanges(FileWatcher* pWatcher) {
 				default: change.event = FC_NONE;
 			}
 
-			i32 len = WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, nullptr, 0, nullptr, nullptr);
+			i32 len = WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, pResults->FileNameLength/2, nullptr, 0, nullptr, nullptr);
 			String fileName = AllocString(len, g_pArenaFrame);
-			WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, -1, fileName.pData, len, nullptr, nullptr);
+			WideCharToMultiByte(CP_UTF8, 0, pResults->FileName, pResults->FileNameLength/2, fileName.pData, len, nullptr, nullptr);
 
-			change.path = StringPrint(pWatcher->pArena, "%s/%s", pInfo->name.pData, fileName.pData);
+			change.path = StringPrint(pWatcher->pArena, "%S/%S", pInfo->name, fileName);
 
+			// @todo: you will want to coalesce events together, things like nvim do many edits quickly
 			pWatcher->callback(change, pWatcher->pUserData);
 
 			// this was the last record
