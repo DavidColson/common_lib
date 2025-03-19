@@ -42,6 +42,12 @@ struct KeyFuncs<CustomKeyType> {
     }
 };
 
+enum MyTestEnum {
+	VAL1,
+	VAL2,
+	VAL3
+};
+
 void HashMapTest() {
     StartTest("HashMap Test");
     int errorCount = 0;
@@ -121,6 +127,14 @@ void HashMapTest() {
         VERIFY(charMap['c'] == 1337);
         VERIFY(charMap['8'] == 1338);
         VERIFY(charMap['U'] == 1339);
+
+		HashMap<MyTestEnum, int> enumMap(pArena);
+        enumMap[VAL2] = 1337;
+        enumMap[VAL1] = 1338;
+        enumMap[VAL3] = 1339;
+        VERIFY(enumMap[VAL2] == 1337);
+        VERIFY(enumMap[VAL1] == 1338);
+        VERIFY(enumMap[VAL3] == 1339);
 
         HashMap<const char*, int> cStringMap(pArena);
         cStringMap["Ducks"] = 1337;
@@ -560,6 +574,6 @@ int main() {
     HashMapTest();
     SortTest();
     JsonTest();
-    __debugbreak();
+    // __debugbreak();
     return 0;
 }

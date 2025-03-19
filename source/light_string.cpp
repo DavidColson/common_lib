@@ -2,27 +2,13 @@
 
 // ***********************************************************************
 
-String::String(const char* str) {
-    pData = const_cast<char*>(str);
-    length = strlen(str);
-}
-
-// ***********************************************************************
-
-void String::operator=(const char* str) {
-    pData = const_cast<char*>(str);
-    length = strlen(str);
-}
-
-// ***********************************************************************
-
-bool String::operator==(const String& other) const {
-    if (length != other.length)
+bool operator==(const String& lhs, const String& rhs) {
+    if (lhs.length != rhs.length)
         return false;
-    char* s1 = pData;
-    char* s2 = other.pData;
+    char* s1 = lhs.pData;
+    char* s2 = rhs.pData;
     i64 count = 0;
-    while (count < length) {
+    while (count < lhs.length) {
         count++;
         if (*s1 != *s2)
             return false;
@@ -34,44 +20,31 @@ bool String::operator==(const String& other) const {
 
 // ***********************************************************************
 
-bool String::operator==(const char* other) const {
-    String str(other);
-    return operator==(str);
+bool operator==(const String& lhs, const char* rhs) {
+    return operator==(lhs, String(rhs));
 }
 
 // ***********************************************************************
 
-bool String::operator!=(const String& other) const {
-    return !operator==(other);
+bool operator!=(const String& lhs, const String& rhs) {
+    return !operator==(lhs, rhs);
 }
 
 // ***********************************************************************
 
-bool String::operator!=(const char* other) const {
-    return !operator==(other);
+bool operator!=(const String& lhs, const char* rhs) {
+    return !operator==(lhs, rhs);
 }
 
 // ***********************************************************************
 
-char String::operator[](i64 index) const {
-	return pData[index];
-}
-
-// ***********************************************************************
-
-char& String::operator[](i64 index) {
-	return pData[index];
-}
-
-// ***********************************************************************
-
-String String::SubStr(i64 start, i64 len) {
+String SubStr(String str, i64 start, i64 len) {
     String result;
-    result.pData = pData + start;
+    result.pData = str.pData + start;
 
 	// What the fuck is this?
     if (len == (u64)-1)
-        result.length = length - start;
+        result.length = str.length - start;
     else
         result.length = len;
     return result;
@@ -79,13 +52,13 @@ String String::SubStr(i64 start, i64 len) {
 
 // ***********************************************************************
 
-i64 String::Find(String substr) {
+i64 Find(String str, String substr) {
 	if (substr.length == 0) return -1;
 
-	for(i64 i = 0; i < length; i++) {
+	for(i64 i = 0; i < str.length; i++) {
 		i64 j = i; // index into self
 		i64 k = 0; // index into substr
-		while(j < length && k < substr.length && pData[j] == substr.pData[k]) {
+		while(j < str.length && k < substr.length && str.pData[j] == substr.pData[k]) {
 			j++;
 			k++;
 		}
@@ -93,7 +66,7 @@ i64 String::Find(String substr) {
 		// found
 		if (k==substr.length) return i;
 	}
-	return length;
+	return str.length;
 }
 
 // ***********************************************************************

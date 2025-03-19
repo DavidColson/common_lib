@@ -25,7 +25,7 @@ bool MakeDirectory(String path, bool makeAll) {
 		memset(folderToTest, 0, MAX_PATH * sizeof(char));
 
 		String subPath = path;
-		i64 end = subPath.Find("/");
+		i64 end = Find(subPath, "/");
 		while(subPath.length > 0) {
 			strncpy(folderToTest, path.pData, end);
 			if (!CreateDirectory(folderToTest, nullptr)) {
@@ -34,8 +34,8 @@ bool MakeDirectory(String path, bool makeAll) {
 					return false;
 				}
 			}
-			subPath = path.SubStr(end, path.length-end);
-			end = end + subPath.Find("/");
+			subPath = SubStr(path, end, path.length-end);
+			end = end + Find(subPath, "/");
 		}
 	}
 	else {
@@ -71,7 +71,7 @@ bool RemoveFileOrDirectory(String path) {
 		}
 
 		do {
-			String item = findFileData.cFileName;
+			String item(findFileData.cFileName);
 
 			if (item != "." && item != "..") {
 				StringBuilder fullPathBuilder(g_pArenaFrame);

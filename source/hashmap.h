@@ -8,42 +8,8 @@ struct String;
 // for each key. So the hashing function and the key comparison
 // -------------------------------
 
-namespace Internal {
-template<typename T, T v>
-struct integral_constant {
-    static constexpr T value = v;
-    typedef T value_type;
-    typedef integral_constant<T, v> type;
-
-    constexpr operator value_type() const {
-        return value;
-    }
-    constexpr value_type operator()() const {
-        return value;
-    }
-};
-
-template<typename T>
-struct is_enum : public integral_constant<bool, __is_enum(T)> {};
-
-template<typename T>
-constexpr bool is_enuv = is_enum<T>::value;
-
-// utility to disable the generic template specialization that is
-// used for enum types only.
-template<typename T, bool Enabled>
-struct EnableHashIf {};
-
-template<typename T>
-struct EnableHashIf<T, true> {
-    u64 operator()(const T& p) const {
-        return u64(p);
-    }
-};
-}
-
 template<typename K>
-struct KeyFuncs : Internal::EnableHashIf<K, Internal::is_enuv<K>> {
+struct KeyFuncs {
     u64 Hash(K key) const {
         return static_cast<u64>(key);
     }
@@ -161,7 +127,7 @@ struct HashNode {
 // Hashmap data structure
 // -----------------------
 // Open addressing to reduce memory allocs and improve cache coherency
-// TODO Documentation etca
+// TODO Documentation etc
 
 template<typename K, typename V, typename KF = KeyFuncs<K>>
 struct HashMap {

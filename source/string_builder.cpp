@@ -90,8 +90,7 @@ void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
 			format++;
 			memcpy(formatHelper, formatStart, format-formatStart);
 
-			// formatBuilder now contains the format we want to process
-			// So we need to append it to outputBuilder
+			// formatHelper now contains the format we want to process
 			i32 addedLength = vsnprintf(nullptr, 0, formatHelper, args);
 			Reserve(GrowCapacity(length + addedLength + 1));
 			vsnprintf(pData + length, addedLength + 1, formatHelper, args);
