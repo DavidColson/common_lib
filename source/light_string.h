@@ -1,12 +1,12 @@
-// Copyright 2020-2022 David Colson. All rights reserved.
+// Copyright David Colson. All rights reserved.
 
 #pragma once
 
 // String Class
 // --------------------
 // NOT null terminated string
-// The functions in this struct guarantee to do zero memory operations
-// and is fully POD, trivially copyable
+// vast majority of these functions do zero memory allocation
+// functions that take arenas are the only ones that do allocations
 
 struct String {
 	char* pData = nullptr;
@@ -34,6 +34,13 @@ String AllocString(u64 length, Arena* pArena);
 	
 // Comparison
 
+enum StrCmpFlags : u8 {
+	CaseInsensitive = 1 << 1,
+	SlashInsensitive = 1 << 2
+};
+
+bool StrCmp(const String& lhs, const String& rhs, StrCmpFlags flags = StrCmpFlags(0));
+
 bool operator==(const String& lhs, const String& rhs);
 
 bool operator==(const String& lhs, const char* rhs);
@@ -42,11 +49,45 @@ bool operator!=(const String& lhs, const String& rhs);
 
 bool operator!=(const String& lhs, const char* rhs);
 
-// Searching
+bool StartsWith(String str, String prefix, StrCmpFlags flags = StrCmpFlags(0));
+
+bool EndsWith(String str, String postfix, StrCmpFlags flags = StrCmpFlags(0));
+
+
+// Slicing
+
+String SubStr(String str, i64 start, i64 len = -1);
+
+String Prefix(String str, i64 n);
+
+String Postfix(String str, i64 n);
+
+String ChopLeft(String str, i64 n);
+
+String ChopRight(String str, i64 n);
+
+ResizableArray<String> Split(Arena* pArena, String str, String splitChars);
+
+// Paths
+
+String TakeAfterLastSlash(String str);
+
+String TakeBeforeLastSlash(String str);
+
+String TakeAfterLastDot(String str);
+
+String TakeBeforeLastDot(String str);
+
+// Misc
 
 // Returns the index substr was found at, otherwise length of str
 i64 Find(String str, String substr);
 
-String SubStr(String str, i64 start, i64 len = -1);
+String Join(Arena* pArena, ResizableArray<String> parts, String separator);
 
+char CharToUpper(char c);
+
+char CharToLower(char c);
+
+char SlashNormalize(char c);
 

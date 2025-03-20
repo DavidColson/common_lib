@@ -190,10 +190,29 @@ void StringTest() {
         VERIFY(str == "Hello World");
         VERIFY(str.length == 11);
 
+		String str2("heLLo wOrld"); 
+		VERIFY(StrCmp(str, str2) == false);
+		VERIFY(StrCmp(str, str2, CaseInsensitive) == true);
+
         str = "Hi Dave";
         VERIFY(str == "Hi Dave");
         VERIFY(str != "Hello World");
         VERIFY(str.length == 7);
+
+		VERIFY(StartsWith(str, "Hi"));
+		VERIFY(EndsWith(str, "ave"));
+
+		// chopleftright
+
+		String path("C:/drive/applications/polybox/demo/model.gltf");
+		ResizableArray<String> tokens = Split(pArena, path, "/.");
+		VERIFY(tokens[0] == "C:");
+		VERIFY(tokens[1] == "drive");
+		VERIFY(tokens[2] == "applications");
+		VERIFY(tokens[3] == "polybox");
+		VERIFY(tokens[4] == "demo");
+		VERIFY(tokens[5] == "model");
+		VERIFY(tokens[6] == "gltf");
 
         String copy = CopyCString("Ducks are cool", pArena);
         VERIFY(copy == "Ducks are cool");
@@ -566,6 +585,9 @@ void StackTest() {
 // [ ] tests for scanner
 
 int main() {
+	g_pArenaFrame = ArenaCreate();
+	g_pArenaPermenant = ArenaCreate();
+
     // LogTest();
     StackTest();
     ArenaTest();
