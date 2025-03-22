@@ -78,6 +78,8 @@ String TakeAfterLastDot(String str);
 
 String TakeBeforeLastDot(String str);
 
+void NormalizePath(String path); // modifies given str
+
 // Misc
 
 // Returns the index substr was found at, otherwise length of str

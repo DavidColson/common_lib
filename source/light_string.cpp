@@ -196,7 +196,7 @@ String TakeAfterLastSlash(String str) {
 			return SubStr(str, i+1, str.length-i-1); 
 		}
 	}
-	return str;
+	return "";
 }
 
 // ***********************************************************************
@@ -218,7 +218,7 @@ String TakeAfterLastDot(String str) {
 			return SubStr(str, i+1, str.length-i-1);
 		}
 	}
-	return str;
+	return "";
 }
 
 // ***********************************************************************
@@ -230,6 +230,14 @@ String TakeBeforeLastDot(String str) {
 		}
 	}
 	return str;
+}
+
+// ***********************************************************************
+
+void NormalizePath(String path) {
+	for (i64 i = 0; i < path.length; i++) {
+		path[i] = SlashNormalize(path[i]);
+	}
 }
 
 // ***********************************************************************

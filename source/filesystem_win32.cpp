@@ -184,6 +184,20 @@ i64 GetFileSize(File file) {
 
 // ***********************************************************************
 
+u64 GetFileLastWriteTime(File file) {
+	FILETIME ftWrite;
+
+	if (GetFileTime(file.handle, nullptr, nullptr, &ftWrite)) {
+		ULARGE_INTEGER    largeInt;
+		largeInt.LowPart  = ftWrite.dwLowDateTime;
+		largeInt.HighPart = ftWrite.dwHighDateTime;
+		return (u64)largeInt.QuadPart;
+	}
+	return 0;
+}
+
+// ***********************************************************************
+
 void CloseFile(File file) {
 	CloseHandle(file.handle);
 }

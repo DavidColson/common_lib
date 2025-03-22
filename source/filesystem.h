@@ -25,6 +25,7 @@ bool IsValid(File file);
 bool WriteToFile(File file, void* pData, i64 size);
 bool ReadFromFile(File file, void* pOutData, i64 sizeToRead);
 i64 GetFileSize(File file);
+u64 GetFileLastWriteTime(File file);
 void CloseFile(File file);
 
 // convenience functions
