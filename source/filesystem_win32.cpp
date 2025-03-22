@@ -2,7 +2,8 @@
 // ***********************************************************************
 
 bool FileExists(String filePath) {
-	DWORD dwAttrib = GetFileAttributes(filePath.pData);
+	String filenameCString = CopyString(filePath, g_pArenaFrame);
+	DWORD dwAttrib = GetFileAttributes(filenameCString.pData);
 
 	return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
          !(dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
@@ -11,7 +12,8 @@ bool FileExists(String filePath) {
 // ***********************************************************************
 
 bool FolderExists(String folderPath) {
-	DWORD dwAttrib = GetFileAttributes(folderPath.pData);
+	String folderCString = CopyString(folderPath, g_pArenaFrame);
+	DWORD dwAttrib = GetFileAttributes(folderCString.pData);
 
 	return (dwAttrib != INVALID_FILE_ATTRIBUTES && 
          (dwAttrib & FILE_ATTRIBUTE_DIRECTORY));
@@ -20,6 +22,7 @@ bool FolderExists(String folderPath) {
 // ***********************************************************************
 
 bool MakeDirectory(String path, bool makeAll) {
+	String pathCString = CopyString(path, g_pArenaFrame);
 	if (makeAll) {
 		char folderToTest[MAX_PATH]; 
 		memset(folderToTest, 0, MAX_PATH * sizeof(char));
@@ -39,7 +42,7 @@ bool MakeDirectory(String path, bool makeAll) {
 		}
 	}
 	else {
-		if (!CreateDirectory(path.pData, nullptr)) {
+		if (!CreateDirectory(pathCString.pData, nullptr)) {
 			return false;
 		}
 	}
@@ -50,7 +53,8 @@ bool MakeDirectory(String path, bool makeAll) {
 
 bool RemoveFileOrDirectory(String path) {
 	// remove file or directory
-	DWORD dwAttrib = GetFileAttributes(path.pData);
+	String pathCString = CopyString(path, g_pArenaFrame);
+	DWORD dwAttrib = GetFileAttributes(pathCString.pData);
 	if (dwAttrib == INVALID_FILE_ATTRIBUTES)
 		return false;
 
@@ -83,11 +87,11 @@ bool RemoveFileOrDirectory(String path) {
 		} while (FindNextFile(hFind, &findFileData));
 
 		FindClose(hFind);
-		return RemoveDirectory(path.pData) != 0;
+		return RemoveDirectory(pathCString.pData) != 0;
 	}
 	else {
 		// delete file
-		return DeleteFile(path.pData) != 0;
+		return DeleteFile(pathCString.pData) != 0;
 	}
 	return false;
 }
@@ -95,13 +99,17 @@ bool RemoveFileOrDirectory(String path) {
 // ***********************************************************************
 
 bool CopyFile(String from, String to) {
-	return CopyFileA(from.pData, to.pData, true);
+	String fromCString = CopyString(from, g_pArenaFrame);
+	String toCString = CopyString(to, g_pArenaFrame);
+	return CopyFileA(fromCString.pData, toCString.pData, true);
 }
 
 // ***********************************************************************
 
 bool MoveFile(String from, String to) {
-	return MoveFileA(from.pData, to.pData);
+	String fromCString = CopyString(from, g_pArenaFrame);
+	String toCString = CopyString(to, g_pArenaFrame);
+	return MoveFileA(fromCString.pData, toCString.pData);
 }
 
 // ***********************************************************************
@@ -151,8 +159,8 @@ File OpenFile(String filename, FileMode mode) {
             break;
     }
 	
-	// @todo: can't guarantee filename is null terminated here, need to fix that
-	file.handle = CreateFile(filename.pData, access, shareMode, nullptr, creationDisposition, FILE_ATTRIBUTE_NORMAL, nullptr);
+	String filenameCString = CopyString(filename, g_pArenaFrame);
+	file.handle = CreateFile(filenameCString.pData, access, shareMode, nullptr, creationDisposition, FILE_ATTRIBUTE_NORMAL, nullptr);
 	return file;
 }
 
