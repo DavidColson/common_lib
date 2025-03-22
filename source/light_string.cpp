@@ -191,7 +191,7 @@ ResizableArray<String> Split(Arena* pArena, String str, String splitChars) {
 // ***********************************************************************
 
 String TakeAfterLastSlash(String str) {
-	for (int i=str.length; i >= 0; i--) {
+	for (i64 i=str.length; i >= 0; i--) {
 		if (str[i] == '/' || str[i] == '\\') {
 			return SubStr(str, i+1, str.length-i-1); 
 		}
@@ -202,7 +202,7 @@ String TakeAfterLastSlash(String str) {
 // ***********************************************************************
 
 String TakeBeforeLastSlash(String str) {
-	for (int i=str.length; i >= 0; i--) {
+	for (i64 i=str.length; i >= 0; i--) {
 		if (str[i] == '/' || str[i] == '\\') {
 			return SubStr(str, 0, i); 
 		}
@@ -213,7 +213,7 @@ String TakeBeforeLastSlash(String str) {
 // ***********************************************************************
 
 String TakeAfterLastDot(String str) {
-	for (int i=str.length; i >= 0; i--) {
+	for (i64 i=str.length; i >= 0; i--) {
 		if (str[i] == '.') {
 			return SubStr(str, i+1, str.length-i-1);
 		}
@@ -224,11 +224,12 @@ String TakeAfterLastDot(String str) {
 // ***********************************************************************
 
 String TakeBeforeLastDot(String str) {
-	for (int i=str.length; i >= 0; i--) {
+	for (i64 i=str.length; i >= 0; i--) {
 		if (str[i] == '.') {
 			return SubStr(str, 0, i); 
 		}
 	}
+	return str;
 }
 
 // ***********************************************************************
