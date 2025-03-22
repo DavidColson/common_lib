@@ -314,10 +314,16 @@ bool FileWatcherIssueRead(FileWatcher* pWatcher, DirectoryWatchInfo* pInfo) {
 
 bool FileWatcherAddDirectory(FileWatcher* pWatcher, String path) {
 	String localString = CopyString(path, pWatcher->pArena);
+	NormalizePath(localString);
 	if (localString[localString.length-1] == '/' || localString[localString.length-1] == '\\') {
 		localString.length -= 1;
 		localString[localString.length] = 0;
-
+	}
+	// check for duplicates
+	for (i32 i=0; i<pWatcher->directories.count; i++) {
+		if (localString == pWatcher->directories[i]->name) {
+			return true;
+		}
 	}
 
 	HANDLE handle = CreateFile(localString.pData, FILE_LIST_DIRECTORY, FILE_SHARE_READ|FILE_SHARE_DELETE|FILE_SHARE_WRITE,
