@@ -151,7 +151,7 @@ String Postfix(String str, i64 n) {
 // ***********************************************************************
 
 String ChopLeft(String str, i64 n) {
-	String result;
+	String result = str;
 	n = min(str.length, n);
 	result.pData += n;
 	result.length -= n;
@@ -161,7 +161,7 @@ String ChopLeft(String str, i64 n) {
 // ***********************************************************************
 
 String ChopRight(String str, i64 n) {
-	String result;
+	String result = str;
 	n = min(str.length, n);
 	result.length -= n;
 	return result;
@@ -187,6 +187,50 @@ ResizableArray<String> Split(Arena* pArena, String str, String splitChars) {
 	return result;
 }
 
+
+// ***********************************************************************
+
+String TakeAfterLastSlash(String str) {
+	for (int i=str.length; i >= 0; i--) {
+		if (str[i] == '/' || str[i] == '\\') {
+			return SubStr(str, i+1, str.length-i-1); 
+		}
+	}
+	return str;
+}
+
+// ***********************************************************************
+
+String TakeBeforeLastSlash(String str) {
+	for (int i=str.length; i >= 0; i--) {
+		if (str[i] == '/' || str[i] == '\\') {
+			return SubStr(str, 0, i); 
+		}
+	}
+	return str;
+}
+
+// ***********************************************************************
+
+String TakeAfterLastDot(String str) {
+	for (int i=str.length; i >= 0; i--) {
+		if (str[i] == '.') {
+			return SubStr(str, i+1, str.length-i-1);
+		}
+	}
+	return str;
+}
+
+// ***********************************************************************
+
+String TakeBeforeLastDot(String str) {
+	for (int i=str.length; i >= 0; i--) {
+		if (str[i] == '.') {
+			return SubStr(str, 0, i); 
+		}
+	}
+}
+
 // ***********************************************************************
 
 i64 Find(String str, String substr) {
@@ -208,6 +252,19 @@ i64 Find(String str, String substr) {
 
 // ***********************************************************************
 
+String Join(Arena* pArena, ResizableArray<String> parts, String separator) {
+	StringBuilder builder(g_pArenaFrame);
+	for (int i=0; i<parts.count; i++) {
+		builder.Append(parts[i]);
+		if (i<parts.count-1) {
+			builder.Append(separator);
+		}
+	}
+	return builder.CreateString(pArena);
+}
+
+// ***********************************************************************
+
 char CharToUpper(char c) {
 	if ('a' <= c && c <= 'z') {
 		return c += ('A' - 'a');
@@ -223,6 +280,7 @@ char CharToLower(char c) {
 	}
 	return c;
 }
+
 // ***********************************************************************
 
 char SlashNormalize(char c) {

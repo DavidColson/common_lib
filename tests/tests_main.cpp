@@ -202,7 +202,10 @@ void StringTest() {
 		VERIFY(StartsWith(str, "Hi"));
 		VERIFY(EndsWith(str, "ave"));
 
-		// chopleftright
+		VERIFY(Prefix(str, 2) == "Hi");
+		VERIFY(Postfix(str, 4) == "Dave");
+		VERIFY(ChopLeft(str, 3) == "Dave");
+		VERIFY(ChopRight(str, 3) == "Hi D");
 
 		String path("C:/drive/applications/polybox/demo/model.gltf");
 		ResizableArray<String> tokens = Split(pArena, path, "/.");
@@ -213,6 +216,13 @@ void StringTest() {
 		VERIFY(tokens[4] == "demo");
 		VERIFY(tokens[5] == "model");
 		VERIFY(tokens[6] == "gltf");
+
+		VERIFY(TakeAfterLastSlash(path) == "model.gltf");
+		VERIFY(TakeBeforeLastSlash(path) == "C:/drive/applications/polybox/demo");
+		VERIFY(TakeAfterLastDot(path) == "gltf");
+		VERIFY(TakeBeforeLastDot(path) == "C:/drive/applications/polybox/demo/model");
+
+		VERIFY(Join(pArena, tokens, "|") == "C:|drive|applications|polybox|demo|model|gltf");
 
         String copy = CopyCString("Ducks are cool", pArena);
         VERIFY(copy == "Ducks are cool");
