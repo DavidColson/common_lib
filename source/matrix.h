@@ -102,7 +102,7 @@ struct Matrix {
 
     inline static Matrix MakeTranslation(Vec3<T> translate);
 
-    inline static Matrix MakeRotation(Vec3<T> rotation);
+    inline static Matrix MakeRotation(T angle, Vec3<T> rotation);
 
     inline static Matrix MakeScale(Vec3<T> scale);
 
@@ -724,29 +724,28 @@ inline Matrix<T> Matrix<T>::MakeTranslation(Vec3<T> translate) {
 // ***********************************************************************
 
 template<typename T>
-inline Matrix<T> Matrix<T>::MakeRotation(Vec3<T> rotation) {
-    // This is a body 3-2-1 (z, then y, then x) rotation
-    const T cx = cosf(rotation.x);
-    const T sx = sinf(rotation.x);
-    const T cy = cosf(rotation.y);
-    const T sy = sinf(rotation.y);
-    const T cz = cosf(rotation.z);
-    const T sz = sinf(rotation.z);
+inline Matrix<T> Matrix<T>::MakeRotation(T angle, Vec3<T> rotation) {
+	T cTheta = cosf(angle);
+	T sTheta = sinf(angle);
+	T oneMinCTheta = T(1) - cosf(angle);
+	T x = rotation.x;
+	T y = rotation.y;
+	T z = rotation.z;
 
     Matrix<T> res;
-    res.m[0][0] = cy * cz;
-    res.m[1][0] = -cx * sz + sx * sy * cz;
-    res.m[2][0] = sx * sz + cx * sy * cz;
+    res.m[0][0] = x*x*oneMinCTheta + cTheta;
+    res.m[1][0] = x*y*oneMinCTheta - z*sTheta;
+    res.m[2][0] = x*z*oneMinCTheta + y*sTheta;
     res.m[3][0] = T(0.0);
 
-    res.m[0][1] = cy * sz;
-    res.m[1][1] = cx * cz + sx * sy * sz;
-    res.m[2][1] = -sx * cz + cx * sy * sz;
+    res.m[0][1] = x*y*oneMinCTheta + z*sTheta;
+    res.m[1][1] = y*y*oneMinCTheta + cTheta;
+    res.m[2][1] = y*z*oneMinCTheta - x*sTheta;
     res.m[3][1] = T(0.0);
 
-    res.m[0][2] = -sy;
-    res.m[1][2] = sx * cy;
-    res.m[2][2] = cx * cy;
+    res.m[0][2] = x*z*oneMinCTheta - y*sTheta;
+    res.m[1][2] = y*z*oneMinCTheta + x*sTheta;
+    res.m[2][2] = z*z*oneMinCTheta + cTheta;
     res.m[3][2] = T(0.0);
 
     res.m[0][3] = T(0.0);
