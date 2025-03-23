@@ -18,7 +18,7 @@ u8* AlignPtr(u8* toAlign, u64 alignment) {
 
 // ***********************************************************************
 
-Arena* ArenaCreate(i64 defaultReserve) {
+Arena* ArenaCreate(i64 defaultReserve, bool noTrack) {
 	SYSTEM_INFO sysInfo;
     GetSystemInfo(&sysInfo);
 
@@ -32,7 +32,8 @@ Arena* ArenaCreate(i64 defaultReserve) {
     Assert(pMemory != nullptr);
 
 #ifdef MEMORY_TRACKING
-	CheckMalloc(this, pMemory, reserveSize);
+	if (!noTrack)
+		CheckMalloc(pMemory, firstPageSize);
 #endif
 
 	Arena* pArena = (Arena*)pMemory; 
@@ -43,6 +44,7 @@ Arena* ArenaCreate(i64 defaultReserve) {
     pArena->pFirstUncommittedPage = pMemory + firstPageSize;
     pArena->pAddressLimit = pMemory + pArena->reserveSize;
     pArena->pCurrentHead = pArena->pMemoryBase;
+    pArena->noTrack = noTrack;
 	return pArena;
 }
 
@@ -68,7 +70,8 @@ void ArenaFinished(Arena* pArena) {
 
 	if (pArena->pMemoryBase != nullptr) {
 #ifdef MEMORY_TRACKING
-        CheckFree(this, pArena);
+	if (!pArena->noTrack)
+        CheckFree(pArena);
 #endif
         VirtualFree(pArena, 0, MEM_RELEASE);
     }
@@ -87,7 +90,8 @@ void ArenaExpandCommitted(Arena* pArena, u8* pDesiredEnd) {
     u64 size = Align(requiredSpace, pArena->pageSize);
     VirtualAlloc(pArena->pFirstUncommittedPage, size, MEM_COMMIT, PAGE_READWRITE);
 #ifdef MEMORY_TRACKING
-    CheckRealloc(this, pArena->pMemoryBase, pArena->pMemoryBase, currentSpace + size, currentSpace);
+	if (!pArena->noTrack)
+		CheckRealloc(pArena->pMemoryBase, pArena->pMemoryBase, currentSpace + size, currentSpace);
 #endif
     pArena->pFirstUncommittedPage += size;
 }
@@ -156,7 +160,7 @@ void* ArenaRealloc(Arena* pArena, void* ptr, i64 size, i64 oldSize, i64 align, b
 void* RawAlloc(i64 size, bool uninitialized) {
     void* pMemory = malloc(size);
 #ifdef MEMORY_TRACKING
-		CheckMalloc(nullptr, pMemory, size);
+	CheckMalloc(pMemory, size);
 #endif
 	if (!uninitialized) 
 		memset(pMemory, 0, size);
@@ -168,7 +172,7 @@ void* RawAlloc(i64 size, bool uninitialized) {
 void* RawRealloc(void* ptr, i64 size, i64 oldSize, bool uninitialized) {
 	void* pMemory = realloc(ptr, size);
 #ifdef MEMORY_TRACKING
-    CheckRealloc(nullptr, pMemory, ptr, size, oldSize);
+    CheckRealloc(pMemory, ptr, size, oldSize);
 #endif
 	if (!uninitialized && size > oldSize) {
 		char* pStart = (char*)pMemory + oldSize;
@@ -181,7 +185,7 @@ void* RawRealloc(void* ptr, i64 size, i64 oldSize, bool uninitialized) {
 
 void RawFree(void* ptr) {
 #ifdef MEMORY_TRACKING
-    CheckFree(nullptr, ptr);
+    CheckFree(ptr);
 #endif
     free(ptr);
 }

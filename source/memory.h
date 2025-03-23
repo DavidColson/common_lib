@@ -20,6 +20,7 @@ struct Arena {
 	u8* pCurrentHead;
 	u8* pFirstUncommittedPage;
 	u8* pAddressLimit;
+	bool noTrack;
 };
 
 // Global shared arena's. You must create and release these yourself
@@ -29,7 +30,7 @@ struct Arena {
 extern Arena* g_pArenaFrame;
 extern Arena* g_pArenaPermenant;
 
-Arena* ArenaCreate(i64 defaultReserve = DEFAULT_RESERVE);
+Arena* ArenaCreate(i64 defaultReserve = DEFAULT_RESERVE, bool noTrack=false);
 void ArenaReset(Arena* pArena);
 void ArenaFinished(Arena* pArena);
 void ArenaExpandCommitted(Arena* pArena, u8* pDesiredEnd);

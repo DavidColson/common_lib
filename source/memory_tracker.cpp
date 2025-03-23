@@ -2,7 +2,6 @@
 
 struct Allocation {
     void* pointer { nullptr };
-    void* pAllocator { nullptr };
     u64 size { 0 };
     bool isLive { false };
 	bool notALeak { false };
@@ -17,44 +16,38 @@ struct MemoryTrackerState {
     HashMap<void*, Allocation> allocationTable;
 };
 
-namespace {
-MemoryTrackerState* g_pCtx { nullptr };
-};
+static MemoryTrackerState* pMemTrack { nullptr };
 
 // ***********************************************************************
 
 void InitContext() {
-	Arena* pArena = ArenaCreate();
-    g_pCtx = New(pArena, MemoryTrackerState);
-	g_pCtx->pArena = pArena;
-    g_pCtx->allocationTable.pArena = pArena;
+	Arena* pArena = ArenaCreate(DEFAULT_RESERVE, true);
+    pMemTrack = New(pArena, MemoryTrackerState);
+	pMemTrack->pArena = pArena;
+    pMemTrack->allocationTable.pArena = pArena;
 }
 
 // ***********************************************************************
 
-void CheckMalloc(void* pAllocatorPtr, void* pAllocated, u64 size) {
-    if (g_pCtx == nullptr)
+void CheckMalloc(void* pAllocated, u64 size) {
+    if (pMemTrack == nullptr)
         InitContext();
 
     Allocation allocation;
     allocation.pointer = pAllocated;
-    allocation.pAllocator = pAllocatorPtr;
     allocation.size = size;
     allocation.isLive = true;
     allocation.allocStackTraceFrames = Debug::CollectStackTrace(allocation.allocStackTrace, 100, 2);
-    g_pCtx->allocationTable[pAllocated] = allocation;
+    pMemTrack->allocationTable[pAllocated] = allocation;
 }
 
 // ***********************************************************************
 
-void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, u64 size, u64 oldSize) {
-    if (g_pCtx == nullptr)
+void CheckRealloc(void* pAllocated, void* ptr, u64 size, u64 oldSize) {
+    if (pMemTrack == nullptr)
         InitContext();
 
-    if (Allocation* alloc = g_pCtx->allocationTable.Get(ptr)) {  // pre-existing allocation
-        if (alloc->pAllocator != pAllocatorPtr)
-            __debugbreak();
-
+    if (Allocation* alloc = pMemTrack->allocationTable.Get(ptr)) {  // pre-existing allocation
         if (alloc->pointer != pAllocated) {  // Memory has changed location, so we must change the key
             // old alloc is effectively freed
             alloc->isLive = false;
@@ -62,31 +55,29 @@ void CheckRealloc(void* pAllocatorPtr, void* pAllocated, void* ptr, u64 size, u6
 
             Allocation newAlloc;
             newAlloc.pointer = pAllocated;
-            newAlloc.pAllocator = pAllocatorPtr;
             newAlloc.size = size;
             newAlloc.isLive = true;
             newAlloc.allocStackTraceFrames = Debug::CollectStackTrace(newAlloc.allocStackTrace, 100, 2);
-            g_pCtx->allocationTable[pAllocated] = newAlloc;
+            pMemTrack->allocationTable[pAllocated] = newAlloc;
         } else {
             alloc->size = size;
         }
     } else {  // new allocation
         Allocation allocation;
         allocation.pointer = pAllocated;
-        allocation.pAllocator = pAllocatorPtr;
         allocation.size = size;
         allocation.isLive = true;
         allocation.allocStackTraceFrames = Debug::CollectStackTrace(allocation.allocStackTrace, 100);
-        g_pCtx->allocationTable[pAllocated] = allocation;
+        pMemTrack->allocationTable[pAllocated] = allocation;
     }
 }
 
 // ***********************************************************************
 
 void ReportDoubleFree(Allocation& alloc, void** newFreeTrace, u64 newFreeTraceFrames) {
-    String allocTrace = Debug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pCtx->pArena);
-    String trace = Debug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, g_pCtx->pArena);
-    String trace2 = Debug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, g_pCtx->pArena);
+    String allocTrace = Debug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, pMemTrack->pArena);
+    String trace = Debug::PrintStackTraceToString(alloc.freeStackTrace, alloc.freeStackTraceFrames, pMemTrack->pArena);
+    String trace2 = Debug::PrintStackTraceToString(newFreeTrace, newFreeTraceFrames, pMemTrack->pArena);
 
     Log::Warn("------ Hey idiot, detected double free at %p. Fix your shit! ------\nAllocated At:\n%s\nPreviously Freed At: \n%s\nFreed Again At:\n%s", alloc.pointer, allocTrace.pData, trace.pData, trace2.pData);
     __debugbreak();
@@ -101,14 +92,11 @@ void ReportUnknownFree(void* ptr) {
 
 // ***********************************************************************
 
-void CheckFree(void* pAllocatorPtr, void* ptr) {
-    if (g_pCtx == nullptr)
+void CheckFree(void* ptr) {
+    if (pMemTrack == nullptr)
         InitContext();
 
-    if (Allocation* alloc = g_pCtx->allocationTable.Get(ptr)) {
-        if (alloc->pAllocator != pAllocatorPtr)
-            __debugbreak();  // Alloc/Free allocator mismatch TODO: Report an error
-
+    if (Allocation* alloc = pMemTrack->allocationTable.Get(ptr)) {
         if (!alloc->isLive) {
             void* stackTrace[100];
             u64 stackFrames = Debug::CollectStackTrace(stackTrace, 100);
@@ -125,10 +113,10 @@ void CheckFree(void* pAllocatorPtr, void* ptr) {
 // ***********************************************************************
 
 void MarkNotALeak(void* ptr) {
-	if (g_pCtx == nullptr)
+	if (pMemTrack == nullptr)
 		InitContext();
 
-	if (Allocation* alloc = g_pCtx->allocationTable.Get(ptr)) {
+	if (Allocation* alloc = pMemTrack->allocationTable.Get(ptr)) {
 		alloc->notALeak = true;
 	}
 }
@@ -137,16 +125,16 @@ void MarkNotALeak(void* ptr) {
 
 int ReportMemoryLeaks() {
 #ifdef MEMORY_TRACKING
-    if (g_pCtx == nullptr)
+    if (pMemTrack == nullptr)
         return 0;
 
     int leakCounter = 0;
-    for (size i = 0; i < g_pCtx->allocationTable.tableSize; i++) {
-        if (g_pCtx->allocationTable.pTable[i].hash != UNUSED_HASH) {
-            Allocation& alloc = g_pCtx->allocationTable.pTable[i].value;
+    for (i64 i = 0; i < pMemTrack->allocationTable.tableSize; i++) {
+        if (pMemTrack->allocationTable.pTable[i].hash != UNUSED_HASH) {
+            Allocation& alloc = pMemTrack->allocationTable.pTable[i].value;
             if (alloc.isLive && !alloc.notALeak) {
                 leakCounter++;
-                String trace = Debug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, g_pCtx->pArena);
+                String trace = Debug::PrintStackTraceToString(alloc.allocStackTrace, alloc.allocStackTraceFrames, pMemTrack->pArena);
                 Log::Warn(" ------ Oi dimwit, detected memory leak at address %p of size %zi. Fix your shit! ------\n%s", alloc.pointer, alloc.size, trace.pData);
             }
         }
@@ -154,5 +142,25 @@ int ReportMemoryLeaks() {
     return leakCounter;
 #else
     return 0;
+#endif
+}
+
+// ***********************************************************************
+
+void ReportMemoryUsage() {
+#ifdef MEMORY_TRACKING
+    if (pMemTrack == nullptr)
+        return;
+
+	i64 memoryAllocated = 0;
+    for (i64 i = 0; i < pMemTrack->allocationTable.tableSize; i++) {
+        if (pMemTrack->allocationTable.pTable[i].hash != UNUSED_HASH) {
+            Allocation& alloc = pMemTrack->allocationTable.pTable[i].value;
+			if (alloc.isLive) {
+				memoryAllocated += alloc.size;
+			}
+		}
+	}
+	Log::Info("Tracked memory usage: %d (bytes) %f (kbytes) %f (mbytes)", memoryAllocated, (f32)memoryAllocated/1024, (f32)memoryAllocated/1024/1024);
 #endif
 }

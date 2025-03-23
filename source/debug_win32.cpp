@@ -28,7 +28,7 @@ String PrintStackTraceToString(void** stackFramesArray, u64 nframes, Arena* pAre
 
     ResizableArray<String> stackFuncs(pArena);
     ResizableArray<String> stackFiles(pArena);
-    ResizableArray<u64> stackLines(pArena);
+    ResizableArray<u32> stackLines(pArena);
 
     u64 longestName = 0;
     for (u32 j = 0; j < nframes - 6; j++) {
@@ -50,7 +50,7 @@ String PrintStackTraceToString(void** stackFramesArray, u64 nframes, Arena* pAre
 
     StringBuilder builder(pArena);
     for (u32 j = 0; j < nframes - 6; j++) {
-        builder.AppendFormat(" %-*s %s:%d\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
+        builder.AppendFormat(" %-*s %s:%u\n", (int)longestName, stackFuncs[j].pData, stackFiles[j].pData, stackLines[j]);
     }
     String output = builder.CreateString(pArena, true);
     return output;
