@@ -72,9 +72,12 @@ void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
         }
 
 		const char* formatStart = format;
+		bool requiresCount = false;
 		format++;
 		while (!IsFormatSpecifier(*format)) {
-			format++;
+			if (*(format++) == '*') {
+				requiresCount = true;
+			}
 		}
 		if (*format == 'S') {
 			// special handling for our non-null terminated string
@@ -97,6 +100,8 @@ void StringBuilder::AppendFormatInternal(const char* format, va_list args) {
 			length += addedLength;
 
 			va_arg(args, int); // skip element since the above copied the arg list
+			if (requiresCount)
+				va_arg(args, int);
 
 			// reset format for next time
 			memset(formatHelper, 0, 256);
